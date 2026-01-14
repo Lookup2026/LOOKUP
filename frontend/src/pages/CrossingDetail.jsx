@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, UserPlus } from 'lucide-react'
-import { getCrossingDetail, likeLook, viewLook, getLookStats } from '../api/client'
+import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl } from '../api/client'
 import toast from 'react-hot-toast'
 
 const CATEGORY_LABELS = {
@@ -140,7 +140,7 @@ export default function CrossingDetail() {
         <div className="px-4 mb-4">
           <div className="relative">
             <img
-              src={other_look.photo_url}
+              src={getPhotoUrl(other_look.photo_url)}
               alt="Look"
               className="w-full rounded-3xl object-cover max-h-[55vh]"
             />

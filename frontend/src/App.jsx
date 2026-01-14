@@ -12,6 +12,7 @@ import AddLook from './pages/AddLook'
 import Crossings from './pages/Crossings'
 import CrossingDetail from './pages/CrossingDetail'
 import Profile from './pages/Profile'
+import Settings from './pages/Settings'
 
 // Components
 import Layout from './components/Layout'
@@ -107,6 +108,7 @@ function App() {
           <Route path="crossings" element={<Crossings />} />
           <Route path="crossings/:id" element={<CrossingDetail />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* Redirect unknown routes */}

@@ -4,6 +4,13 @@ import axios from 'axios'
 // En prod: utilise VITE_API_URL
 const API_URL = import.meta.env.VITE_API_URL || ''
 
+// Helper pour construire l'URL complete des photos
+export const getPhotoUrl = (path) => {
+  if (!path) return null
+  if (path.startsWith('http')) return path
+  return `${API_URL}${path}`
+}
+
 const api = axios.create({
   baseURL: `${API_URL}/api`,
   headers: {

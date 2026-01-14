@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { LogOut, Camera, Trash2, MapPin, Calendar, Eye, Heart } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
-import { getMyLooks, deleteLook } from '../api/client'
+import { getMyLooks, deleteLook, getPhotoUrl } from '../api/client'
 import toast from 'react-hot-toast'
 
 export default function Profile() {
@@ -131,7 +131,7 @@ export default function Profile() {
               {looks.map((look) => (
                 <div key={look.id} className="relative group">
                   <img
-                    src={look.photo_url}
+                    src={getPhotoUrl(look.photo_url)}
                     alt=""
                     className="w-full aspect-square object-cover rounded-xl"
                   />

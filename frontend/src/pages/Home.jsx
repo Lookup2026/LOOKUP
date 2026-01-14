@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, MapPin, ChevronRight } from 'lucide-react'
-import { getTodayLook, deleteLook } from '../api/client'
+import { ChevronLeft, MapPin, ChevronRight, Settings } from 'lucide-react'
+import { getTodayLook, deleteLook, getPhotoUrl } from '../api/client'
 import { useLocationStore } from '../stores/locationStore'
 import toast from 'react-hot-toast'
 
@@ -59,16 +59,16 @@ export default function Home() {
     <div className="min-h-full bg-white pb-24">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <ChevronLeft size={24} className="text-lookup-black opacity-0" />
+        <Link to="/settings" className="w-8 h-8 bg-lookup-cream rounded-full flex items-center justify-center">
+          <Settings size={18} className="text-lookup-gray" />
+        </Link>
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 bg-gradient-to-br from-lookup-mint to-pink-300 rounded-full flex items-center justify-center">
             <MapPin size={12} className="text-white" />
           </div>
           <span className="text-lg font-bold text-lookup-black">LOOKUP</span>
         </div>
-        <div className="w-8 h-8 bg-lookup-mint-light rounded-full flex items-center justify-center">
-          <span className="text-xs">?</span>
-        </div>
+        <div className="w-8"></div>
       </div>
 
       {/* Title */}
@@ -83,7 +83,7 @@ export default function Home() {
             {/* Photo */}
             <div className="relative aspect-[3/4] max-h-[400px]">
               <img
-                src={todayLook.photo_url}
+                src={getPhotoUrl(todayLook.photo_url)}
                 alt="Mon look"
                 className="w-full h-full object-cover"
               />

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MapPin, Clock, Eye, Heart } from 'lucide-react'
-import { getMyCrossings } from '../api/client'
+import { MapPin, Clock, Eye, Heart, Settings } from 'lucide-react'
+import { getMyCrossings, getPhotoUrl } from '../api/client'
 
 export default function Crossings() {
   const [crossings, setCrossings] = useState([])
@@ -46,16 +46,16 @@ export default function Crossings() {
     <div className="min-h-full bg-white pb-24">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <div className="w-8"></div>
+        <Link to="/settings" className="w-8 h-8 bg-lookup-cream rounded-full flex items-center justify-center">
+          <Settings size={18} className="text-lookup-gray" />
+        </Link>
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 bg-gradient-to-br from-lookup-mint to-pink-300 rounded-full flex items-center justify-center">
             <MapPin size={12} className="text-white" />
           </div>
           <span className="text-lg font-bold text-lookup-black">LOOKUP</span>
         </div>
-        <div className="w-8 h-8 bg-lookup-mint-light rounded-full flex items-center justify-center">
-          <span className="text-xs">?</span>
-        </div>
+        <div className="w-8"></div>
       </div>
 
       {/* Title */}
@@ -90,7 +90,7 @@ export default function Crossings() {
                 {crossing.other_look_photo_url ? (
                   <div className="aspect-square">
                     <img
-                      src={crossing.other_look_photo_url}
+                      src={getPhotoUrl(crossing.other_look_photo_url)}
                       alt=""
                       className="w-full h-full object-cover"
                     />
@@ -158,7 +158,7 @@ export default function Crossings() {
                     <div className="flex items-center gap-3">
                       {crossing.other_look_photo_url ? (
                         <img
-                          src={crossing.other_look_photo_url}
+                          src={getPhotoUrl(crossing.other_look_photo_url)}
                           alt=""
                           className="w-12 h-12 rounded-lg object-cover"
                         />
