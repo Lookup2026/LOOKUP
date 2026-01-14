@@ -7,6 +7,7 @@ import uuid
 
 from app.core.database import get_db
 from app.core.config import settings
+from app.core.storage import upload_photo, delete_photo
 from app.models import User, Look, LookItem, LookLike, LookView
 from app.schemas import LookCreate, LookResponse, LookItemCreate
 from app.api.deps import get_current_user
@@ -33,20 +34,22 @@ async def create_look(
             detail="Le fichier doit etre une image"
         )
 
-    # Sauvegarder la photo
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-    file_ext = photo.filename.split(".")[-1] if "." in photo.filename else "jpg"
-    filename = f"{uuid.uuid4()}.{file_ext}"
-    filepath = os.path.join(settings.UPLOAD_DIR, filename)
+    # Lire le contenu du fichier
+    content = await photo.read()
+    if len(content) > settings.MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Fichier trop volumineux (max 5MB)"
+        )
 
-    with open(filepath, "wb") as f:
-        content = await photo.read()
-        if len(content) > settings.MAX_FILE_SIZE:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Fichier trop volumineux (max 5MB)"
-            )
-        f.write(content)
+    # Upload vers Supabase Storage
+    try:
+        photo_url = await upload_photo(content, photo.filename)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur upload photo: {str(e)}"
+        )
 
     # Parser la date
     parsed_date = date.today()
@@ -61,7 +64,7 @@ async def create_look(
         user_id=current_user.id,
         title=title,
         description=description,
-        photo_url=f"/uploads/{filename}",
+        photo_url=photo_url,
         look_date=parsed_date
     )
     db.add(look)
@@ -148,11 +151,9 @@ async def delete_look(
             detail="Look non trouve"
         )
 
-    # Supprimer le fichier photo
+    # Supprimer la photo de Supabase Storage
     if look.photo_url:
-        filepath = look.photo_url.replace("/uploads/", settings.UPLOAD_DIR + "/")
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        await delete_photo(look.photo_url)
 
     db.delete(look)
     db.commit()

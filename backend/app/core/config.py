@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "uploads"
     MAX_FILE_SIZE: int = 5 * 1024 * 1024  # 5MB
 
+    # Supabase Storage
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+    SUPABASE_BUCKET: str = "looks"
+
     # Geolocation
     CROSSING_RADIUS_METERS: float = 50.0  # Rayon pour detecter un croisement
     CROSSING_TIME_WINDOW_MINUTES: int = 10  # Fenetre de temps pour un croisement
