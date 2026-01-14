@@ -4,6 +4,7 @@ import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './stores/authStore'
 
 // Pages
+import Welcome from './pages/Welcome'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
@@ -24,7 +25,21 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/welcome" replace />
+  }
+
+  return children
+}
+
+function PublicRoute({ children }) {
+  const { isAuthenticated, isLoading } = useAuthStore()
+
+  if (isLoading) {
+    return <LoadingScreen />
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />
   }
 
   return children
@@ -47,15 +62,38 @@ function App() {
         position="top-center"
         toastOptions={{
           style: {
-            background: '#1a1a1a',
+            background: '#1A1A1A',
             color: '#fff',
+            borderRadius: '100px',
+            padding: '12px 24px',
+          },
+          success: {
+            iconTheme: {
+              primary: '#9DC08B',
+              secondary: '#fff',
+            },
           },
         }}
       />
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        {/* Public routes */}
+        <Route path="/welcome" element={
+          <PublicRoute>
+            <Welcome />
+          </PublicRoute>
+        } />
+        <Route path="/login" element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        } />
+        <Route path="/register" element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>
+        } />
 
+        {/* Protected routes */}
         <Route
           path="/"
           element={
@@ -70,6 +108,9 @@ function App() {
           <Route path="crossings/:id" element={<CrossingDetail />} />
           <Route path="profile" element={<Profile />} />
         </Route>
+
+        {/* Redirect unknown routes */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

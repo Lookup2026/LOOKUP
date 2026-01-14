@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -10,9 +12,9 @@
 
 html, body {
   height: 100%;
-  background-color: #000000;
-  color: #ffffff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: #FFFFFF;
+  color: #1A1A1A;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 #root {
@@ -34,15 +36,32 @@ html, body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #111111;
+  background: #F5F5F5;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333333;
+  background: #9DC08B;
   border-radius: 2px;
 }
 
 /* Mobile tap highlight */
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom classes */
+.btn-primary {
+  @apply bg-lookup-mint text-white font-semibold py-3 px-6 rounded-full shadow-button hover:bg-lookup-mint-dark transition-all duration-200;
+}
+
+.btn-secondary {
+  @apply bg-white text-lookup-black font-semibold py-3 px-6 rounded-full border-2 border-lookup-gray-light hover:border-lookup-mint transition-all duration-200;
+}
+
+.card {
+  @apply bg-white rounded-2xl shadow-card p-4;
+}
+
+.input-field {
+  @apply w-full bg-lookup-cream border border-lookup-gray-light rounded-xl px-4 py-3 text-lookup-black placeholder-lookup-gray focus:outline-none focus:border-lookup-mint transition-colors;
 }

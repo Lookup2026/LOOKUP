@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, Plus, X, Upload } from 'lucide-react'
+import { Camera, Plus, X, Upload, ChevronLeft, MapPin } from 'lucide-react'
 import { createLook } from '../api/client'
 import toast from 'react-hot-toast'
 
@@ -82,14 +82,31 @@ export default function AddLook() {
   }
 
   return (
-    <div className="p-4 pb-24">
-      <h1 className="text-2xl font-bold text-white mb-6">Ajouter mon look</h1>
+    <div className="min-h-full bg-white pb-24">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2">
+          <ChevronLeft size={24} className="text-lookup-black" />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-gradient-to-br from-lookup-mint to-pink-300 rounded-full flex items-center justify-center">
+            <MapPin size={12} className="text-white" />
+          </div>
+          <span className="text-lg font-bold text-lookup-black">LOOKUP</span>
+        </div>
+        <div className="w-8"></div>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Title */}
+      <h1 className="text-2xl font-bold text-lookup-black px-4 mt-4 mb-6">
+        Ajouter mon look
+      </h1>
+
+      <form onSubmit={handleSubmit} className="px-4 space-y-6">
         {/* Photo */}
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="bg-lookup-gray rounded-xl aspect-[3/4] flex items-center justify-center cursor-pointer hover:bg-lookup-light-gray transition overflow-hidden"
+          className="bg-lookup-mint-light rounded-3xl aspect-[3/4] max-h-[400px] flex items-center justify-center cursor-pointer hover:bg-lookup-mint/20 transition overflow-hidden"
         >
           {photoPreview ? (
             <img
@@ -99,8 +116,11 @@ export default function AddLook() {
             />
           ) : (
             <div className="text-center">
-              <Camera size={48} className="text-gray-500 mx-auto mb-2" />
-              <p className="text-gray-400">Prendre une photo</p>
+              <div className="w-16 h-16 bg-lookup-mint/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Camera size={32} className="text-lookup-mint-dark" />
+              </div>
+              <p className="text-lookup-gray font-medium">Prendre une photo</p>
+              <p className="text-lookup-gray text-sm mt-1">ou choisir dans la galerie</p>
             </div>
           )}
         </div>
@@ -119,17 +139,17 @@ export default function AddLook() {
           placeholder="Titre du look (optionnel)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full bg-lookup-gray border border-lookup-light-gray rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-lookup-accent"
+          className="input-field"
         />
 
         {/* Items */}
         <div>
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold text-white">Pieces</h2>
+            <h2 className="text-lg font-semibold text-lookup-black">Pieces du look</h2>
             <button
               type="button"
               onClick={addItem}
-              className="flex items-center gap-1 text-lookup-accent"
+              className="flex items-center gap-1 text-lookup-mint-dark font-medium"
             >
               <Plus size={18} />
               <span>Ajouter</span>
@@ -140,12 +160,12 @@ export default function AddLook() {
             {items.map((item) => (
               <div
                 key={item.id}
-                className="bg-lookup-gray rounded-xl p-4 relative"
+                className="bg-lookup-cream rounded-2xl p-4 relative"
               >
                 <button
                   type="button"
                   onClick={() => removeItem(item.id)}
-                  className="absolute top-2 right-2 text-gray-400 hover:text-white"
+                  className="absolute top-3 right-3 text-lookup-gray hover:text-red-500"
                 >
                   <X size={18} />
                 </button>
@@ -153,7 +173,7 @@ export default function AddLook() {
                 <select
                   value={item.category}
                   onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                  className="w-full bg-lookup-light-gray rounded-lg px-4 py-2 text-white mb-3"
+                  className="w-full bg-white rounded-xl px-4 py-3 text-lookup-black mb-3 border border-lookup-gray-light"
                 >
                   {CATEGORIES.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -168,14 +188,14 @@ export default function AddLook() {
                     placeholder="Marque"
                     value={item.brand}
                     onChange={(e) => updateItem(item.id, 'brand', e.target.value)}
-                    className="bg-lookup-light-gray rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500"
+                    className="bg-white rounded-xl px-3 py-2 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
                   />
                   <input
                     type="text"
                     placeholder="Couleur"
                     value={item.color}
                     onChange={(e) => updateItem(item.id, 'color', e.target.value)}
-                    className="bg-lookup-light-gray rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500"
+                    className="bg-white rounded-xl px-3 py-2 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
                   />
                 </div>
                 <input
@@ -183,7 +203,7 @@ export default function AddLook() {
                   placeholder="Nom du produit"
                   value={item.product_name}
                   onChange={(e) => updateItem(item.id, 'product_name', e.target.value)}
-                  className="w-full bg-lookup-light-gray rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 mt-2"
+                  className="w-full bg-white rounded-xl px-3 py-2 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
                 />
                 <input
                   type="text"
@@ -192,14 +212,14 @@ export default function AddLook() {
                   onChange={(e) =>
                     updateItem(item.id, 'product_reference', e.target.value)
                   }
-                  className="w-full bg-lookup-light-gray rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 mt-2"
+                  className="w-full bg-white rounded-xl px-3 py-2 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
                 />
               </div>
             ))}
           </div>
 
           {items.length === 0 && (
-            <p className="text-gray-400 text-center py-4">
+            <p className="text-lookup-gray text-center py-4">
               Ajoutez les pieces de votre look pour aider les autres a les trouver
             </p>
           )}
@@ -209,7 +229,7 @@ export default function AddLook() {
         <button
           type="submit"
           disabled={loading || !photo}
-          className="w-full flex items-center justify-center gap-2 bg-white text-black font-semibold py-3 rounded-lg hover:bg-gray-200 transition disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-lookup-mint text-white font-semibold py-4 rounded-full shadow-button hover:bg-lookup-mint-dark transition-all disabled:opacity-50"
         >
           <Upload size={20} />
           <span>{loading ? 'Publication...' : 'Publier mon look'}</span>

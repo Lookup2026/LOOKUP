@@ -1,38 +1,52 @@
 import { Outlet, NavLink } from 'react-router-dom'
-import { Home, PlusCircle, Users, User } from 'lucide-react'
+import { MapPin, Plus, User } from 'lucide-react'
 
 export default function Layout() {
-  const navItems = [
-    { to: '/', icon: Home, label: 'Accueil' },
-    { to: '/add-look', icon: PlusCircle, label: 'Look' },
-    { to: '/crossings', icon: Users, label: 'Croises' },
-    { to: '/profile', icon: User, label: 'Profil' },
-  ]
-
   return (
-    <div className="h-screen flex flex-col bg-black">
-      {/* Contenu principal */}
+    <div className="h-screen flex flex-col bg-white">
+      {/* Main content */}
       <main className="flex-1 overflow-auto safe-area-top">
         <Outlet />
       </main>
 
-      {/* Navigation bottom */}
-      <nav className="bg-lookup-dark border-t border-lookup-gray safe-area-bottom">
-        <div className="flex justify-around py-2">
-          {navItems.map(({ to, icon: Icon, label }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex flex-col items-center py-2 px-4 transition-colors ${
-                  isActive ? 'text-lookup-accent' : 'text-gray-400'
-                }`
-              }
-            >
-              <Icon size={24} />
-              <span className="text-xs mt-1">{label}</span>
-            </NavLink>
-          ))}
+      {/* Bottom navigation */}
+      <nav className="bg-white border-t border-lookup-gray-light safe-area-bottom">
+        <div className="flex justify-around items-center py-3 px-6">
+          {/* Explorer */}
+          <NavLink
+            to="/crossings"
+            className={({ isActive }) =>
+              `flex flex-col items-center transition-colors ${
+                isActive ? 'text-lookup-mint-dark' : 'text-lookup-gray'
+              }`
+            }
+          >
+            <MapPin size={24} />
+            <span className="text-xs mt-1">Explorer</span>
+          </NavLink>
+
+          {/* Add Look - Center button */}
+          <NavLink
+            to="/add-look"
+            className="relative -top-4"
+          >
+            <div className="w-14 h-14 bg-gradient-to-br from-lookup-mint to-pink-300 rounded-full flex items-center justify-center shadow-lg">
+              <Plus size={28} className="text-white" />
+            </div>
+          </NavLink>
+
+          {/* Profile */}
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `flex flex-col items-center transition-colors ${
+                isActive ? 'text-lookup-mint-dark' : 'text-lookup-gray'
+              }`
+            }
+          >
+            <User size={24} />
+            <span className="text-xs mt-1">Profil</span>
+          </NavLink>
         </div>
       </nav>
     </div>
