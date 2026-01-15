@@ -82,31 +82,33 @@ export default function AddLook() {
   }
 
   return (
-    <div className="min-h-full bg-white pb-24">
+    <div className="min-h-full bg-lookup-cream pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2">
-          <ChevronLeft size={24} className="text-lookup-black" />
-        </button>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-br from-lookup-mint to-pink-300 rounded-full flex items-center justify-center">
-            <MapPin size={12} className="text-white" />
+      <div className="bg-white px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+            <ChevronLeft size={20} className="text-lookup-gray" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center">
+              <MapPin size={14} className="text-white" />
+            </div>
+            <span className="text-xl font-bold text-lookup-black">LOOKUP</span>
           </div>
-          <span className="text-lg font-bold text-lookup-black">LOOKUP</span>
+          <div className="w-9"></div>
         </div>
-        <div className="w-8"></div>
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl font-bold text-lookup-black px-4 mt-4 mb-6">
-        Ajouter mon look
-      </h1>
+      <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide px-4 pt-4 mb-3">
+        Ajouter mon look du jour
+      </h2>
 
-      <form onSubmit={handleSubmit} className="px-4 space-y-6">
+      <form onSubmit={handleSubmit} className="px-4 space-y-4">
         {/* Photo */}
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="bg-lookup-mint-light rounded-3xl aspect-[3/4] max-h-[400px] flex items-center justify-center cursor-pointer hover:bg-lookup-mint/20 transition overflow-hidden"
+          className="bg-white rounded-2xl aspect-[3/4] max-h-[350px] flex items-center justify-center cursor-pointer hover:bg-lookup-cream transition overflow-hidden shadow-sm"
         >
           {photoPreview ? (
             <img
@@ -116,10 +118,10 @@ export default function AddLook() {
             />
           ) : (
             <div className="text-center">
-              <div className="w-16 h-16 bg-lookup-mint/30 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <Camera size={32} className="text-lookup-mint-dark" />
+              <div className="w-14 h-14 bg-lookup-mint-light rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Camera size={28} className="text-lookup-mint" />
               </div>
-              <p className="text-lookup-gray font-medium">Prendre une photo</p>
+              <p className="text-lookup-black font-medium">Prendre une photo</p>
               <p className="text-lookup-gray text-sm mt-1">ou choisir dans la galerie</p>
             </div>
           )}
@@ -139,28 +141,28 @@ export default function AddLook() {
           placeholder="Titre du look (optionnel)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="input-field"
+          className="w-full bg-white rounded-xl px-4 py-3 text-lookup-black border border-lookup-gray-light placeholder-lookup-gray shadow-sm"
         />
 
         {/* Items */}
         <div>
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-semibold text-lookup-black">Pieces du look</h2>
+            <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">Pieces du look</h2>
             <button
               type="button"
               onClick={addItem}
-              className="flex items-center gap-1 text-lookup-mint-dark font-medium"
+              className="flex items-center gap-1 text-lookup-mint font-medium text-sm"
             >
-              <Plus size={18} />
+              <Plus size={16} />
               <span>Ajouter</span>
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {items.map((item) => (
               <div
                 key={item.id}
-                className="bg-lookup-cream rounded-2xl p-4 relative"
+                className="bg-white rounded-2xl p-4 relative shadow-sm"
               >
                 <button
                   type="button"
@@ -173,7 +175,7 @@ export default function AddLook() {
                 <select
                   value={item.category}
                   onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                  className="w-full bg-white rounded-xl px-4 py-3 text-lookup-black mb-3 border border-lookup-gray-light"
+                  className="w-full bg-lookup-cream rounded-xl px-4 py-3 text-lookup-black mb-3 border border-lookup-gray-light text-sm"
                 >
                   {CATEGORIES.map((cat) => (
                     <option key={cat.id} value={cat.id}>
@@ -188,14 +190,14 @@ export default function AddLook() {
                     placeholder="Marque"
                     value={item.brand}
                     onChange={(e) => updateItem(item.id, 'brand', e.target.value)}
-                    className="bg-white rounded-xl px-3 py-2 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
+                    className="bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
                   />
                   <input
                     type="text"
                     placeholder="Couleur"
                     value={item.color}
                     onChange={(e) => updateItem(item.id, 'color', e.target.value)}
-                    className="bg-white rounded-xl px-3 py-2 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
+                    className="bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
                   />
                 </div>
                 <input
@@ -203,7 +205,7 @@ export default function AddLook() {
                   placeholder="Nom du produit"
                   value={item.product_name}
                   onChange={(e) => updateItem(item.id, 'product_name', e.target.value)}
-                  className="w-full bg-white rounded-xl px-3 py-2 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
+                  className="w-full bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
                 />
                 <input
                   type="text"
@@ -212,16 +214,18 @@ export default function AddLook() {
                   onChange={(e) =>
                     updateItem(item.id, 'product_reference', e.target.value)
                   }
-                  className="w-full bg-white rounded-xl px-3 py-2 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
+                  className="w-full bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
                 />
               </div>
             ))}
           </div>
 
           {items.length === 0 && (
-            <p className="text-lookup-gray text-center py-4">
-              Ajoutez les pieces de votre look pour aider les autres a les trouver
-            </p>
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <p className="text-lookup-gray text-sm">
+                Ajoutez les pieces de votre look pour aider les autres a les trouver
+              </p>
+            </div>
           )}
         </div>
 
@@ -229,7 +233,7 @@ export default function AddLook() {
         <button
           type="submit"
           disabled={loading || !photo}
-          className="w-full flex items-center justify-center gap-2 bg-lookup-mint text-white font-semibold py-4 rounded-full shadow-button hover:bg-lookup-mint-dark transition-all disabled:opacity-50"
+          className="w-full flex items-center justify-center gap-2 bg-lookup-mint text-white font-semibold py-4 rounded-full shadow-lg hover:bg-lookup-mint-dark transition-all disabled:opacity-50 mt-2"
         >
           <Upload size={20} />
           <span>{loading ? 'Publication...' : 'Publier mon look'}</span>

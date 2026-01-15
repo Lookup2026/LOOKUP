@@ -1,5 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom'
-import { MapPin, Plus, User } from 'lucide-react'
+import { Home, Plus, User } from 'lucide-react'
 
 export default function Layout() {
   return (
@@ -12,17 +12,18 @@ export default function Layout() {
       {/* Bottom navigation */}
       <nav className="bg-white border-t border-lookup-gray-light safe-area-bottom">
         <div className="flex justify-around items-center py-3 px-6">
-          {/* Explorer */}
+          {/* Home */}
           <NavLink
-            to="/crossings"
+            to="/"
+            end
             className={({ isActive }) =>
               `flex flex-col items-center transition-colors ${
                 isActive ? 'text-lookup-mint-dark' : 'text-lookup-gray'
               }`
             }
           >
-            <MapPin size={24} />
-            <span className="text-xs mt-1">Explorer</span>
+            <Home size={24} />
+            <span className="text-xs mt-1">Accueil</span>
           </NavLink>
 
           {/* Add Look - Center button */}
@@ -30,14 +31,14 @@ export default function Layout() {
             to="/add-look"
             className="relative -top-4"
           >
-            <div className="w-14 h-14 bg-gradient-to-br from-lookup-mint to-pink-300 rounded-full flex items-center justify-center shadow-lg">
+            <div className="w-14 h-14 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center shadow-lg">
               <Plus size={28} className="text-white" />
             </div>
           </NavLink>
 
           {/* Profile */}
           <NavLink
-            to="/"
+            to="/profile"
             className={({ isActive }) =>
               `flex flex-col items-center transition-colors ${
                 isActive ? 'text-lookup-mint-dark' : 'text-lookup-gray'

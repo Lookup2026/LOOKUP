@@ -23,36 +23,38 @@ export default function Settings() {
   const currentLang = LANGUAGES.find(l => l.code === language)
 
   return (
-    <div className="min-h-full bg-white pb-24">
+    <div className="min-h-full bg-lookup-cream pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2">
-          <ChevronLeft size={24} className="text-lookup-black" />
-        </button>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-br from-lookup-mint to-pink-300 rounded-full flex items-center justify-center">
-            <MapPin size={12} className="text-white" />
+      <div className="bg-white px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+            <ChevronLeft size={20} className="text-lookup-gray" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center">
+              <MapPin size={14} className="text-white" />
+            </div>
+            <span className="text-xl font-bold text-lookup-black">LOOKUP</span>
           </div>
-          <span className="text-lg font-bold text-lookup-black">LOOKUP</span>
+          <div className="w-9"></div>
         </div>
-        <div className="w-8"></div>
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl font-bold text-lookup-black px-4 mt-4 mb-6">
+      <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide px-4 pt-4 mb-3">
         Parametres
-      </h1>
+      </h2>
 
       {/* Settings list */}
-      <div className="px-4 space-y-3">
+      <div className="px-4 space-y-2">
         {/* Language */}
         <button
           onClick={() => setShowLanguages(!showLanguages)}
-          className="w-full bg-lookup-cream rounded-2xl p-4 flex items-center justify-between"
+          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
-              <Globe size={20} className="text-lookup-mint-dark" />
+              <Globe size={18} className="text-lookup-mint" />
             </div>
             <div className="text-left">
               <p className="font-medium text-lookup-black">Langue</p>
@@ -60,14 +62,14 @@ export default function Settings() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xl">{currentLang?.flag}</span>
-            <ChevronRight size={20} className={`text-lookup-gray transition ${showLanguages ? 'rotate-90' : ''}`} />
+            <span className="text-lg">{currentLang?.flag}</span>
+            <ChevronRight size={18} className={`text-lookup-gray transition ${showLanguages ? 'rotate-90' : ''}`} />
           </div>
         </button>
 
         {/* Language options */}
         {showLanguages && (
-          <div className="bg-lookup-cream rounded-2xl overflow-hidden">
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.code}
@@ -77,8 +79,8 @@ export default function Settings() {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{lang.flag}</span>
-                  <span className={`${language === lang.code ? 'font-semibold text-lookup-mint-dark' : 'text-lookup-black'}`}>
+                  <span className="text-lg">{lang.flag}</span>
+                  <span className={`text-sm ${language === lang.code ? 'font-semibold text-lookup-mint-dark' : 'text-lookup-black'}`}>
                     {lang.label}
                   </span>
                 </div>
@@ -93,52 +95,52 @@ export default function Settings() {
         )}
 
         {/* Notifications */}
-        <button className="w-full bg-lookup-cream rounded-2xl p-4 flex items-center justify-between">
+        <button className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
-              <Bell size={20} className="text-lookup-mint-dark" />
+              <Bell size={18} className="text-lookup-mint" />
             </div>
             <div className="text-left">
               <p className="font-medium text-lookup-black">Notifications</p>
               <p className="text-sm text-lookup-gray">Gerer les alertes</p>
             </div>
           </div>
-          <ChevronRight size={20} className="text-lookup-gray" />
+          <ChevronRight size={18} className="text-lookup-gray" />
         </button>
 
         {/* Privacy */}
-        <button className="w-full bg-lookup-cream rounded-2xl p-4 flex items-center justify-between">
+        <button className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
-              <Shield size={20} className="text-lookup-mint-dark" />
+              <Shield size={18} className="text-lookup-mint" />
             </div>
             <div className="text-left">
               <p className="font-medium text-lookup-black">Confidentialite</p>
               <p className="text-sm text-lookup-gray">Vie privee et donnees</p>
             </div>
           </div>
-          <ChevronRight size={20} className="text-lookup-gray" />
+          <ChevronRight size={18} className="text-lookup-gray" />
         </button>
 
         {/* Help */}
-        <button className="w-full bg-lookup-cream rounded-2xl p-4 flex items-center justify-between">
+        <button className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
-              <HelpCircle size={20} className="text-lookup-mint-dark" />
+              <HelpCircle size={18} className="text-lookup-mint" />
             </div>
             <div className="text-left">
               <p className="font-medium text-lookup-black">Aide</p>
               <p className="text-sm text-lookup-gray">FAQ et support</p>
             </div>
           </div>
-          <ChevronRight size={20} className="text-lookup-gray" />
+          <ChevronRight size={18} className="text-lookup-gray" />
         </button>
       </div>
 
       {/* App info */}
       <div className="px-4 mt-8 text-center">
         <p className="text-lookup-gray text-sm">LOOKUP v1.0.0</p>
-        <p className="text-lookup-gray text-xs mt-1">Made with ❤️ in Paris</p>
+        <p className="text-lookup-gray text-xs mt-1">Made with love in Paris</p>
       </div>
     </div>
   )

@@ -1,25 +1,28 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, MapPin, ChevronRight, Settings } from 'lucide-react'
-import { getTodayLook, deleteLook, getPhotoUrl } from '../api/client'
+import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight } from 'lucide-react'
+import { getTodayLook, getMyCrossings, getPhotoUrl } from '../api/client'
 import { useLocationStore } from '../stores/locationStore'
-import toast from 'react-hot-toast'
 
 export default function Home() {
   const { sendPing } = useLocationStore()
   const [todayLook, setTodayLook] = useState(null)
+  const [crossings, setCrossings] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadData()
-    // Send ping on load
     sendPing().catch(() => {})
   }, [])
 
   const loadData = async () => {
     try {
-      const lookRes = await getTodayLook()
+      const [lookRes, crossingsRes] = await Promise.all([
+        getTodayLook(),
+        getMyCrossings()
+      ])
       setTodayLook(lookRes.data)
+      setCrossings(crossingsRes.data || [])
     } catch (error) {
       console.error('Erreur chargement:', error)
     } finally {
@@ -27,135 +30,174 @@ export default function Home() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!todayLook) return
-    if (!confirm('Supprimer ce look ?')) return
+  const getTimeAgo = (date) => {
+    const now = new Date()
+    const crossed = new Date(date)
+    const diffMs = now - crossed
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
 
-    try {
-      await deleteLook(todayLook.id)
-      setTodayLook(null)
-      toast.success('Look supprime')
-    } catch (error) {
-      toast.error('Erreur lors de la suppression')
-    }
+    if (diffMins < 1) return "A l'instant"
+    if (diffMins < 60) return `Il y a ${diffMins} min`
+    if (diffHours < 24) return `Il y a ${diffHours}h`
+    return crossed.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
   }
 
-  const today = new Date()
-  const dateStr = today.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long'
-  })
+  const getApproxLocation = (crossing) => {
+    if (crossing.zone_name) return crossing.zone_name
+    return 'Pres de vous'
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-lookup-cream flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-full bg-white pb-24">
+    <div className="min-h-full bg-lookup-cream pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <Link to="/settings" className="w-8 h-8 bg-lookup-cream rounded-full flex items-center justify-center">
-          <Settings size={18} className="text-lookup-gray" />
-        </Link>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-br from-lookup-mint to-pink-300 rounded-full flex items-center justify-center">
-            <MapPin size={12} className="text-white" />
+      <div className="bg-white px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between">
+          <Link to="/settings" className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+            <Settings size={18} className="text-lookup-gray" />
+          </Link>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center">
+              <MapPin size={14} className="text-white" />
+            </div>
+            <span className="text-xl font-bold text-lookup-black">LOOKUP</span>
           </div>
-          <span className="text-lg font-bold text-lookup-black">LOOKUP</span>
+          <div className="w-9"></div>
         </div>
-        <div className="w-8"></div>
       </div>
 
-      {/* Title */}
-      <h1 className="text-2xl font-bold text-lookup-black px-4 mt-4 mb-6">
-        Mon look du jour
-      </h1>
+      {/* My Look Today - Mini Card */}
+      <div className="px-4 pt-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">Mon look du jour</h2>
+          <Link to="/add-look" className="text-lookup-mint text-sm font-medium">
+            {todayLook ? 'Modifier' : 'Ajouter'}
+          </Link>
+        </div>
 
-      {/* Look Card */}
-      <div className="px-4">
         {todayLook ? (
-          <div className="bg-lookup-mint-light rounded-3xl overflow-hidden">
-            {/* Photo */}
-            <div className="relative aspect-[3/4] max-h-[400px]">
+          <Link to="/add-look" className="block">
+            <div className="bg-white rounded-2xl overflow-hidden shadow-sm flex items-center p-3 gap-4">
               <img
                 src={getPhotoUrl(todayLook.photo_url)}
                 alt="Mon look"
-                className="w-full h-full object-cover"
+                className="w-20 h-20 object-cover rounded-xl"
               />
-              {/* Arrow button */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                <Link
-                  to="/crossings"
-                  className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg"
-                >
-                  <ChevronRight size={20} className="text-lookup-black" />
-                </Link>
+              <div className="flex-1">
+                <p className="font-semibold text-lookup-black">
+                  {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </p>
+                <div className="flex items-center gap-1 text-lookup-gray text-sm mt-1">
+                  <MapPin size={14} />
+                  <span>Visible par les autres</span>
+                </div>
+                <div className="flex items-center gap-3 mt-2">
+                  <div className="flex items-center gap-1 text-lookup-gray text-xs">
+                    <Eye size={12} />
+                    <span>{todayLook.views_count || 0}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-lookup-gray text-xs">
+                    <Heart size={12} />
+                    <span>{todayLook.likes_count || 0}</span>
+                  </div>
+                </div>
               </div>
+              <ChevronRight size={20} className="text-lookup-gray" />
             </div>
-
-            {/* Info */}
-            <div className="p-4">
-              <p className="text-lookup-black font-semibold capitalize">{dateStr}</p>
-              <div className="flex items-center gap-1 text-lookup-gray text-sm mt-1">
-                <MapPin size={14} />
-                <span>Pret a etre croise</span>
-              </div>
-
-              <p className="text-lookup-gray text-sm mt-3">
-                Look publie, explorez et decouvrez d'autres passionnes de mode autour de vous
-              </p>
-
-              {/* Buttons */}
-              <div className="flex gap-3 mt-4">
-                <Link
-                  to="/add-look"
-                  className="flex-1 py-3 px-4 bg-white rounded-full text-center font-medium text-lookup-black border border-lookup-gray-light"
-                >
-                  Modifier
-                </Link>
-                <button
-                  onClick={handleDelete}
-                  className="flex-1 py-3 px-4 bg-white rounded-full text-center font-medium text-lookup-black border border-lookup-gray-light"
-                >
-                  Supprimer
-                </button>
-              </div>
-            </div>
-          </div>
+          </Link>
         ) : (
-          <div className="bg-lookup-mint-light rounded-3xl p-8 text-center">
-            <div className="w-20 h-20 bg-lookup-mint/20 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <MapPin size={32} className="text-lookup-mint" />
+          <Link to="/add-look" className="block">
+            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="w-14 h-14 bg-lookup-mint-light rounded-full mx-auto mb-3 flex items-center justify-center">
+                <Plus size={24} className="text-lookup-mint" />
+              </div>
+              <p className="text-lookup-black font-medium">Publie ton look du jour</p>
+              <p className="text-lookup-gray text-sm mt-1">Pour etre visible par ceux que tu croises</p>
             </div>
-            <h3 className="text-lg font-semibold text-lookup-black mb-2">
-              Aucun look aujourd'hui
-            </h3>
-            <p className="text-lookup-gray text-sm mb-6">
-              Publie ton look du jour pour que d'autres passionnes de mode puissent te croiser
-            </p>
-            <Link
-              to="/add-look"
-              className="inline-block bg-lookup-mint text-white font-semibold py-3 px-8 rounded-full shadow-button"
-            >
-              Ajouter mon look
-            </Link>
-          </div>
+          </Link>
         )}
       </div>
 
-      {/* CTA Button */}
-      <div className="px-4 mt-6">
-        <Link
-          to="/crossings"
-          className="block w-full bg-lookup-mint text-white font-semibold py-4 rounded-full text-center shadow-button"
-        >
-          Explorer les looks croises
-        </Link>
+      {/* Crossed Looks Feed */}
+      <div className="px-4 pt-6">
+        <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide mb-3">
+          Looks recemment croises
+        </h2>
+
+        {crossings.length === 0 ? (
+          <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+            <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
+              <MapPin size={28} className="text-lookup-mint" />
+            </div>
+            <p className="text-lookup-black font-medium">Aucun croisement pour l'instant</p>
+            <p className="text-lookup-gray text-sm mt-1">
+              Deplacez-vous pour croiser d'autres passionnes de mode
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {crossings.map((crossing) => (
+              <Link
+                key={crossing.id}
+                to={`/crossings/${crossing.id}`}
+                className="block bg-white rounded-2xl overflow-hidden shadow-sm"
+              >
+                {/* Photo */}
+                <div className="relative">
+                  {crossing.other_look_photo_url ? (
+                    <img
+                      src={getPhotoUrl(crossing.other_look_photo_url)}
+                      alt=""
+                      className="w-full aspect-[4/5] object-cover"
+                    />
+                  ) : (
+                    <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
+                      <MapPin size={48} className="text-lookup-mint" />
+                    </div>
+                  )}
+
+                  {/* Gradient overlay at bottom */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                    <p className="text-white font-semibold text-lg">{crossing.other_username}</p>
+                    <div className="flex items-center gap-4 mt-1">
+                      <div className="flex items-center gap-1 text-white/90 text-sm">
+                        <Clock size={14} />
+                        <span>{getTimeAgo(crossing.crossed_at)}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-white/90 text-sm">
+                        <MapPin size={14} />
+                        <span>{getApproxLocation(crossing)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Stats bar */}
+                <div className="flex items-center justify-between px-4 py-3 bg-white">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5 text-lookup-gray">
+                      <Eye size={18} />
+                      <span className="text-sm font-medium">{crossing.views_count || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-lookup-gray">
+                      <Heart size={18} />
+                      <span className="text-sm font-medium">{crossing.likes_count || 0}</span>
+                    </div>
+                  </div>
+                  <span className="text-lookup-mint text-sm font-medium">Voir les details</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

@@ -9,7 +9,6 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Home from './pages/Home'
 import AddLook from './pages/AddLook'
-import Crossings from './pages/Crossings'
 import CrossingDetail from './pages/CrossingDetail'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
@@ -105,7 +104,6 @@ function App() {
         >
           <Route index element={<Home />} />
           <Route path="add-look" element={<AddLook />} />
-          <Route path="crossings" element={<Crossings />} />
           <Route path="crossings/:id" element={<CrossingDetail />} />
           <Route path="profile" element={<Profile />} />
           <Route path="settings" element={<Settings />} />

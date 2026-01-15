@@ -89,7 +89,7 @@ export default function CrossingDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-lookup-cream flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
@@ -97,16 +97,16 @@ export default function CrossingDetail() {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+      <div className="min-h-screen bg-lookup-cream flex flex-col items-center justify-center px-4">
         <div className="w-16 h-16 bg-lookup-mint-light rounded-full flex items-center justify-center mb-4">
           <MapPin size={32} className="text-lookup-mint" />
         </div>
         <p className="text-lookup-gray text-center">Croisement non trouve ou expire</p>
         <button
-          onClick={() => navigate('/crossings')}
-          className="mt-4 text-lookup-mint-dark font-medium"
+          onClick={() => navigate('/')}
+          className="mt-4 text-lookup-mint font-medium"
         >
-          Retour aux croisements
+          Retour a l'accueil
         </button>
       </div>
     )
@@ -115,34 +115,36 @@ export default function CrossingDetail() {
   const { crossing, other_user, other_look } = data
 
   return (
-    <div className="min-h-full bg-white pb-24">
+    <div className="min-h-full bg-lookup-cream pb-24">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2">
-          <ChevronLeft size={24} className="text-lookup-black" />
-        </button>
-        <div className="text-center">
-          <h1 className="text-xl font-bold text-lookup-black">{other_user?.username}</h1>
-          {timeRemaining && (
-            <div className="flex items-center justify-center gap-1 text-lookup-mint-dark text-xs">
-              <Timer size={12} />
-              <span>{timeRemaining}</span>
-            </div>
-          )}
+      <div className="bg-white px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+            <ChevronLeft size={20} className="text-lookup-gray" />
+          </button>
+          <div className="text-center">
+            <h1 className="text-lg font-bold text-lookup-black">{other_user?.username}</h1>
+            {timeRemaining && (
+              <div className="flex items-center justify-center gap-1 text-lookup-mint text-xs">
+                <Timer size={12} />
+                <span>Expire dans {timeRemaining}</span>
+              </div>
+            )}
+          </div>
+          <button className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+            <UserPlus size={18} className="text-lookup-gray" />
+          </button>
         </div>
-        <button className="p-2 -mr-2">
-          <UserPlus size={20} className="text-lookup-gray" />
-        </button>
       </div>
 
       {/* Photo */}
       {other_look?.photo_url ? (
-        <div className="px-4 mb-4">
+        <div className="px-4 pt-4 mb-4">
           <div className="relative">
             <img
               src={getPhotoUrl(other_look.photo_url)}
               alt="Look"
-              className="w-full rounded-3xl object-cover max-h-[55vh]"
+              className="w-full rounded-2xl object-cover max-h-[55vh] shadow-sm"
             />
             {/* Stats overlay */}
             <div className="absolute bottom-4 left-4 right-4 flex justify-between">
@@ -169,8 +171,8 @@ export default function CrossingDetail() {
           </div>
         </div>
       ) : (
-        <div className="px-4 mb-4">
-          <div className="w-full aspect-[3/4] rounded-3xl bg-lookup-mint-light flex items-center justify-center">
+        <div className="px-4 pt-4 mb-4">
+          <div className="w-full aspect-[3/4] rounded-2xl bg-white flex items-center justify-center shadow-sm">
             <p className="text-lookup-gray">Pas de photo</p>
           </div>
         </div>
@@ -178,7 +180,7 @@ export default function CrossingDetail() {
 
       {/* User info card */}
       <div className="px-4 mb-4">
-        <div className="bg-lookup-cream rounded-2xl p-4">
+        <div className="bg-white rounded-2xl p-4 shadow-sm">
           <div className="flex items-center gap-3">
             {other_user?.avatar_url ? (
               <img
@@ -187,7 +189,7 @@ export default function CrossingDetail() {
                 className="w-12 h-12 rounded-full object-cover"
               />
             ) : (
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-lookup-mint to-pink-300 flex items-center justify-center text-white font-bold text-lg">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white font-bold text-lg">
                 {other_user?.username?.[0]?.toUpperCase()}
               </div>
             )}
@@ -219,17 +221,17 @@ export default function CrossingDetail() {
 
       {/* Pieces */}
       <div className="px-4">
-        <h2 className="text-lg font-semibold text-lookup-black mb-3 flex items-center gap-2">
-          <Tag size={18} className="text-lookup-mint" />
+        <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide mb-3 flex items-center gap-2">
+          <Tag size={14} />
           Pieces du look ({other_look?.items?.length || 0})
         </h2>
 
         {other_look?.items?.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {other_look.items.map((item, index) => (
               <div
                 key={index}
-                className="bg-lookup-cream rounded-2xl p-4"
+                className="bg-white rounded-2xl p-4 shadow-sm"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -275,8 +277,8 @@ export default function CrossingDetail() {
             ))}
           </div>
         ) : (
-          <div className="bg-lookup-mint-light rounded-2xl p-6 text-center">
-            <p className="text-lookup-gray">Aucune piece renseignee pour ce look</p>
+          <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+            <p className="text-lookup-gray text-sm">Aucune piece renseignee pour ce look</p>
           </div>
         )}
       </div>
