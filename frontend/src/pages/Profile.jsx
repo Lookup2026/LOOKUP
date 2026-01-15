@@ -258,20 +258,19 @@ export default function Profile() {
 
       {/* Look Detail Modal */}
       {showModal && selectedLook && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex flex-col">
-          {/* Modal Header */}
-          <div className="flex items-center justify-between p-4 bg-black/50">
+        <div className="fixed inset-0 bg-black z-50 flex flex-col">
+          {/* Modal Header - Clean minimal design */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
             <button
               onClick={closeLookDetail}
-              className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+              className="p-2 -ml-2 text-white/80 hover:text-white"
             >
-              <X size={24} className="text-white" />
+              <X size={24} />
             </button>
-            <div className="text-white text-center">
-              <p className="font-semibold">{selectedLook.title || 'Mon look'}</p>
-              <p className="text-sm text-white/70">
+            <div className="text-white text-center flex-1 px-4">
+              <p className="font-semibold text-lg">{selectedLook.title || 'Mon look'}</p>
+              <p className="text-xs text-white/50 mt-0.5">
                 {new Date(selectedLook.look_date).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
                   day: 'numeric',
                   month: 'long',
                   year: 'numeric'
@@ -284,15 +283,15 @@ export default function Profile() {
                   e.stopPropagation()
                   setMenuOpenId(menuOpenId === selectedLook.id ? null : selectedLook.id)
                 }}
-                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+                className="p-2 -mr-2 text-white/80 hover:text-white"
               >
-                <MoreVertical size={20} className="text-white" />
+                <MoreVertical size={24} />
               </button>
 
               {/* Dropdown menu */}
               {menuOpenId === selectedLook.id && (
                 <div
-                  className="absolute top-12 right-0 bg-white rounded-xl shadow-lg overflow-hidden z-10 min-w-[150px]"
+                  className="absolute top-10 right-0 bg-white rounded-xl shadow-lg overflow-hidden z-10 min-w-[150px]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
