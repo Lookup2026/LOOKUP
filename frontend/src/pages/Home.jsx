@@ -13,6 +13,16 @@ export default function Home() {
   useEffect(() => {
     loadData()
     sendPing().catch(() => {})
+
+    // Ping automatique toutes les 30 secondes pour détecter les croisements
+    const pingInterval = setInterval(() => {
+      sendPing().then(() => {
+        // Recharger les croisements après chaque ping
+        getMyCrossings().then(res => setCrossings(res.data || [])).catch(() => {})
+      }).catch(() => {})
+    }, 30000)
+
+    return () => clearInterval(pingInterval)
   }, [])
 
   const loadData = async () => {
