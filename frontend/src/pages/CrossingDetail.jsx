@@ -7,12 +7,31 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
-// Fix for default marker icon
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+// Custom marker icon matching app design
+const customIcon = new L.DivIcon({
+  className: 'custom-marker',
+  html: `
+    <div style="
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #9DC08B 0%, #609966 100%);
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(96, 153, 102, 0.4);
+      border: 3px solid white;
+    ">
+      <svg style="transform: rotate(45deg); width: 18px; height: 18px; color: white;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+        <circle cx="12" cy="10" r="3"></circle>
+      </svg>
+    </div>
+  `,
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+  popupAnchor: [0, -40],
 })
 
 const CATEGORY_LABELS = {
@@ -245,32 +264,48 @@ export default function CrossingDetail() {
       {/* Mini Map */}
       {showMap && hasLocation && (
         <div className="px-4 mb-4">
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-            <div className="h-48">
+          <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-lookup-gray-light">
+            {/* Map Header */}
+            <div className="px-4 py-3 bg-gradient-to-r from-lookup-mint-light to-white flex items-center gap-2">
+              <div className="w-8 h-8 bg-lookup-mint rounded-full flex items-center justify-center">
+                <MapPin size={16} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-lookup-black">Zone de croisement</p>
+                <p className="text-xs text-lookup-gray">{crossing.location_name || 'Position approximative'}</p>
+              </div>
+            </div>
+
+            {/* Map Container */}
+            <div className="h-52 relative">
               <MapContainer
                 center={[crossing.latitude, crossing.longitude]}
                 zoom={16}
                 style={{ height: '100%', width: '100%' }}
                 zoomControl={false}
                 attributionControl={false}
+                scrollWheelZoom={false}
+                dragging={false}
               >
                 <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                 />
-                <Marker position={[crossing.latitude, crossing.longitude]}>
+                <Marker position={[crossing.latitude, crossing.longitude]} icon={customIcon}>
                   <Popup>
-                    <div className="text-center">
-                      <p className="font-semibold">Zone de croisement</p>
+                    <div className="text-center py-1">
+                      <p className="font-semibold text-lookup-black">Vous etiez ici</p>
                       {crossing.location_name && (
-                        <p className="text-sm text-gray-600">{crossing.location_name}</p>
+                        <p className="text-sm text-lookup-gray">{crossing.location_name}</p>
                       )}
                     </div>
                   </Popup>
                 </Marker>
               </MapContainer>
-            </div>
-            <div className="px-4 py-2 bg-lookup-cream text-center">
-              <p className="text-xs text-lookup-gray">Zone approximative du croisement</p>
+
+              {/* Pulse animation overlay */}
+              <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ marginTop: '-20px' }}>
+                <div className="w-16 h-16 rounded-full bg-lookup-mint/20 animate-ping"></div>
+              </div>
             </div>
           </div>
         </div>
