@@ -1,25 +1,47 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight } from 'lucide-react'
+import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, Wifi } from 'lucide-react'
 import { getTodayLook, getMyCrossings, getPhotoUrl } from '../api/client'
 import { useLocationStore } from '../stores/locationStore'
+import toast from 'react-hot-toast'
 
 export default function Home() {
   const { sendPing } = useLocationStore()
   const [todayLook, setTodayLook] = useState(null)
   const [crossings, setCrossings] = useState([])
   const [loading, setLoading] = useState(true)
+  const [lastPing, setLastPing] = useState(null)
+  const [pingStatus, setPingStatus] = useState('waiting') // waiting, success, error
+
+  const doPing = async () => {
+    try {
+      const result = await sendPing()
+      setLastPing(new Date())
+      setPingStatus('success')
+
+      // Vérifier si nouveau croisement
+      if (result?.new_crossings > 0) {
+        toast.success(`${result.new_crossings} nouveau(x) croisement(s) !`)
+      }
+
+      // Recharger les croisements
+      const res = await getMyCrossings()
+      setCrossings(res.data || [])
+
+      return result
+    } catch (err) {
+      setPingStatus('error')
+      console.error('Ping error:', err)
+    }
+  }
 
   useEffect(() => {
     loadData()
-    sendPing().catch(() => {})
+    doPing()
 
     // Ping automatique toutes les 30 secondes pour détecter les croisements
     const pingInterval = setInterval(() => {
-      sendPing().then(() => {
-        // Recharger les croisements après chaque ping
-        getMyCrossings().then(res => setCrossings(res.data || [])).catch(() => {})
-      }).catch(() => {})
+      doPing()
     }, 30000)
 
     return () => clearInterval(pingInterval)
@@ -75,6 +97,11 @@ export default function Home() {
             <Settings size={18} className="text-lookup-gray" />
           </Link>
           <div className="flex items-center gap-2">
+            {/* Status indicator */}
+            <div className={`w-2 h-2 rounded-full ${
+              pingStatus === 'success' ? 'bg-green-500' :
+              pingStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'
+            } animate-pulse`}></div>
             <div className="w-7 h-7 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center">
               <MapPin size={14} className="text-white" />
             </div>
