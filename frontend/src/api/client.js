@@ -43,6 +43,10 @@ api.interceptors.response.use(
 export const register = (data) => api.post('/auth/register', data)
 export const login = (data) => api.post('/auth/login', data)
 export const getMe = () => api.get('/auth/me')
+export const uploadAvatar = (formData) =>
+  api.post('/auth/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
 
 // Looks
 export const createLook = (formData) =>

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { getMyLooks, deleteLook, getPhotoUrl } from '../api/client'
+import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar } from '../api/client'
 import toast from 'react-hot-toast'
 
 const CATEGORY_LABELS = {
@@ -15,13 +15,15 @@ const CATEGORY_LABELS = {
 }
 
 export default function Profile() {
-  const { user, logout } = useAuthStore()
+  const { user, logout, setUser } = useAuthStore()
   const navigate = useNavigate()
+  const avatarInputRef = useRef(null)
   const [looks, setLooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedLook, setSelectedLook] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [menuOpenId, setMenuOpenId] = useState(null)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   useEffect(() => {
     loadLooks()
@@ -44,6 +46,24 @@ export default function Profile() {
       console.error('Erreur:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setUploadingAvatar(true)
+    try {
+      const formData = new FormData()
+      formData.append('photo', file)
+      const { data } = await uploadAvatar(formData)
+      setUser(data)
+      toast.success('Photo de profil mise à jour')
+    } catch (error) {
+      toast.error('Erreur lors du téléchargement')
+    } finally {
+      setUploadingAvatar(false)
     }
   }
 
@@ -111,22 +131,48 @@ export default function Profile() {
         </div>
       </div>
 
+      {/* Hidden file input for avatar */}
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleAvatarChange}
+        className="hidden"
+      />
+
       {/* Profile Card */}
       <div className="px-4 pt-4">
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           {/* User Info */}
           <div className="flex items-center gap-4 mb-4">
-            {user?.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt=""
-                className="w-16 h-16 rounded-full object-cover border-3 border-lookup-mint"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white text-2xl font-bold">
-                {user?.username?.[0]?.toUpperCase()}
+            <div
+              className="relative cursor-pointer group"
+              onClick={() => avatarInputRef.current?.click()}
+            >
+              {user?.avatar_url ? (
+                <img
+                  src={getPhotoUrl(user.avatar_url)}
+                  alt=""
+                  className="w-16 h-16 rounded-full object-cover border-2 border-lookup-mint"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white text-2xl font-bold">
+                  {user?.username?.[0]?.toUpperCase()}
+                </div>
+              )}
+              {/* Camera overlay */}
+              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                {uploadingAvatar ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <Camera size={20} className="text-white" />
+                )}
               </div>
-            )}
+              {/* Small camera badge */}
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-lookup-mint rounded-full flex items-center justify-center border-2 border-white">
+                <Camera size={12} className="text-white" />
+              </div>
+            </div>
             <div className="flex-1">
               <h1 className="text-xl font-bold text-lookup-black">{user?.username}</h1>
               {user?.full_name && (
