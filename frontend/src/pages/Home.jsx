@@ -12,12 +12,18 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
   const [lastPing, setLastPing] = useState(null)
   const [pingStatus, setPingStatus] = useState('waiting') // waiting, success, error
+  const [debugInfo, setDebugInfo] = useState(null)
 
   const doPing = async () => {
     try {
       const result = await sendPing()
       setLastPing(new Date())
       setPingStatus('success')
+      setDebugInfo({
+        zone: result?.zone,
+        newCrossings: result?.new_crossings || 0,
+        time: new Date().toLocaleTimeString('fr-FR')
+      })
 
       // Vérifier si nouveau croisement
       if (result?.new_crossings > 0) {
@@ -31,6 +37,7 @@ export default function Home() {
       return result
     } catch (err) {
       setPingStatus('error')
+      setDebugInfo({ error: err.message || 'Erreur GPS', time: new Date().toLocaleTimeString('fr-FR') })
       console.error('Ping error:', err)
     }
   }
@@ -109,6 +116,20 @@ export default function Home() {
           </div>
           <div className="w-9"></div>
         </div>
+
+        {/* Debug Panel */}
+        {debugInfo && (
+          <div className="mt-2 p-2 bg-gray-100 rounded-lg text-xs font-mono">
+            {debugInfo.error ? (
+              <p className="text-red-500">Erreur: {debugInfo.error}</p>
+            ) : (
+              <>
+                <p>Zone: {debugInfo.zone}</p>
+                <p>Dernier ping: {debugInfo.time}</p>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* My Look Today - Mini Card */}
