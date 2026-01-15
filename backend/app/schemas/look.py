@@ -41,6 +41,8 @@ class LookResponse(LookBase):
     look_date: date
     created_at: datetime
     items: List[LookItemResponse] = []
+    likes_count: int = 0
+    views_count: int = 0
 
     class Config:
         from_attributes = True

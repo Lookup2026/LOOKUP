@@ -1,15 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2 } from 'lucide-react'
+import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { getMyLooks, deleteLook, getPhotoUrl } from '../api/client'
 import toast from 'react-hot-toast'
+
+const CATEGORY_LABELS = {
+  top: 'Haut',
+  bottom: 'Bas',
+  shoes: 'Chaussures',
+  outerwear: 'Veste/Manteau',
+  accessory: 'Accessoire',
+}
 
 export default function Profile() {
   const { user, logout } = useAuthStore()
   const [looks, setLooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedLook, setSelectedLook] = useState(null)
+  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     loadLooks()
@@ -26,18 +35,28 @@ export default function Profile() {
     }
   }
 
-  const handleDelete = async (id, e) => {
-    e.stopPropagation()
+  const handleDelete = async (id) => {
     if (!confirm('Supprimer ce look ?')) return
 
     try {
       await deleteLook(id)
       setLooks(looks.filter((l) => l.id !== id))
       setSelectedLook(null)
+      setShowModal(false)
       toast.success('Look supprimé')
     } catch (error) {
       toast.error('Erreur lors de la suppression')
     }
+  }
+
+  const openLookDetail = (look) => {
+    setSelectedLook(look)
+    setShowModal(true)
+  }
+
+  const closeLookDetail = () => {
+    setShowModal(false)
+    setSelectedLook(null)
   }
 
   const handleLogout = () => {
@@ -155,7 +174,7 @@ export default function Profile() {
               <div
                 key={look.id}
                 className="relative aspect-[3/4] group cursor-pointer"
-                onClick={() => setSelectedLook(selectedLook?.id === look.id ? null : look)}
+                onClick={() => openLookDetail(look)}
               >
                 <img
                   src={getPhotoUrl(look.photo_url)}
@@ -184,18 +203,6 @@ export default function Profile() {
                     </div>
                   </div>
                 </div>
-
-                {/* Delete button - show on selection */}
-                {selectedLook?.id === look.id && (
-                  <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">
-                    <button
-                      onClick={(e) => handleDelete(look.id, e)}
-                      className="p-3 bg-red-500 rounded-full text-white shadow-lg"
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -228,6 +235,105 @@ export default function Profile() {
           <span>Déconnexion</span>
         </button>
       </div>
+
+      {/* Look Detail Modal */}
+      {showModal && selectedLook && (
+        <div className="fixed inset-0 bg-black/80 z-50 flex flex-col">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between p-4 bg-black/50">
+            <button
+              onClick={closeLookDetail}
+              className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+            >
+              <X size={24} className="text-white" />
+            </button>
+            <div className="text-white text-center">
+              <p className="font-semibold">Mon look</p>
+              <p className="text-sm text-white/70">
+                {new Date(selectedLook.look_date).toLocaleDateString('fr-FR', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </p>
+            </div>
+            <div className="w-10"></div>
+          </div>
+
+          {/* Modal Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Photo */}
+            <div className="px-4 pt-4">
+              <img
+                src={getPhotoUrl(selectedLook.photo_url)}
+                alt="Mon look"
+                className="w-full max-h-[50vh] object-contain rounded-2xl"
+              />
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-8 py-4">
+              <div className="flex items-center gap-2 text-white">
+                <Eye size={20} />
+                <span className="font-semibold">{selectedLook.views_count || 0} vues</span>
+              </div>
+              <div className="flex items-center gap-2 text-white">
+                <Heart size={20} className="text-pink-400" />
+                <span className="font-semibold">{selectedLook.likes_count || 0} likes</span>
+              </div>
+            </div>
+
+            {/* Items/Pieces */}
+            {selectedLook.items && selectedLook.items.length > 0 && (
+              <div className="px-4 pb-4">
+                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                  <Tag size={16} />
+                  Pièces du look ({selectedLook.items.length})
+                </h3>
+                <div className="space-y-2">
+                  {selectedLook.items.map((item, index) => (
+                    <div key={index} className="bg-white/10 backdrop-blur rounded-xl p-3">
+                      <span className="inline-block text-xs text-white bg-lookup-mint px-2 py-0.5 rounded-full font-medium">
+                        {CATEGORY_LABELS[item.category] || item.category}
+                      </span>
+                      {item.brand && (
+                        <p className="text-white font-semibold mt-1">{item.brand}</p>
+                      )}
+                      {item.product_name && (
+                        <p className="text-white/70 text-sm">{item.product_name}</p>
+                      )}
+                      {item.color && (
+                        <p className="text-white/50 text-xs mt-1">Couleur: {item.color}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No items message */}
+            {(!selectedLook.items || selectedLook.items.length === 0) && (
+              <div className="px-4 pb-4">
+                <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+                  <p className="text-white/70 text-sm">Aucune pièce renseignée pour ce look</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Delete Button - Fixed at bottom */}
+          <div className="p-4 bg-black/50">
+            <button
+              onClick={() => handleDelete(selectedLook.id)}
+              className="w-full flex items-center justify-center gap-2 bg-red-500 text-white font-medium py-3 rounded-full"
+            >
+              <Trash2 size={18} />
+              <span>Supprimer ce look</span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
