@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag } from 'lucide-react'
+import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { getMyLooks, deleteLook, getPhotoUrl } from '../api/client'
 import toast from 'react-hot-toast'
@@ -15,14 +16,25 @@ const CATEGORY_LABELS = {
 
 export default function Profile() {
   const { user, logout } = useAuthStore()
+  const navigate = useNavigate()
   const [looks, setLooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedLook, setSelectedLook] = useState(null)
   const [showModal, setShowModal] = useState(false)
+  const [menuOpenId, setMenuOpenId] = useState(null)
 
   useEffect(() => {
     loadLooks()
   }, [])
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setMenuOpenId(null)
+    if (menuOpenId) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [menuOpenId])
 
   const loadLooks = async () => {
     try {
@@ -169,40 +181,48 @@ export default function Profile() {
             <div className="w-8 h-8 border-4 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : looks.length > 0 ? (
-          <div className="grid grid-cols-3 gap-1">
+          <div className="grid grid-cols-3 gap-2">
             {looks.map((look) => (
-              <div
-                key={look.id}
-                className="relative aspect-[3/4] group cursor-pointer"
-                onClick={() => openLookDetail(look)}
-              >
-                <img
-                  src={getPhotoUrl(look.photo_url)}
-                  alt=""
-                  className="w-full h-full object-cover rounded-lg"
-                />
+              <div key={look.id} className="relative">
+                {/* Image container */}
+                <div
+                  className="relative aspect-[3/4] group cursor-pointer"
+                  onClick={() => openLookDetail(look)}
+                >
+                  <img
+                    src={getPhotoUrl(look.photo_url)}
+                    alt=""
+                    className="w-full h-full object-cover rounded-lg"
+                  />
 
-                {/* Always visible overlay - Instagram Reels style */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-lg">
-                  {/* Date at top */}
-                  <div className="absolute top-2 left-2 text-xs text-white bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                    {formatDate(look.look_date)}
-                  </div>
+                  {/* Always visible overlay - Instagram Reels style */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-lg">
+                    {/* Date at top */}
+                    <div className="absolute top-2 left-2 text-xs text-white bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                      {formatDate(look.look_date)}
+                    </div>
 
-                  {/* Stats at bottom */}
-                  <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 text-white text-xs">
-                        <Eye size={12} />
-                        <span className="font-medium">{look.views_count || 0}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-white text-xs">
-                        <Heart size={12} />
-                        <span className="font-medium">{look.likes_count || 0}</span>
+                    {/* Stats at bottom */}
+                    <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 text-white text-xs">
+                          <Eye size={12} />
+                          <span className="font-medium">{look.views_count || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-white text-xs">
+                          <Heart size={12} />
+                          <span className="font-medium">{look.likes_count || 0}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+
                 </div>
+
+                {/* Look name below image */}
+                <p className="mt-1.5 text-sm text-lookup-black font-medium truncate px-0.5">
+                  {look.title || 'Sans titre'}
+                </p>
               </div>
             ))}
           </div>
@@ -248,7 +268,7 @@ export default function Profile() {
               <X size={24} className="text-white" />
             </button>
             <div className="text-white text-center">
-              <p className="font-semibold">Mon look</p>
+              <p className="font-semibold">{selectedLook.title || 'Mon look'}</p>
               <p className="text-sm text-white/70">
                 {new Date(selectedLook.look_date).toLocaleDateString('fr-FR', {
                   weekday: 'long',
@@ -258,7 +278,41 @@ export default function Profile() {
                 })}
               </p>
             </div>
-            <div className="w-10"></div>
+            <div className="relative">
+              <button
+                onClick={() => setMenuOpenId(menuOpenId === selectedLook.id ? null : selectedLook.id)}
+                className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+              >
+                <MoreVertical size={20} className="text-white" />
+              </button>
+
+              {/* Dropdown menu */}
+              {menuOpenId === selectedLook.id && (
+                <div className="absolute top-12 right-0 bg-white rounded-xl shadow-lg overflow-hidden z-10 min-w-[150px]">
+                  <button
+                    onClick={() => {
+                      setMenuOpenId(null)
+                      setShowModal(false)
+                      navigate(`/edit-look/${selectedLook.id}`)
+                    }}
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-lookup-black hover:bg-lookup-cream w-full"
+                  >
+                    <Pencil size={16} className="text-lookup-mint" />
+                    <span>Modifier</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpenId(null)
+                      handleDelete(selectedLook.id)
+                    }}
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50 w-full border-t border-gray-100"
+                  >
+                    <Trash2 size={16} />
+                    <span>Supprimer</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Modal Content - Scrollable */}
@@ -322,16 +376,6 @@ export default function Profile() {
             )}
           </div>
 
-          {/* Delete Button - Fixed at bottom */}
-          <div className="p-4 bg-black/50">
-            <button
-              onClick={() => handleDelete(selectedLook.id)}
-              className="w-full flex items-center justify-center gap-2 bg-red-500 text-white font-medium py-3 rounded-full"
-            >
-              <Trash2 size={18} />
-              <span>Supprimer ce look</span>
-            </button>
-          </div>
         </div>
       )}
     </div>

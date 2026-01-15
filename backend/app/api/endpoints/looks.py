@@ -133,6 +133,91 @@ async def get_look(
         )
     return look
 
+@router.put("/{look_id}", response_model=LookResponse)
+async def update_look(
+    look_id: int,
+    title: Optional[str] = Form(None),
+    description: Optional[str] = Form(None),
+    items_json: Optional[str] = Form(None),
+    photo: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Mettre a jour un look"""
+    import json
+
+    look = db.query(Look).filter(
+        Look.id == look_id,
+        Look.user_id == current_user.id
+    ).first()
+
+    if not look:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Look non trouve"
+        )
+
+    # Mettre a jour le titre et la description
+    if title is not None:
+        look.title = title
+    if description is not None:
+        look.description = description
+
+    # Mettre a jour la photo si fournie
+    if photo:
+        if not photo.content_type.startswith("image/"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Le fichier doit etre une image"
+            )
+
+        content = await photo.read()
+        if len(content) > settings.MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Fichier trop volumineux (max 5MB)"
+            )
+
+        # Supprimer l'ancienne photo
+        if look.photo_url:
+            await delete_photo(look.photo_url)
+
+        # Upload la nouvelle
+        try:
+            look.photo_url = await upload_photo(content, photo.filename)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur upload photo: {str(e)}"
+            )
+
+    # Mettre a jour les items si fournis
+    if items_json is not None:
+        try:
+            # Supprimer les anciens items
+            db.query(LookItem).filter(LookItem.look_id == look_id).delete()
+
+            # Ajouter les nouveaux
+            items = json.loads(items_json)
+            for item_data in items:
+                item = LookItem(
+                    look_id=look.id,
+                    category=item_data.get("category", "other"),
+                    brand=item_data.get("brand"),
+                    product_name=item_data.get("product_name"),
+                    product_reference=item_data.get("product_reference"),
+                    product_url=item_data.get("product_url"),
+                    color=item_data.get("color")
+                )
+                db.add(item)
+        except json.JSONDecodeError:
+            pass
+
+    db.commit()
+    db.refresh(look)
+    return look
+
+
 @router.delete("/{look_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_look(
     look_id: int,

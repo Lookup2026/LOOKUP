@@ -104,6 +104,7 @@ function App() {
         >
           <Route index element={<Home />} />
           <Route path="add-look" element={<AddLook />} />
+          <Route path="edit-look/:id" element={<AddLook />} />
           <Route path="crossings/:id" element={<CrossingDetail />} />
           <Route path="profile" element={<Profile />} />
           <Route path="settings" element={<Settings />} />

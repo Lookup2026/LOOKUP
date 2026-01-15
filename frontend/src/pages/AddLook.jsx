@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Camera, Plus, X, Upload, ChevronLeft, MapPin } from 'lucide-react'
-import { createLook } from '../api/client'
+import { useState, useRef, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { Camera, Plus, X, Upload, ChevronLeft, MapPin, Save } from 'lucide-react'
+import { createLook, getLook, updateLook, getPhotoUrl } from '../api/client'
 import toast from 'react-hot-toast'
 
 const CATEGORIES = [
@@ -14,12 +14,45 @@ const CATEGORIES = [
 
 export default function AddLook() {
   const navigate = useNavigate()
+  const { id } = useParams()
+  const isEditing = Boolean(id)
   const fileInputRef = useRef(null)
   const [photo, setPhoto] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [title, setTitle] = useState('')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingLook, setLoadingLook] = useState(isEditing)
+
+  // Charger le look existant si on est en mode édition
+  useEffect(() => {
+    if (isEditing) {
+      loadExistingLook()
+    }
+  }, [id])
+
+  const loadExistingLook = async () => {
+    try {
+      const { data } = await getLook(id)
+      setTitle(data.title || '')
+      setPhotoPreview(getPhotoUrl(data.photo_url))
+      if (data.items && data.items.length > 0) {
+        setItems(data.items.map(item => ({
+          id: item.id || Date.now() + Math.random(),
+          category: item.category,
+          brand: item.brand || '',
+          product_name: item.product_name || '',
+          product_reference: item.product_reference || '',
+          color: item.color || '',
+        })))
+      }
+    } catch (error) {
+      toast.error('Erreur lors du chargement du look')
+      navigate('/profile')
+    } finally {
+      setLoadingLook(false)
+    }
+  }
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0]
@@ -58,7 +91,7 @@ export default function AddLook() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!photo) {
+    if (!isEditing && !photo) {
       toast.error('Ajoutez une photo de votre look')
       return
     }
@@ -67,18 +100,33 @@ export default function AddLook() {
 
     try {
       const formData = new FormData()
-      formData.append('photo', photo)
+      if (photo) {
+        formData.append('photo', photo)
+      }
       formData.append('title', title)
       formData.append('items_json', JSON.stringify(items.map(({ id, ...rest }) => rest)))
 
-      await createLook(formData)
-      toast.success('Look ajouté !')
-      navigate('/')
+      if (isEditing) {
+        await updateLook(id, formData)
+        toast.success('Look modifié !')
+      } else {
+        await createLook(formData)
+        toast.success('Look ajouté !')
+      }
+      navigate('/profile')
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erreur lors de l\'ajout')
+      toast.error(error.response?.data?.detail || 'Erreur lors de l\'enregistrement')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (loadingLook) {
+    return (
+      <div className="min-h-full bg-lookup-cream flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
   }
 
   return (
@@ -101,7 +149,7 @@ export default function AddLook() {
 
       {/* Title */}
       <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide px-4 pt-4 mb-3">
-        Ajouter mon look du jour
+        {isEditing ? 'Modifier mon look' : 'Ajouter mon look du jour'}
       </h2>
 
       <form onSubmit={handleSubmit} className="px-4 space-y-4">
@@ -232,11 +280,11 @@ export default function AddLook() {
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading || !photo}
+          disabled={loading || (!isEditing && !photo)}
           className="w-full flex items-center justify-center gap-2 bg-lookup-mint text-white font-semibold py-4 rounded-full shadow-lg hover:bg-lookup-mint-dark transition-all disabled:opacity-50 mt-2"
         >
-          <Upload size={20} />
-          <span>{loading ? 'Publication...' : 'Publier mon look'}</span>
+          {isEditing ? <Save size={20} /> : <Upload size={20} />}
+          <span>{loading ? 'Enregistrement...' : (isEditing ? 'Enregistrer les modifications' : 'Publier mon look')}</span>
         </button>
       </form>
     </div>

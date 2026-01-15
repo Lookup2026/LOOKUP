@@ -51,6 +51,11 @@ export const createLook = (formData) =>
   })
 export const getMyLooks = () => api.get('/looks/')
 export const getTodayLook = () => api.get('/looks/today')
+export const getLook = (id) => api.get(`/looks/${id}`)
+export const updateLook = (id, formData) =>
+  api.put(`/looks/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
 export const deleteLook = (id) => api.delete(`/looks/${id}`)
 export const likeLook = (id) => api.post(`/looks/${id}/like`)
 export const viewLook = (id) => api.post(`/looks/${id}/view`)
