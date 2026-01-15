@@ -258,9 +258,9 @@ export default function Profile() {
 
       {/* Look Detail Modal */}
       {showModal && selectedLook && (
-        <div className="fixed inset-0 bg-black z-50 flex flex-col">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex flex-col">
           {/* Modal Header - Clean minimal design */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="flex items-center justify-between px-4 py-3">
             <button
               onClick={closeLookDetail}
               className="p-2 -ml-2 text-white/80 hover:text-white"
