@@ -61,7 +61,8 @@ export default function Profile() {
       setUser(data)
       toast.success('Photo de profil mise à jour')
     } catch (error) {
-      toast.error('Erreur lors du téléchargement')
+      console.error('Avatar upload error:', error)
+      toast.error(error.response?.data?.detail || 'Erreur lors du téléchargement')
     } finally {
       setUploadingAvatar(false)
     }
