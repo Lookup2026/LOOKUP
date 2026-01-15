@@ -69,7 +69,7 @@ function App() {
           },
           success: {
             iconTheme: {
-              primary: '#9DC08B',
+              primary: '#E8A0A0',
               secondary: '#fff',
             },
           },

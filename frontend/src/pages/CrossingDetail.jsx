@@ -14,7 +14,7 @@ const customIcon = new L.DivIcon({
     <div style="
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #9DC08B 0%, #609966 100%);
+      background: linear-gradient(135deg, #E8A0A0 0%, #D4817F 100%);
       border-radius: 50% 50% 50% 0;
       transform: rotate(-45deg);
       display: flex;
