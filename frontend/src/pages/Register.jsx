@@ -23,7 +23,7 @@ export default function Register() {
     e.preventDefault()
 
     if (formData.password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caracteres')
+      toast.error('Le mot de passe doit contenir au moins 6 caractères')
       return
     }
 
@@ -36,7 +36,7 @@ export default function Register() {
         formData.password,
         formData.fullName
       )
-      toast.success('Compte cree avec succes')
+      toast.success('Compte créé avec succès')
       navigate('/')
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erreur lors de l\'inscription')
@@ -95,7 +95,7 @@ export default function Register() {
           disabled={loading}
           className="w-full bg-lookup-mint text-white font-semibold py-4 rounded-full shadow-button hover:bg-lookup-mint-dark transition-all disabled:opacity-50"
         >
-          {loading ? 'Creation...' : 'S\'inscrire'}
+          {loading ? 'Création...' : 'S\'inscrire'}
         </button>
 
         <div className="text-center">
@@ -126,16 +126,16 @@ export default function Register() {
       {/* Footer */}
       <div className="py-6 text-center">
         <p className="text-xs text-lookup-gray">
-          Vous avez deja un compte ?{' '}
+          Vous avez déjà un compte ?{' '}
           <Link to="/login" className="text-lookup-mint-dark underline">
             Se connecter
           </Link>
         </p>
         <p className="text-xs text-lookup-gray mt-4">
           En continuant, vous acceptez nos{' '}
-          <span className="underline">conditions generales</span>
+          <span className="underline">conditions générales</span>
           {' '}et notre{' '}
-          <span className="underline">politique de confidentialite</span>.
+          <span className="underline">politique de confidentialité</span>.
         </p>
       </div>
 

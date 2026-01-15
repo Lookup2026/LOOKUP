@@ -132,12 +132,12 @@ export default function CrossingDetail() {
         <div className="w-16 h-16 bg-lookup-mint-light rounded-full flex items-center justify-center mb-4">
           <MapPin size={32} className="text-lookup-mint" />
         </div>
-        <p className="text-lookup-gray text-center">Croisement non trouve ou expire</p>
+        <p className="text-lookup-gray text-center">Croisement non trouvé ou expiré</p>
         <button
           onClick={() => navigate('/')}
           className="mt-4 text-lookup-mint font-medium"
         >
-          Retour a l'accueil
+          Retour à l'accueil
         </button>
       </div>
     )
@@ -230,7 +230,7 @@ export default function CrossingDetail() {
               <div className="flex items-center gap-1 text-lookup-gray text-sm">
                 <Clock size={12} />
                 <span>
-                  Croise {new Date(crossing.crossed_at).toLocaleString('fr-FR', {
+                  Croisé {new Date(crossing.crossed_at).toLocaleString('fr-FR', {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
@@ -293,7 +293,7 @@ export default function CrossingDetail() {
                 <Marker position={[crossing.latitude, crossing.longitude]} icon={customIcon}>
                   <Popup>
                     <div className="text-center py-1">
-                      <p className="font-semibold text-lookup-black">Vous etiez ici</p>
+                      <p className="font-semibold text-lookup-black">Vous étiez ici</p>
                       {crossing.location_name && (
                         <p className="text-sm text-lookup-gray">{crossing.location_name}</p>
                       )}
@@ -315,7 +315,7 @@ export default function CrossingDetail() {
       <div className="px-4">
         <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide mb-3 flex items-center gap-2">
           <Tag size={14} />
-          Pieces du look ({other_look?.items?.length || 0})
+          Pièces du look ({other_look?.items?.length || 0})
         </h2>
 
         {other_look?.items?.length > 0 ? (
@@ -370,7 +370,7 @@ export default function CrossingDetail() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
-            <p className="text-lookup-gray text-sm">Aucune piece renseignee pour ce look</p>
+            <p className="text-lookup-gray text-sm">Aucune pièce renseignée pour ce look</p>
           </div>
         )}
       </div>

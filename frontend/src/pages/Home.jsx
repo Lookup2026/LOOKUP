@@ -37,7 +37,7 @@ export default function Home() {
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMins / 60)
 
-    if (diffMins < 1) return "A l'instant"
+    if (diffMins < 1) return "À l'instant"
     if (diffMins < 60) return `Il y a ${diffMins} min`
     if (diffHours < 24) return `Il y a ${diffHours}h`
     return crossed.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
@@ -45,7 +45,7 @@ export default function Home() {
 
   const getApproxLocation = (crossing) => {
     if (crossing.location_name) return crossing.location_name
-    return 'Pres de vous'
+    return 'Près de vous'
   }
 
   if (loading) {
@@ -120,7 +120,7 @@ export default function Home() {
                 <Plus size={24} className="text-lookup-mint" />
               </div>
               <p className="text-lookup-black font-medium">Publie ton look du jour</p>
-              <p className="text-lookup-gray text-sm mt-1">Pour etre visible par ceux que tu croises</p>
+              <p className="text-lookup-gray text-sm mt-1">Pour être visible par ceux que tu croises</p>
             </div>
           </Link>
         )}
@@ -129,7 +129,7 @@ export default function Home() {
       {/* Crossed Looks Feed */}
       <div className="px-4 pt-6">
         <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide mb-3">
-          Looks recemment croises
+          Looks récemment croisés
         </h2>
 
         {crossings.length === 0 ? (
@@ -139,7 +139,7 @@ export default function Home() {
             </div>
             <p className="text-lookup-black font-medium">Aucun croisement pour l'instant</p>
             <p className="text-lookup-gray text-sm mt-1">
-              Deplacez-vous pour croiser d'autres passionnes de mode
+              Déplacez-vous pour croiser d'autres passionnés de mode
             </p>
           </div>
         ) : (
@@ -192,7 +192,7 @@ export default function Home() {
                       <span className="text-sm font-medium">{crossing.likes_count || 0}</span>
                     </div>
                   </div>
-                  <span className="text-lookup-mint text-sm font-medium">Voir les details</span>
+                  <span className="text-lookup-mint text-sm font-medium">Voir les détails</span>
                 </div>
               </Link>
             ))}

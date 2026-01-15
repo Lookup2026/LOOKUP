@@ -72,7 +72,7 @@ export default function AddLook() {
       formData.append('items_json', JSON.stringify(items.map(({ id, ...rest }) => rest)))
 
       await createLook(formData)
-      toast.success('Look ajoute !')
+      toast.success('Look ajouté !')
       navigate('/')
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erreur lors de l\'ajout')
@@ -147,7 +147,7 @@ export default function AddLook() {
         {/* Items */}
         <div>
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">Pieces du look</h2>
+            <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">Pièces du look</h2>
             <button
               type="button"
               onClick={addItem}
@@ -209,7 +209,7 @@ export default function AddLook() {
                 />
                 <input
                   type="text"
-                  placeholder="Reference produit (optionnel)"
+                  placeholder="Référence produit (optionnel)"
                   value={item.product_reference}
                   onChange={(e) =>
                     updateItem(item.id, 'product_reference', e.target.value)
@@ -223,7 +223,7 @@ export default function AddLook() {
           {items.length === 0 && (
             <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
               <p className="text-lookup-gray text-sm">
-                Ajoutez les pieces de votre look pour aider les autres a les trouver
+                Ajoutez les pièces de votre look pour aider les autres à les trouver
               </p>
             </div>
           )}

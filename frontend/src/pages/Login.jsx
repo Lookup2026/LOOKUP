@@ -17,7 +17,7 @@ export default function Login() {
 
     try {
       await login(email, password)
-      toast.success('Connexion reussie')
+      toast.success('Connexion réussie')
       navigate('/')
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erreur de connexion')
@@ -101,9 +101,9 @@ export default function Login() {
       <div className="py-6 text-center">
         <p className="text-xs text-lookup-gray">
           En continuant, vous acceptez nos{' '}
-          <span className="underline">conditions generales</span>
+          <span className="underline">conditions générales</span>
           {' '}et notre{' '}
-          <span className="underline">politique de confidentialite</span>.
+          <span className="underline">politique de confidentialité</span>.
         </p>
       </div>
 

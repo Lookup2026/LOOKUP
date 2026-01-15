@@ -18,13 +18,13 @@ export default function Welcome() {
       <div className="flex-1 flex flex-col justify-center px-8">
         {/* Main Title */}
         <h1 className="text-3xl font-bold text-lookup-black leading-tight text-center mb-4">
-          Vous avez aime une tenue ?{'\n'}
+          Vous avez aimé une tenue ?{'\n'}
           <span className="text-lookup-mint-dark">Retrouvez-la.</span>
         </h1>
 
         {/* Subtitle */}
         <p className="text-lookup-gray text-center text-base leading-relaxed max-w-xs mx-auto">
-          LOOKUP permet de retrouver les vetements portes par les personnes que vous croisez dans la rue.
+          LOOKUP permet de retrouver les vêtements portés par les personnes que vous croisez dans la rue.
         </p>
 
         {/* Decorative illustration */}
@@ -71,7 +71,7 @@ export default function Welcome() {
         </Link>
         <p className="text-xs text-lookup-gray text-center pt-2">
           En continuant, vous acceptez nos{' '}
-          <span className="underline">conditions generales</span>.
+          <span className="underline">conditions générales</span>.
         </p>
       </div>
 

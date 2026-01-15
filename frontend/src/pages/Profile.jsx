@@ -34,7 +34,7 @@ export default function Profile() {
       await deleteLook(id)
       setLooks(looks.filter((l) => l.id !== id))
       setSelectedLook(null)
-      toast.success('Look supprime')
+      toast.success('Look supprimé')
     } catch (error) {
       toast.error('Erreur lors de la suppression')
     }
@@ -42,7 +42,7 @@ export default function Profile() {
 
   const handleLogout = () => {
     logout()
-    toast.success('Deconnexion reussie')
+    toast.success('Déconnexion réussie')
   }
 
   const totalViews = looks.reduce((sum, l) => sum + (l.views_count || 0), 0)
@@ -142,7 +142,7 @@ export default function Profile() {
       <div className="px-4 pt-6">
         <div className="flex items-center gap-2 mb-3">
           <Grid3X3 size={16} className="text-lookup-gray" />
-          <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">Ma bibliotheque</h2>
+          <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">Ma bibliothèque</h2>
         </div>
 
         {loading ? (
@@ -204,7 +204,7 @@ export default function Profile() {
             <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
               <Camera size={28} className="text-lookup-mint" />
             </div>
-            <p className="text-lookup-black font-medium">Aucun look enregistre</p>
+            <p className="text-lookup-black font-medium">Aucun look enregistré</p>
             <p className="text-lookup-gray text-sm mt-1">
               Publie ton premier look du jour !
             </p>
@@ -225,7 +225,7 @@ export default function Profile() {
           className="w-full flex items-center justify-center gap-2 bg-white text-red-500 font-medium py-3 rounded-full border border-red-200 hover:bg-red-50 transition shadow-sm"
         >
           <LogOut size={18} />
-          <span>Deconnexion</span>
+          <span>Déconnexion</span>
         </button>
       </div>
     </div>

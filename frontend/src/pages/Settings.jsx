@@ -42,7 +42,7 @@ export default function Settings() {
 
       {/* Title */}
       <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide px-4 pt-4 mb-3">
-        Parametres
+        Paramètres
       </h2>
 
       {/* Settings list */}
@@ -102,7 +102,7 @@ export default function Settings() {
             </div>
             <div className="text-left">
               <p className="font-medium text-lookup-black">Notifications</p>
-              <p className="text-sm text-lookup-gray">Gerer les alertes</p>
+              <p className="text-sm text-lookup-gray">Gérer les alertes</p>
             </div>
           </div>
           <ChevronRight size={18} className="text-lookup-gray" />
@@ -115,8 +115,8 @@ export default function Settings() {
               <Shield size={18} className="text-lookup-mint" />
             </div>
             <div className="text-left">
-              <p className="font-medium text-lookup-black">Confidentialite</p>
-              <p className="text-sm text-lookup-gray">Vie privee et donnees</p>
+              <p className="font-medium text-lookup-black">Confidentialité</p>
+              <p className="text-sm text-lookup-gray">Vie privée et données</p>
             </div>
           </div>
           <ChevronRight size={18} className="text-lookup-gray" />
@@ -140,7 +140,7 @@ export default function Settings() {
       {/* App info */}
       <div className="px-4 mt-8 text-center">
         <p className="text-lookup-gray text-sm">LOOKUP v1.0.0</p>
-        <p className="text-lookup-gray text-xs mt-1">Made with love in Paris</p>
+        <p className="text-lookup-gray text-xs mt-1">Fait avec amour à Paris</p>
       </div>
     </div>
   )
