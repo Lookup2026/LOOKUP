@@ -280,7 +280,10 @@ export default function Profile() {
             </div>
             <div className="relative">
               <button
-                onClick={() => setMenuOpenId(menuOpenId === selectedLook.id ? null : selectedLook.id)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setMenuOpenId(menuOpenId === selectedLook.id ? null : selectedLook.id)
+                }}
                 className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
               >
                 <MoreVertical size={20} className="text-white" />
@@ -288,7 +291,10 @@ export default function Profile() {
 
               {/* Dropdown menu */}
               {menuOpenId === selectedLook.id && (
-                <div className="absolute top-12 right-0 bg-white rounded-xl shadow-lg overflow-hidden z-10 min-w-[150px]">
+                <div
+                  className="absolute top-12 right-0 bg-white rounded-xl shadow-lg overflow-hidden z-10 min-w-[150px]"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     onClick={() => {
                       setMenuOpenId(null)
