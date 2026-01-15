@@ -23,7 +23,7 @@ export default function Settings() {
   const currentLang = LANGUAGES.find(l => l.code === language)
 
   return (
-    <div className="min-h-full bg-lookup-cream pb-24">
+    <div className="min-h-full bg-lookup-cream pb-4">
       {/* Header */}
       <div className="bg-white px-4 pt-4 pb-3">
         <div className="flex items-center justify-between">
