@@ -44,7 +44,7 @@ export default function Home() {
   }
 
   const getApproxLocation = (crossing) => {
-    if (crossing.zone_name) return crossing.zone_name
+    if (crossing.location_name) return crossing.location_name
     return 'Pres de vous'
   }
 

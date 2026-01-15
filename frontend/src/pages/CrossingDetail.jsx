@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, UserPlus } from 'lucide-react'
+import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, UserPlus, Map } from 'lucide-react'
 import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl } from '../api/client'
 import toast from 'react-hot-toast'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
+
+// Fix for default marker icon
+delete L.Icon.Default.prototype._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+})
 
 const CATEGORY_LABELS = {
   top: 'Haut',
@@ -34,6 +45,7 @@ export default function CrossingDetail() {
   const [timeRemaining, setTimeRemaining] = useState(null)
   const [stats, setStats] = useState({ likes_count: 0, views_count: 0, user_liked: false })
   const [liking, setLiking] = useState(false)
+  const [showMap, setShowMap] = useState(false)
 
   useEffect(() => {
     loadDetail()
@@ -113,6 +125,7 @@ export default function CrossingDetail() {
   }
 
   const { crossing, other_user, other_look } = data
+  const hasLocation = crossing.latitude && crossing.longitude && crossing.latitude !== 0 && crossing.longitude !== 0
 
   return (
     <div className="min-h-full bg-lookup-cream pb-4">
@@ -210,14 +223,58 @@ export default function CrossingDetail() {
             </div>
           </div>
 
-          {crossing.location_name && (
-            <div className="flex items-center gap-2 text-lookup-gray text-sm mt-3 pt-3 border-t border-lookup-gray-light">
+          {/* Location info */}
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-lookup-gray-light">
+            <div className="flex items-center gap-2 text-lookup-gray text-sm">
               <MapPin size={14} className="text-lookup-mint" />
-              <span>{crossing.location_name}</span>
+              <span>{crossing.location_name || 'Zone de croisement'}</span>
             </div>
-          )}
+            {hasLocation && (
+              <button
+                onClick={() => setShowMap(!showMap)}
+                className="flex items-center gap-1 text-lookup-mint text-sm font-medium"
+              >
+                <Map size={14} />
+                <span>{showMap ? 'Masquer' : 'Voir la carte'}</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Mini Map */}
+      {showMap && hasLocation && (
+        <div className="px-4 mb-4">
+          <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+            <div className="h-48">
+              <MapContainer
+                center={[crossing.latitude, crossing.longitude]}
+                zoom={16}
+                style={{ height: '100%', width: '100%' }}
+                zoomControl={false}
+                attributionControl={false}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={[crossing.latitude, crossing.longitude]}>
+                  <Popup>
+                    <div className="text-center">
+                      <p className="font-semibold">Zone de croisement</p>
+                      {crossing.location_name && (
+                        <p className="text-sm text-gray-600">{crossing.location_name}</p>
+                      )}
+                    </div>
+                  </Popup>
+                </Marker>
+              </MapContainer>
+            </div>
+            <div className="px-4 py-2 bg-lookup-cream text-center">
+              <p className="text-xs text-lookup-gray">Zone approximative du croisement</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Pieces */}
       <div className="px-4">

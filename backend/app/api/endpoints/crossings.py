@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 from typing import List
 from datetime import datetime, timedelta
+from geopy.geocoders import Nominatim
 
 from app.core.database import get_db
 from app.core.config import settings
@@ -10,6 +11,28 @@ from app.core.zones import get_zone_id
 from app.models import User, Look, LocationPing, Crossing
 from app.schemas import LocationPingCreate, CrossingWithDetails
 from app.api.deps import get_current_user
+
+# Geocoder pour reverse geocoding
+geolocator = Nominatim(user_agent="lookup_app")
+
+def get_location_name(latitude: float, longitude: float) -> str:
+    """Obtenir le nom du lieu a partir des coordonnees"""
+    try:
+        location = geolocator.reverse(f"{latitude}, {longitude}", language="fr", timeout=5)
+        if location and location.raw.get("address"):
+            addr = location.raw["address"]
+            # Priorite: rue > quartier > ville
+            if addr.get("road"):
+                return addr["road"]
+            elif addr.get("neighbourhood"):
+                return addr["neighbourhood"]
+            elif addr.get("suburb"):
+                return addr["suburb"]
+            elif addr.get("city") or addr.get("town"):
+                return addr.get("city") or addr.get("town")
+        return None
+    except Exception:
+        return None
 
 router = APIRouter(prefix="/crossings", tags=["Crossings"])
 
@@ -76,6 +99,9 @@ async def send_location_ping(
                 Look.look_date == today
             ).first()
 
+            # Obtenir le nom du lieu
+            location_name = get_location_name(location.latitude, location.longitude)
+
             # Creer le croisement
             crossing = Crossing(
                 user1_id=current_user.id,
@@ -83,6 +109,7 @@ async def send_location_ping(
                 zone_id=zone_id,
                 latitude=location.latitude,
                 longitude=location.longitude,
+                location_name=location_name,
                 user1_look_id=my_look.id if my_look else None,
                 user2_look_id=other_look.id if other_look else None
             )
