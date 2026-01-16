@@ -74,6 +74,9 @@ async def send_location_ping(
 
     new_crossings = []
 
+    # Fenetre plus longue pour eviter les doublons (1 heure)
+    dedup_window = datetime.utcnow() - timedelta(hours=1)
+
     for other_ping in users_in_same_zone:
         # Verifier qu'on n'a pas deja detecte ce croisement recemment
         existing = db.query(Crossing).filter(
@@ -87,7 +90,7 @@ async def send_location_ping(
                     Crossing.user2_id == current_user.id
                 )
             ),
-            Crossing.crossed_at >= time_window
+            Crossing.crossed_at >= dedup_window  # 1 heure au lieu de 10 min
         ).first()
 
         if not existing:
@@ -141,17 +144,30 @@ async def get_my_crossings(
     """
     Obtenir la liste de mes croisements des dernieres 24h.
     Les looks croises restent visibles pendant 24h.
+    Ne montre que le croisement le plus recent par utilisateur.
     """
     # Seulement les croisements des dernieres 24h
     since_24h = datetime.utcnow() - timedelta(hours=24)
 
-    crossings = db.query(Crossing).filter(
+    all_crossings = db.query(Crossing).filter(
         or_(
             Crossing.user1_id == current_user.id,
             Crossing.user2_id == current_user.id
         ),
         Crossing.crossed_at >= since_24h  # Visible 24h
-    ).order_by(Crossing.crossed_at.desc()).offset(skip).limit(limit).all()
+    ).order_by(Crossing.crossed_at.desc()).all()
+
+    # Dedupliquer: garder seulement le croisement le plus recent par utilisateur
+    seen_users = set()
+    crossings = []
+    for c in all_crossings:
+        other_user_id = c.user2_id if c.user1_id == current_user.id else c.user1_id
+        if other_user_id not in seen_users:
+            seen_users.add(other_user_id)
+            crossings.append(c)
+
+    # Appliquer pagination
+    crossings = crossings[skip:skip + limit]
 
     result = []
     for c in crossings:
