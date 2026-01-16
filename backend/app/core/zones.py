@@ -28,6 +28,18 @@ def get_zone_id(latitude: float, longitude: float) -> str:
     return f"{zone_lat}:{zone_lon}"
 
 
+def get_adjacent_zones(zone_id: str) -> list:
+    """
+    Retourne la liste des zones adjacentes (8 voisins + la zone elle-meme).
+    """
+    zone_lat, zone_lon = map(int, zone_id.split(':'))
+    adjacent = []
+    for dlat in [-1, 0, 1]:
+        for dlon in [-1, 0, 1]:
+            adjacent.append(f"{zone_lat + dlat}:{zone_lon + dlon}")
+    return adjacent
+
+
 def get_zone_center(zone_id: str) -> tuple:
     """
     Retourne les coordonnées du centre d'une zone.

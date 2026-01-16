@@ -7,7 +7,7 @@ from geopy.geocoders import Nominatim
 
 from app.core.database import get_db
 from app.core.config import settings
-from app.core.zones import get_zone_id
+from app.core.zones import get_zone_id, get_adjacent_zones
 from app.models import User, Look, LocationPing, Crossing
 from app.schemas import LocationPingCreate, CrossingWithDetails
 from app.api.deps import get_current_user
@@ -62,10 +62,13 @@ async def send_location_ping(
     # Fenetre de temps pour detecter un croisement (10 min par defaut)
     time_window = datetime.utcnow() - timedelta(minutes=settings.CROSSING_TIME_WINDOW_MINUTES)
 
-    # Trouver les autres utilisateurs dans la MEME ZONE au meme moment
+    # Obtenir les zones adjacentes (rayon de ~100m)
+    adjacent_zones = get_adjacent_zones(zone_id)
+
+    # Trouver les autres utilisateurs dans la MEME ZONE ou zones adjacentes
     users_in_same_zone = db.query(LocationPing).filter(
         LocationPing.user_id != current_user.id,
-        LocationPing.zone_id == zone_id,  # Meme zone!
+        LocationPing.zone_id.in_(adjacent_zones),  # Zone + 8 voisins
         LocationPing.timestamp >= time_window
     ).all()
 
