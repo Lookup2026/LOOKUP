@@ -15,129 +15,107 @@ export default function Welcome() {
       </div>
 
       {/* Illustration principale */}
-      <div className="flex-1 flex flex-col items-center px-6 pt-4">
+      <div className="flex-1 flex flex-col items-center px-6 pt-2">
         <svg
-          viewBox="0 0 280 400"
-          className="w-full max-w-[260px] h-auto"
+          viewBox="0 0 300 360"
+          className="w-full max-w-[280px] h-auto"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Personne 1 - Gauche (homme de dos, style minimaliste) */}
-          <g transform="translate(45, 10)" stroke="#1a1a1a" strokeWidth="1.2" fill="none">
-            {/* Tete */}
-            <ellipse cx="25" cy="12" rx="8" ry="9"/>
-            {/* Cheveux courts */}
-            <path d="M17 9 Q25 3 33 9"/>
-            {/* Main vers la tete */}
-            <path d="M35 8 Q42 5 44 12 Q45 18 40 22"/>
-            {/* Corps - veste ROSE */}
-            <path d="M12 22 L38 22 L42 75 L8 75 Z" fill="#E8A0A0" stroke="#1a1a1a"/>
-            {/* Bras gauche */}
-            <path d="M12 22 Q4 40 8 60"/>
-            {/* Bras droit (leve vers tete) */}
-            <path d="M38 22 Q44 20 40 22"/>
-            {/* Jambes */}
-            <line x1="15" y1="75" x2="12" y2="115"/>
-            <line x1="35" y1="75" x2="38" y2="115"/>
-            {/* Pieds */}
-            <ellipse cx="12" cy="118" rx="5" ry="3" fill="#1a1a1a"/>
-            <ellipse cx="38" cy="118" rx="5" ry="3" fill="#1a1a1a"/>
+          {/* Lignes de trajectoire elegantes */}
+          <g stroke="#e5e5e5" strokeWidth="1" fill="none">
+            <path d="M40 350 Q60 280 90 220 Q120 160 150 180"/>
+            <path d="M260 350 Q240 280 210 220 Q180 160 150 180"/>
           </g>
 
-          {/* Personne 2 - Droite (femme de dos, style minimaliste) */}
-          <g transform="translate(175, 10)" stroke="#1a1a1a" strokeWidth="1.2" fill="none">
+          {/* Personne 1 - Homme en haut a gauche */}
+          <g transform="translate(60, 30)">
             {/* Tete */}
-            <ellipse cx="25" cy="11" rx="7" ry="8"/>
-            {/* Cheveux longs fluides */}
-            <path d="M18 10 Q14 25 16 50"/>
-            <path d="M20 12 Q17 28 19 48"/>
-            <path d="M32 10 Q36 25 34 50"/>
-            <path d="M30 12 Q33 28 31 48"/>
-            {/* Corps - manteau */}
-            <path d="M14 20 L36 20 L40 90 L10 90 Z"/>
+            <circle cx="20" cy="10" r="8" stroke="#2a2a2a" strokeWidth="1.5" fill="none"/>
+            {/* Corps - veste avec couleur subtile */}
+            <path d="M8 20 C8 18 12 16 20 16 C28 16 32 18 32 20 L34 50 L6 50 Z"
+                  stroke="#2a2a2a" strokeWidth="1.5" fill="#F5E1E1"/>
             {/* Bras */}
-            <path d="M14 22 Q6 45 10 70"/>
-            <path d="M36 22 Q44 45 40 70"/>
+            <path d="M8 22 Q2 35 6 48" stroke="#2a2a2a" strokeWidth="1.5"/>
+            <path d="M32 22 Q38 35 34 48" stroke="#2a2a2a" strokeWidth="1.5"/>
             {/* Jambes */}
-            <line x1="18" y1="90" x2="16" y2="115"/>
-            <line x1="32" y1="90" x2="34" y2="115"/>
-            {/* Pieds */}
-            <ellipse cx="16" cy="118" rx="4" ry="3" fill="#1a1a1a"/>
-            <ellipse cx="34" cy="118" rx="4" ry="3" fill="#1a1a1a"/>
+            <path d="M14 50 L12 75" stroke="#2a2a2a" strokeWidth="1.5"/>
+            <path d="M26 50 L28 75" stroke="#2a2a2a" strokeWidth="1.5"/>
           </g>
 
-          {/* Traces de pas - Gauche vers centre (formant un X) */}
-          <g fill="#9ca3af">
-            {/* Paire 1 */}
-            <ellipse cx="55" cy="155" rx="4" ry="7" transform="rotate(20 55 155)"/>
-            <ellipse cx="65" cy="152" rx="3" ry="5" transform="rotate(20 65 152)"/>
-            {/* Paire 2 */}
-            <ellipse cx="70" cy="180" rx="4" ry="7" transform="rotate(15 70 180)"/>
-            <ellipse cx="80" cy="177" rx="3" ry="5" transform="rotate(15 80 177)"/>
-            {/* Paire 3 */}
-            <ellipse cx="88" cy="205" rx="4" ry="7" transform="rotate(10 88 205)"/>
-            <ellipse cx="98" cy="203" rx="3" ry="5" transform="rotate(10 98 203)"/>
-            {/* Paire 4 */}
-            <ellipse cx="105" cy="232" rx="4" ry="7" transform="rotate(5 105 232)"/>
-            <ellipse cx="115" cy="230" rx="3" ry="5" transform="rotate(5 115 230)"/>
-            {/* Paire 5 */}
-            <ellipse cx="122" cy="260" rx="4" ry="7" transform="rotate(2 122 260)"/>
-            <ellipse cx="132" cy="258" rx="3" ry="5" transform="rotate(2 132 258)"/>
+          {/* Personne 2 - Femme en haut a droite */}
+          <g transform="translate(200, 25)">
+            {/* Tete */}
+            <circle cx="20" cy="10" r="7" stroke="#2a2a2a" strokeWidth="1.5" fill="none"/>
+            {/* Cheveux */}
+            <path d="M13 8 Q10 20 12 35" stroke="#2a2a2a" strokeWidth="1.2"/>
+            <path d="M27 8 Q30 20 28 35" stroke="#2a2a2a" strokeWidth="1.2"/>
+            {/* Robe/Manteau */}
+            <path d="M10 18 C10 16 15 15 20 15 C25 15 30 16 30 18 L32 65 L8 65 Z"
+                  stroke="#2a2a2a" strokeWidth="1.5" fill="none"/>
+            {/* Bras */}
+            <path d="M10 20 Q4 35 8 50" stroke="#2a2a2a" strokeWidth="1.5"/>
+            <path d="M30 20 Q36 35 32 50" stroke="#2a2a2a" strokeWidth="1.5"/>
+            {/* Jambes */}
+            <path d="M16 65 L15 80" stroke="#2a2a2a" strokeWidth="1.5"/>
+            <path d="M24 65 L25 80" stroke="#2a2a2a" strokeWidth="1.5"/>
           </g>
 
-          {/* Traces de pas - Droite vers centre (formant un X) */}
-          <g fill="#9ca3af">
-            {/* Paire 1 */}
-            <ellipse cx="225" cy="155" rx="4" ry="7" transform="rotate(-20 225 155)"/>
-            <ellipse cx="215" cy="152" rx="3" ry="5" transform="rotate(-20 215 152)"/>
-            {/* Paire 2 */}
-            <ellipse cx="210" cy="180" rx="4" ry="7" transform="rotate(-15 210 180)"/>
-            <ellipse cx="200" cy="177" rx="3" ry="5" transform="rotate(-15 200 177)"/>
-            {/* Paire 3 */}
-            <ellipse cx="192" cy="205" rx="4" ry="7" transform="rotate(-10 192 205)"/>
-            <ellipse cx="182" cy="203" rx="3" ry="5" transform="rotate(-10 182 203)"/>
-            {/* Paire 4 */}
-            <ellipse cx="175" cy="232" rx="4" ry="7" transform="rotate(-5 175 232)"/>
-            <ellipse cx="165" cy="230" rx="3" ry="5" transform="rotate(-5 165 230)"/>
-            {/* Paire 5 */}
-            <ellipse cx="158" cy="260" rx="4" ry="7" transform="rotate(-2 158 260)"/>
-            <ellipse cx="148" cy="258" rx="3" ry="5" transform="rotate(-2 148 258)"/>
+          {/* Personne 3 - Silhouette plus petite au milieu gauche */}
+          <g transform="translate(30, 140) scale(0.7)">
+            <circle cx="20" cy="10" r="7" stroke="#2a2a2a" strokeWidth="1.3" fill="none"/>
+            <path d="M10 18 L30 18 L32 55 L8 55 Z" stroke="#2a2a2a" strokeWidth="1.3" fill="none"/>
+            <path d="M14 55 L13 72" stroke="#2a2a2a" strokeWidth="1.3"/>
+            <path d="M26 55 L27 72" stroke="#2a2a2a" strokeWidth="1.3"/>
           </g>
 
-          {/* Logo LOOKUP au croisement */}
-          <g transform="translate(140, 290)">
-            <circle cx="0" cy="0" r="18" fill="#E8A0A0"/>
-            {/* MapPin icon */}
+          {/* Personne 4 - Silhouette plus petite au milieu droite */}
+          <g transform="translate(230, 130) scale(0.7)">
+            <circle cx="20" cy="10" r="7" stroke="#2a2a2a" strokeWidth="1.3" fill="none"/>
+            {/* Haut avec couleur subtile */}
+            <path d="M10 18 L30 18 L28 40 L12 40 Z" stroke="#2a2a2a" strokeWidth="1.3" fill="#F5E1E1"/>
+            <path d="M12 40 L32 40 L34 60 L10 60 Z" stroke="#2a2a2a" strokeWidth="1.3" fill="none"/>
+            <path d="M16 60 L15 75" stroke="#2a2a2a" strokeWidth="1.3"/>
+            <path d="M24 60 L25 75" stroke="#2a2a2a" strokeWidth="1.3"/>
+          </g>
+
+          {/* Personne 5 - En bas gauche */}
+          <g transform="translate(80, 250) scale(0.65)">
+            <circle cx="20" cy="10" r="7" stroke="#2a2a2a" strokeWidth="1.3" fill="none"/>
+            <path d="M10 18 L30 18 L32 55 L8 55 Z" stroke="#2a2a2a" strokeWidth="1.3" fill="none"/>
+            <path d="M14 55 L12 72" stroke="#2a2a2a" strokeWidth="1.3"/>
+            <path d="M26 55 L28 72" stroke="#2a2a2a" strokeWidth="1.3"/>
+          </g>
+
+          {/* Personne 6 - En bas droite */}
+          <g transform="translate(190, 260) scale(0.6)">
+            <circle cx="20" cy="10" r="7" stroke="#2a2a2a" strokeWidth="1.3" fill="none"/>
+            <path d="M10 18 L30 18 L32 60 L8 60 Z" stroke="#2a2a2a" strokeWidth="1.3" fill="none"/>
+            <path d="M15 60 L14 78" stroke="#2a2a2a" strokeWidth="1.3"/>
+            <path d="M25 60 L26 78" stroke="#2a2a2a" strokeWidth="1.3"/>
+          </g>
+
+          {/* Logo LOOKUP au centre */}
+          <g transform="translate(150, 180)">
+            <circle cx="0" cy="0" r="16" fill="#E8A0A0"/>
             <path
-              d="M0 -10 C-5 -10 -8 -6 -8 -2 C-8 4 0 11 0 11 C0 11 8 4 8 -2 C8 -6 5 -10 0 -10 Z"
+              d="M0 -8 C-4 -8 -6.5 -5 -6.5 -1.5 C-6.5 3 0 9 0 9 C0 9 6.5 3 6.5 -1.5 C6.5 -5 4 -8 0 -8 Z"
               fill="white"
             />
-            <circle cx="0" cy="-3" r="2.5" fill="#E8A0A0"/>
+            <circle cx="0" cy="-2.5" r="2" fill="#E8A0A0"/>
           </g>
 
-          {/* Traces de pas continuant apres le croisement - vers bas gauche */}
-          <g fill="#9ca3af">
-            <ellipse cx="118" cy="320" rx="4" ry="7" transform="rotate(-15 118 320)"/>
-            <ellipse cx="108" cy="318" rx="3" ry="5" transform="rotate(-15 108 318)"/>
-            <ellipse cx="95" cy="345" rx="4" ry="7" transform="rotate(-20 95 345)"/>
-            <ellipse cx="85" cy="343" rx="3" ry="5" transform="rotate(-20 85 343)"/>
-            <ellipse cx="70" cy="372" rx="4" ry="7" transform="rotate(-25 70 372)"/>
-            <ellipse cx="60" cy="370" rx="3" ry="5" transform="rotate(-25 60 370)"/>
-          </g>
-
-          {/* Traces de pas continuant apres le croisement - vers bas droite */}
-          <g fill="#9ca3af">
-            <ellipse cx="162" cy="320" rx="4" ry="7" transform="rotate(15 162 320)"/>
-            <ellipse cx="172" cy="318" rx="3" ry="5" transform="rotate(15 172 318)"/>
-            <ellipse cx="185" cy="345" rx="4" ry="7" transform="rotate(20 185 345)"/>
-            <ellipse cx="195" cy="343" rx="3" ry="5" transform="rotate(20 195 343)"/>
-            <ellipse cx="210" cy="372" rx="4" ry="7" transform="rotate(25 210 372)"/>
-            <ellipse cx="220" cy="370" rx="3" ry="5" transform="rotate(25 220 370)"/>
+          {/* Lignes supplementaires pour les chemins */}
+          <g stroke="#e8e8e8" strokeWidth="0.8" fill="none">
+            <path d="M75 100 Q100 140 150 175"/>
+            <path d="M225 100 Q200 140 150 175"/>
+            <path d="M50 200 Q90 190 145 180"/>
+            <path d="M250 195 Q210 188 155 180"/>
           </g>
         </svg>
 
         {/* Texte */}
-        <div className="mt-4 text-center">
+        <div className="mt-6 text-center">
           <h1 className="text-[22px] font-bold text-lookup-black leading-snug">
             Vous avez croise un style ?
           </h1>
