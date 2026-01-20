@@ -73,7 +73,16 @@ export default function Home() {
         getTodayLook(),
         getMyCrossings()
       ])
-      setTodayLooks(lookRes.data || [])
+      // Gerer les deux cas: ancien endpoint (objet) et nouveau (tableau)
+      const looksData = lookRes.data
+      if (Array.isArray(looksData)) {
+        setTodayLooks(looksData)
+      } else if (looksData) {
+        // Ancien format: objet unique -> convertir en tableau
+        setTodayLooks([looksData])
+      } else {
+        setTodayLooks([])
+      }
       setCrossings(crossingsRes.data || [])
     } catch (error) {
       console.error('Erreur chargement:', error)
