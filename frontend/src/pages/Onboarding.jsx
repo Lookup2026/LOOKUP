@@ -13,13 +13,13 @@ const STEPS = [
   {
     icon: Users,
     title: 'Croise du monde',
-    description: 'Deplace-toi avec l\'app ouverte. Quand tu croises quelqu\'un qui utilise LOOKUP, la magie opere !',
+    description: 'Vis ta journee normalement. LOOKUP detecte automatiquement les personnes que tu croises, meme quand ton telephone est en veille.',
     color: 'bg-purple-400',
   },
   {
     icon: Sparkles,
-    title: 'Decouvre leurs styles',
-    description: 'Tu peux voir le look des personnes croisees pendant 24h. Trouve l\'inspiration !',
+    title: 'Retrouve ce style',
+    description: 'Tu as croise une veste qui t\'a plu ? Ouvre l\'app plus tard et decouvre le look complet de cette personne !',
     color: 'bg-orange-400',
   },
 ]
