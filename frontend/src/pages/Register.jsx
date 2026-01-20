@@ -36,8 +36,8 @@ export default function Register() {
         formData.password,
         formData.fullName
       )
-      toast.success('Compte créé avec succès')
-      navigate('/')
+      toast.success('Compte cree avec succes')
+      navigate('/onboarding')
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erreur lors de l\'inscription')
     } finally {
