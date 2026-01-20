@@ -36,8 +36,10 @@ export default function Register() {
         formData.password,
         formData.fullName
       )
+      // Marquer qu'on vient de s'inscrire pour afficher l'onboarding
+      localStorage.setItem('show_onboarding', 'true')
       toast.success('Compte cree avec succes')
-      navigate('/onboarding')
+      navigate('/onboarding', { replace: true })
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Erreur lors de l\'inscription')
     } finally {

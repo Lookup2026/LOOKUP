@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, Wifi } from 'lucide-react'
 import { getTodayLook, getMyCrossings, getPhotoUrl } from '../api/client'
 import { useLocationStore } from '../stores/locationStore'
 import toast from 'react-hot-toast'
 
 export default function Home() {
+  const navigate = useNavigate()
   const { sendPing } = useLocationStore()
+
+  // Verifier si on doit afficher l'onboarding
+  useEffect(() => {
+    const showOnboarding = localStorage.getItem('show_onboarding')
+    if (showOnboarding === 'true') {
+      localStorage.removeItem('show_onboarding')
+      navigate('/onboarding', { replace: true })
+    }
+  }, [navigate])
   const [todayLook, setTodayLook] = useState(null)
   const [crossings, setCrossings] = useState([])
   const [loading, setLoading] = useState(true)
