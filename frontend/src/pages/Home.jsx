@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, Wifi } from 'lucide-react'
 import { getTodayLook, getMyCrossings, getPhotoUrl } from '../api/client'
@@ -9,14 +9,17 @@ export default function Home() {
   const navigate = useNavigate()
   const { sendPing } = useLocationStore()
 
-  // Verifier si on doit afficher l'onboarding
-  useEffect(() => {
-    const showOnboarding = localStorage.getItem('show_onboarding')
-    if (showOnboarding === 'true') {
+  // Check for onboarding redirect immediately (before any render)
+  const shouldShowOnboarding = localStorage.getItem('show_onboarding') === 'true'
+
+  // Verifier si on doit afficher l'onboarding (useLayoutEffect pour execution synchrone)
+  useLayoutEffect(() => {
+    if (shouldShowOnboarding) {
       localStorage.removeItem('show_onboarding')
       navigate('/onboarding', { replace: true })
     }
-  }, [navigate])
+  }, [shouldShowOnboarding, navigate])
+
   const [todayLook, setTodayLook] = useState(null)
   const [crossings, setCrossings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -95,6 +98,15 @@ export default function Home() {
   const getApproxLocation = (crossing) => {
     if (crossing.location_name) return crossing.location_name
     return 'Près de vous'
+  }
+
+  // Ne pas rendre si redirection vers onboarding en cours
+  if (shouldShowOnboarding) {
+    return (
+      <div className="min-h-screen bg-lookup-cream flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    )
   }
 
   if (loading) {
