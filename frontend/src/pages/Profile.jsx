@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil } from 'lucide-react'
+import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar } from '../api/client'
@@ -25,6 +25,7 @@ export default function Profile() {
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
+  const [linkCopied, setLinkCopied] = useState(false)
 
   useEffect(() => {
     loadLooks()
@@ -292,8 +293,82 @@ export default function Profile() {
         )}
       </div>
 
-      {/* Logout Button */}
+      {/* Invite Friends Section */}
       <div className="px-4 pt-6">
+        <div className="bg-white rounded-2xl p-5 shadow-sm">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
+              <Users size={20} className="text-lookup-mint" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-lookup-black">Invite tes amis</h3>
+              <p className="text-lookup-gray text-xs">LOOKUP est plus fun à plusieurs !</p>
+            </div>
+          </div>
+
+          {/* Referral Link */}
+          {user?.referral_code && (
+            <div className="bg-lookup-cream rounded-xl p-3 mb-4">
+              <p className="text-xs text-lookup-gray mb-1">Ton lien personnel</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 text-sm text-lookup-black font-medium truncate">
+                  lookup-puce.vercel.app/join/{user.referral_code}
+                </code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`https://lookup-puce.vercel.app/join/${user.referral_code}`)
+                    setLinkCopied(true)
+                    setTimeout(() => setLinkCopied(false), 2000)
+                    toast.success('Lien copié !')
+                  }}
+                  className="p-2 text-lookup-mint hover:bg-lookup-mint-light rounded-lg transition"
+                >
+                  {linkCopied ? <Check size={18} /> : <Copy size={18} />}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Share Button */}
+          <button
+            onClick={async () => {
+              const shareData = {
+                title: 'Rejoins LOOKUP !',
+                text: `Découvre les looks des gens que tu croises dans la rue ! Rejoins-moi sur LOOKUP.`,
+                url: `https://lookup-puce.vercel.app/join/${user?.referral_code || ''}`
+              }
+
+              if (navigator.share) {
+                try {
+                  await navigator.share(shareData)
+                } catch (err) {
+                  if (err.name !== 'AbortError') {
+                    navigator.clipboard.writeText(shareData.url)
+                    toast.success('Lien copié !')
+                  }
+                }
+              } else {
+                navigator.clipboard.writeText(shareData.url)
+                toast.success('Lien copié !')
+              }
+            }}
+            className="w-full flex items-center justify-center gap-2 bg-lookup-mint text-white font-semibold py-3 rounded-full shadow-button hover:bg-lookup-mint-dark transition"
+          >
+            <Share2 size={18} />
+            <span>Partager le lien</span>
+          </button>
+
+          {/* Referral Count */}
+          {user?.referral_count > 0 && (
+            <p className="text-center text-lookup-gray text-sm mt-3">
+              <span className="text-lookup-mint font-semibold">{user.referral_count}</span> ami{user.referral_count > 1 ? 's' : ''} ont rejoint LOOKUP
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Logout Button */}
+      <div className="px-4 pt-6 pb-4">
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 bg-white text-red-500 font-medium py-3 rounded-full border border-red-200 hover:bg-red-50 transition shadow-sm"

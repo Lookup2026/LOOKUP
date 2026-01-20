@@ -9,6 +9,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    referral_code: Optional[str] = None  # Code du parrain (optionnel)
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -25,6 +26,8 @@ class UserResponse(UserBase):
     bio: Optional[str] = None
     is_active: bool
     created_at: datetime
+    referral_code: Optional[str] = None
+    referral_count: int = 0
 
     class Config:
         from_attributes = True

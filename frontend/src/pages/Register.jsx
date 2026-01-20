@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { MapPin } from 'lucide-react'
+import { MapPin, UserPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function Register() {
@@ -14,6 +14,15 @@ export default function Register() {
     password: '',
   })
   const [loading, setLoading] = useState(false)
+  const [referralCode, setReferralCode] = useState(null)
+
+  // Recuperer le code de parrainage depuis localStorage
+  useEffect(() => {
+    const code = localStorage.getItem('referral_code')
+    if (code) {
+      setReferralCode(code)
+    }
+  }, [])
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -34,8 +43,11 @@ export default function Register() {
         formData.email,
         formData.username,
         formData.password,
-        formData.fullName
+        formData.fullName,
+        referralCode
       )
+      // Nettoyer le code de parrainage
+      localStorage.removeItem('referral_code')
       // Marquer qu'on vient de s'inscrire pour afficher l'onboarding
       localStorage.setItem('show_onboarding', 'true')
       toast.success('Compte cree avec succes')
@@ -58,6 +70,18 @@ export default function Register() {
           <span className="text-2xl font-bold text-lookup-black">LOOKUP</span>
         </div>
       </div>
+
+      {/* Referral Banner */}
+      {referralCode && (
+        <div className="bg-lookup-mint-light border border-lookup-mint rounded-xl p-3 mb-6 flex items-center gap-3">
+          <div className="w-8 h-8 bg-lookup-mint rounded-full flex items-center justify-center flex-shrink-0">
+            <UserPlus size={16} className="text-white" />
+          </div>
+          <p className="text-sm text-lookup-black">
+            Tu as ete invite a rejoindre LOOKUP !
+          </p>
+        </div>
+      )}
 
       {/* Title */}
       <h1 className="text-2xl font-bold text-lookup-black mb-8">S'inscrire</h1>

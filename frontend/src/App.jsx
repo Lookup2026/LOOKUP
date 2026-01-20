@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './stores/authStore'
 
@@ -44,6 +44,19 @@ function PublicRoute({ children }) {
   }
 
   return children
+}
+
+// Composant pour gerer les liens de parrainage /join/:code
+function JoinRedirect() {
+  const { code } = useParams()
+
+  useEffect(() => {
+    if (code) {
+      localStorage.setItem('referral_code', code.toUpperCase())
+    }
+  }, [code])
+
+  return <Navigate to="/register" replace />
 }
 
 function App() {
@@ -93,6 +106,7 @@ function App() {
             <Register />
           </PublicRoute>
         } />
+        <Route path="/join/:code" element={<JoinRedirect />} />
 
         {/* Protected routes */}
         <Route

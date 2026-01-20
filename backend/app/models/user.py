@@ -1,7 +1,12 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
+import secrets
 from app.core.database import Base
+
+def generate_referral_code():
+    """Genere un code de parrainage unique de 8 caracteres"""
+    return secrets.token_urlsafe(6)[:8].upper()
 
 class User(Base):
     __tablename__ = "users"
@@ -18,6 +23,12 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # Parrainage
+    referral_code = Column(String, unique=True, index=True, nullable=True)
+    referred_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    referral_count = Column(Integer, default=0)
+
     # Relations
     looks = relationship("Look", back_populates="user", cascade="all, delete-orphan")
     location_pings = relationship("LocationPing", back_populates="user", cascade="all, delete-orphan")
+    referred_by = relationship("User", remote_side=[id], foreign_keys=[referred_by_id])

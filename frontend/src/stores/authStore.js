@@ -31,8 +31,12 @@ export const useAuthStore = create((set) => ({
   },
 
   // Register
-  register: async (email, username, password, fullName) => {
-    await apiRegister({ email, username, password, full_name: fullName })
+  register: async (email, username, password, fullName, referralCode = null) => {
+    const registerData = { email, username, password, full_name: fullName }
+    if (referralCode) {
+      registerData.referral_code = referralCode
+    }
+    await apiRegister(registerData)
     // Login automatique apres inscription
     const { data } = await apiLogin({ email, password })
     localStorage.setItem('token', data.access_token)

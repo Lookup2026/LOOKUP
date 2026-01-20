@@ -5,6 +5,7 @@ from app.core.security import get_password_hash, verify_password, create_access_
 from app.core.storage import upload_photo, delete_photo
 from app.core.config import settings
 from app.models import User
+from app.models.user import generate_referral_code
 from app.schemas import UserCreate, UserLogin, UserResponse, Token
 from app.api.deps import get_current_user
 
@@ -28,15 +29,34 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="Ce nom d'utilisateur est deja pris"
         )
 
+    # Chercher le parrain si un code est fourni
+    referrer = None
+    if user_data.referral_code:
+        referrer = db.query(User).filter(
+            User.referral_code == user_data.referral_code.upper()
+        ).first()
+
+    # Generer un code de parrainage unique
+    new_referral_code = generate_referral_code()
+    while db.query(User).filter(User.referral_code == new_referral_code).first():
+        new_referral_code = generate_referral_code()
+
     # Creer l'utilisateur
     hashed_password = get_password_hash(user_data.password)
     user = User(
         email=user_data.email,
         username=user_data.username,
         full_name=user_data.full_name,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        referral_code=new_referral_code,
+        referred_by_id=referrer.id if referrer else None
     )
     db.add(user)
+
+    # Incrementer le compteur du parrain
+    if referrer:
+        referrer.referral_count += 1
+
     db.commit()
     db.refresh(user)
 
