@@ -24,6 +24,7 @@ export default function Profile() {
   const [showModal, setShowModal] = useState(false)
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null)
 
   useEffect(() => {
     loadLooks()
@@ -69,14 +70,13 @@ export default function Profile() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Supprimer ce look ?')) return
-
     try {
       await deleteLook(id)
       setLooks(looks.filter((l) => l.id !== id))
       setSelectedLook(null)
       setShowModal(false)
-      toast.success('Look supprimé')
+      setDeleteConfirmId(null)
+      toast.success('Look supprime')
     } catch (error) {
       toast.error('Erreur lors de la suppression')
     }
@@ -355,7 +355,7 @@ export default function Profile() {
                   <button
                     onClick={() => {
                       setMenuOpenId(null)
-                      handleDelete(selectedLook.id)
+                      setDeleteConfirmId(selectedLook.id)
                     }}
                     className="flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50 w-full border-t border-gray-100"
                   >
@@ -428,6 +428,32 @@ export default function Profile() {
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold text-lookup-black text-center">Supprimer ce look ?</h3>
+            <p className="text-lookup-gray text-sm text-center mt-2">
+              Cette action est irreversible.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => handleDelete(deleteConfirmId)}
+                className="flex-1 py-3 rounded-full bg-red-500 font-medium text-white"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
