@@ -106,17 +106,17 @@ async def get_my_looks(
     ).order_by(Look.look_date.desc()).offset(skip).limit(limit).all()
     return looks
 
-@router.get("/today", response_model=Optional[LookResponse])
-async def get_today_look(
+@router.get("/today", response_model=List[LookResponse])
+async def get_today_looks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Obtenir le look du jour"""
-    look = db.query(Look).filter(
+    """Obtenir tous les looks du jour"""
+    looks = db.query(Look).filter(
         Look.user_id == current_user.id,
         Look.look_date == date.today()
-    ).first()
-    return look
+    ).order_by(Look.created_at.desc()).all()
+    return looks
 
 @router.get("/{look_id}", response_model=LookResponse)
 async def get_look(

@@ -65,3 +65,13 @@ html, body {
 .input-field {
   @apply w-full bg-lookup-cream border border-lookup-gray-light rounded-xl px-4 py-3 text-lookup-black placeholder-lookup-gray focus:outline-none focus:border-lookup-mint transition-colors;
 }
+
+/* Hide scrollbar for horizontal carousels */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

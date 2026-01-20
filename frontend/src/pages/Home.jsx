@@ -20,7 +20,7 @@ export default function Home() {
     }
   }, [shouldShowOnboarding, navigate])
 
-  const [todayLook, setTodayLook] = useState(null)
+  const [todayLooks, setTodayLooks] = useState([])
   const [crossings, setCrossings] = useState([])
   const [loading, setLoading] = useState(true)
   const [lastPing, setLastPing] = useState(null)
@@ -73,7 +73,7 @@ export default function Home() {
         getTodayLook(),
         getMyCrossings()
       ])
-      setTodayLook(lookRes.data)
+      setTodayLooks(lookRes.data || [])
       setCrossings(crossingsRes.data || [])
     } catch (error) {
       console.error('Erreur chargement:', error)
@@ -154,55 +154,71 @@ export default function Home() {
         )}
       </div>
 
-      {/* My Look Today - Mini Card */}
-      <div className="px-4 pt-4">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">Mon look du jour</h2>
+      {/* My Looks Today - Horizontal Carousel */}
+      <div className="pt-4">
+        <div className="flex items-center justify-between mb-3 px-4">
+          <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">
+            Mes looks du jour {todayLooks.length > 0 && `(${todayLooks.length})`}
+          </h2>
           <Link to="/add-look" className="text-lookup-mint text-sm font-medium">
-            {todayLook ? 'Modifier' : 'Ajouter'}
+            Ajouter
           </Link>
         </div>
 
-        {todayLook ? (
-          <Link to="/add-look" className="block">
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm flex items-center p-3 gap-4">
-              <img
-                src={getPhotoUrl(todayLook.photo_url)}
-                alt="Mon look"
-                className="w-20 h-20 object-cover rounded-xl"
-              />
-              <div className="flex-1">
-                <p className="font-semibold text-lookup-black">
-                  {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
-                </p>
-                <div className="flex items-center gap-1 text-lookup-gray text-sm mt-1">
-                  <MapPin size={14} />
-                  <span>Visible par les autres</span>
-                </div>
-                <div className="flex items-center gap-3 mt-2">
-                  <div className="flex items-center gap-1 text-lookup-gray text-xs">
-                    <Eye size={12} />
-                    <span>{todayLook.views_count || 0}</span>
+        {todayLooks.length > 0 ? (
+          <div className="flex gap-3 overflow-x-auto px-4 pb-2 snap-x snap-mandatory scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            {todayLooks.map((look) => (
+              <Link
+                key={look.id}
+                to={`/edit-look/${look.id}`}
+                className="flex-shrink-0 snap-start"
+              >
+                <div className="bg-white rounded-2xl overflow-hidden shadow-sm w-36">
+                  <img
+                    src={getPhotoUrl(look.photo_url)}
+                    alt="Mon look"
+                    className="w-36 h-44 object-cover"
+                  />
+                  <div className="p-2">
+                    <p className="text-xs text-lookup-gray truncate">
+                      {look.title || new Date(look.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1 text-lookup-gray text-xs">
+                        <Eye size={10} />
+                        <span>{look.views_count || 0}</span>
+                      </div>
+                      <div className="flex items-center gap-1 text-lookup-gray text-xs">
+                        <Heart size={10} />
+                        <span>{look.likes_count || 0}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-lookup-gray text-xs">
-                    <Heart size={12} />
-                    <span>{todayLook.likes_count || 0}</span>
-                  </div>
                 </div>
+              </Link>
+            ))}
+            {/* Add new look card */}
+            <Link to="/add-look" className="flex-shrink-0 snap-start">
+              <div className="bg-white rounded-2xl overflow-hidden shadow-sm w-36 h-[212px] flex flex-col items-center justify-center border-2 border-dashed border-lookup-gray-light">
+                <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center mb-2">
+                  <Plus size={20} className="text-lookup-mint" />
+                </div>
+                <p className="text-lookup-gray text-xs">Ajouter</p>
               </div>
-              <ChevronRight size={20} className="text-lookup-gray" />
-            </div>
-          </Link>
+            </Link>
+          </div>
         ) : (
-          <Link to="/add-look" className="block">
-            <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
-              <div className="w-14 h-14 bg-lookup-mint-light rounded-full mx-auto mb-3 flex items-center justify-center">
-                <Plus size={24} className="text-lookup-mint" />
+          <div className="px-4">
+            <Link to="/add-look" className="block">
+              <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+                <div className="w-14 h-14 bg-lookup-mint-light rounded-full mx-auto mb-3 flex items-center justify-center">
+                  <Plus size={24} className="text-lookup-mint" />
+                </div>
+                <p className="text-lookup-black font-medium">Publie ton look du jour</p>
+                <p className="text-lookup-gray text-sm mt-1">Pour être visible par ceux que tu croises</p>
               </div>
-              <p className="text-lookup-black font-medium">Publie ton look du jour</p>
-              <p className="text-lookup-gray text-sm mt-1">Pour être visible par ceux que tu croises</p>
-            </div>
-          </Link>
+            </Link>
+          </div>
         )}
       </div>
 
