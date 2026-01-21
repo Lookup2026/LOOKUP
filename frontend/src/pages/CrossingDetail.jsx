@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, UserPlus, Map } from 'lucide-react'
-import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl } from '../api/client'
+import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, UserPlus, Map, Bookmark } from 'lucide-react'
+import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl, saveLook } from '../api/client'
 import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -62,8 +62,9 @@ export default function CrossingDetail() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [timeRemaining, setTimeRemaining] = useState(null)
-  const [stats, setStats] = useState({ likes_count: 0, views_count: 0, user_liked: false })
+  const [stats, setStats] = useState({ likes_count: 0, views_count: 0, user_liked: false, user_saved: false })
   const [liking, setLiking] = useState(false)
+  const [saving, setSaving] = useState(false)
   const [showMap, setShowMap] = useState(false)
 
   useEffect(() => {
@@ -115,6 +116,28 @@ export default function CrossingDetail() {
       toast.error('Erreur')
     } finally {
       setLiking(false)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!data?.other_look?.id || saving) return
+
+    setSaving(true)
+    try {
+      const { data: saveData } = await saveLook(data.other_look.id)
+      setStats(prev => ({
+        ...prev,
+        user_saved: saveData.saved
+      }))
+      if (saveData.saved) {
+        toast.success('Look sauvegarde !')
+      } else {
+        toast.success('Look retire des sauvegardes')
+      }
+    } catch (error) {
+      toast.error('Erreur')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -179,23 +202,39 @@ export default function CrossingDetail() {
               className="w-full rounded-2xl object-cover max-h-[55vh] shadow-sm"
             />
             {/* Stats overlay */}
-            <div className="absolute bottom-4 left-4 right-4 flex justify-between">
-              <button
-                onClick={handleLike}
-                disabled={liking}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full backdrop-blur-md transition ${
-                  stats.user_liked
-                    ? 'bg-pink-500 text-white'
-                    : 'bg-white/90 text-lookup-black'
-                }`}
-              >
-                <Heart
-                  size={20}
-                  fill={stats.user_liked ? 'currentColor' : 'none'}
-                />
-                <span className="font-semibold">{stats.likes_count}</span>
-              </button>
-              <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/90 text-lookup-black backdrop-blur-md">
+            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleLike}
+                  disabled={liking}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-full backdrop-blur-md transition ${
+                    stats.user_liked
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-white/90 text-lookup-black'
+                  }`}
+                >
+                  <Heart
+                    size={20}
+                    fill={stats.user_liked ? 'currentColor' : 'none'}
+                  />
+                  <span className="font-semibold">{stats.likes_count}</span>
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-full backdrop-blur-md transition ${
+                    stats.user_saved
+                      ? 'bg-lookup-mint text-white'
+                      : 'bg-white/90 text-lookup-black'
+                  }`}
+                >
+                  <Bookmark
+                    size={20}
+                    fill={stats.user_saved ? 'currentColor' : 'none'}
+                  />
+                </button>
+              </div>
+              <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white/90 text-lookup-black backdrop-blur-md">
                 <Eye size={20} />
                 <span className="font-semibold">{stats.views_count}</span>
               </div>

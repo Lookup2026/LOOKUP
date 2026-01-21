@@ -64,6 +64,8 @@ export const deleteLook = (id) => api.delete(`/looks/${id}`)
 export const likeLook = (id) => api.post(`/looks/${id}/like`)
 export const viewLook = (id) => api.post(`/looks/${id}/view`)
 export const getLookStats = (id) => api.get(`/looks/${id}/stats`)
+export const saveLook = (id) => api.post(`/looks/${id}/save`)
+export const getSavedLooks = () => api.get('/looks/saved/list')
 
 // Crossings
 export const sendLocationPing = (data) => api.post('/crossings/ping', data)

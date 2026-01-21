@@ -8,7 +8,7 @@ import uuid
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.storage import upload_photo, delete_photo
-from app.models import User, Look, LookItem, LookLike, LookView
+from app.models import User, Look, LookItem, LookLike, LookView, SavedLook
 from app.schemas import LookCreate, LookResponse, LookItemCreate
 from app.api.deps import get_current_user
 
@@ -343,8 +343,66 @@ async def get_look_stats(
         LookLike.user_id == current_user.id
     ).first() is not None
 
+    # Verifier si l'utilisateur a sauvegarde
+    user_saved = db.query(SavedLook).filter(
+        SavedLook.look_id == look_id,
+        SavedLook.user_id == current_user.id
+    ).first() is not None
+
     return {
         "likes_count": look.likes_count,
         "views_count": look.views_count,
-        "user_liked": user_liked
+        "user_liked": user_liked,
+        "user_saved": user_saved
     }
+
+
+@router.post("/{look_id}/save")
+async def save_look(
+    look_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Sauvegarder un look (bookmark)"""
+    look = db.query(Look).filter(Look.id == look_id).first()
+    if not look:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Look non trouve"
+        )
+
+    # Verifier si deja sauvegarde
+    existing = db.query(SavedLook).filter(
+        SavedLook.look_id == look_id,
+        SavedLook.user_id == current_user.id
+    ).first()
+
+    if existing:
+        # Retirer la sauvegarde
+        db.delete(existing)
+        db.commit()
+        return {"saved": False}
+    else:
+        # Sauvegarder
+        new_save = SavedLook(look_id=look_id, user_id=current_user.id)
+        db.add(new_save)
+        db.commit()
+        return {"saved": True}
+
+
+@router.get("/saved/list", response_model=List[LookResponse])
+async def get_saved_looks(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Obtenir tous les looks sauvegardes"""
+    saved = db.query(SavedLook).filter(
+        SavedLook.user_id == current_user.id
+    ).order_by(SavedLook.created_at.desc()).all()
+
+    look_ids = [s.look_id for s in saved]
+    looks = db.query(Look).filter(Look.id.in_(look_ids)).all() if look_ids else []
+
+    # Trier par ordre de sauvegarde
+    look_dict = {look.id: look for look in looks}
+    return [look_dict[lid] for lid in look_ids if lid in look_dict]

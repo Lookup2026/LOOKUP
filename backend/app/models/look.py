@@ -70,3 +70,17 @@ class LookView(Base):
 
     # Relations
     look = relationship("Look", back_populates="views")
+
+
+class SavedLook(Base):
+    """Look sauvegarde par un utilisateur (bookmark)"""
+    __tablename__ = "saved_looks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    look_id = Column(Integer, ForeignKey("looks.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relations
+    look = relationship("Look")
+    user = relationship("User")

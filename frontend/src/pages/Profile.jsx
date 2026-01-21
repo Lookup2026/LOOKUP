@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check } from 'lucide-react'
+import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar } from '../api/client'
+import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar, getSavedLooks } from '../api/client'
 import toast from 'react-hot-toast'
 
 const CATEGORY_LABELS = {
@@ -19,6 +19,8 @@ export default function Profile() {
   const navigate = useNavigate()
   const avatarInputRef = useRef(null)
   const [looks, setLooks] = useState([])
+  const [savedLooks, setSavedLooks] = useState([])
+  const [activeTab, setActiveTab] = useState('mine') // 'mine' or 'saved'
   const [loading, setLoading] = useState(true)
   const [selectedLook, setSelectedLook] = useState(null)
   const [showModal, setShowModal] = useState(false)
@@ -26,6 +28,8 @@ export default function Profile() {
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState(null)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [selectedSavedLook, setSelectedSavedLook] = useState(null)
+  const [showSavedModal, setShowSavedModal] = useState(false)
 
   useEffect(() => {
     loadLooks()
@@ -42,8 +46,12 @@ export default function Profile() {
 
   const loadLooks = async () => {
     try {
-      const { data } = await getMyLooks()
-      setLooks(data)
+      const [myLooksRes, savedLooksRes] = await Promise.all([
+        getMyLooks(),
+        getSavedLooks()
+      ])
+      setLooks(myLooksRes.data)
+      setSavedLooks(savedLooksRes.data)
     } catch (error) {
       console.error('Erreur:', error)
     } finally {
@@ -217,79 +225,154 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* My Looks Library */}
+      {/* Library Section with Tabs */}
       <div className="px-4 pt-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Grid3X3 size={16} className="text-lookup-gray" />
-          <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">Ma bibliothèque</h2>
+        {/* Tabs */}
+        <div className="flex bg-lookup-cream rounded-xl p-1 mb-4">
+          <button
+            onClick={() => setActiveTab('mine')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition ${
+              activeTab === 'mine'
+                ? 'bg-white text-lookup-black shadow-sm'
+                : 'text-lookup-gray'
+            }`}
+          >
+            <Grid3X3 size={16} />
+            <span>Mes looks</span>
+            <span className="text-xs bg-lookup-mint-light text-lookup-mint px-1.5 py-0.5 rounded-full">
+              {looks.length}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('saved')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition ${
+              activeTab === 'saved'
+                ? 'bg-white text-lookup-black shadow-sm'
+                : 'text-lookup-gray'
+            }`}
+          >
+            <Bookmark size={16} />
+            <span>Sauvegardes</span>
+            <span className="text-xs bg-lookup-mint-light text-lookup-mint px-1.5 py-0.5 rounded-full">
+              {savedLooks.length}
+            </span>
+          </button>
         </div>
 
+        {/* Content based on active tab */}
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 border-4 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
           </div>
-        ) : looks.length > 0 ? (
-          <div className="grid grid-cols-3 gap-2">
-            {looks.map((look) => (
-              <div key={look.id} className="relative">
-                {/* Image container */}
-                <div
-                  className="relative aspect-[3/4] group cursor-pointer"
-                  onClick={() => openLookDetail(look)}
-                >
-                  <img
-                    src={getPhotoUrl(look.photo_url)}
-                    alt=""
-                    className="w-full h-full object-cover rounded-lg"
-                  />
-
-                  {/* Always visible overlay - Instagram Reels style */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-lg">
-                    {/* Date at top */}
-                    <div className="absolute top-2 left-2 text-xs text-white bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                      {formatDate(look.look_date)}
-                    </div>
-
-                    {/* Stats at bottom */}
-                    <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 text-white text-xs">
-                          <Eye size={12} />
-                          <span className="font-medium">{look.views_count || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1 text-white text-xs">
-                          <Heart size={12} />
-                          <span className="font-medium">{look.likes_count || 0}</span>
+        ) : activeTab === 'mine' ? (
+          /* My Looks */
+          looks.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2">
+              {looks.map((look) => (
+                <div key={look.id} className="relative">
+                  <div
+                    className="relative aspect-[3/4] group cursor-pointer"
+                    onClick={() => openLookDetail(look)}
+                  >
+                    <img
+                      src={getPhotoUrl(look.photo_url)}
+                      alt=""
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-lg">
+                      <div className="absolute top-2 left-2 text-xs text-white bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                        {formatDate(look.look_date)}
+                      </div>
+                      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 text-white text-xs">
+                            <Eye size={12} />
+                            <span className="font-medium">{look.views_count || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-white text-xs">
+                            <Heart size={12} />
+                            <span className="font-medium">{look.likes_count || 0}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-
+                  <p className="mt-1.5 text-sm text-lookup-black font-medium truncate px-0.5">
+                    {look.title || 'Sans titre'}
+                  </p>
                 </div>
-
-                {/* Look name below image */}
-                <p className="mt-1.5 text-sm text-lookup-black font-medium truncate px-0.5">
-                  {look.title || 'Sans titre'}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
-            <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
-              <Camera size={28} className="text-lookup-mint" />
+              ))}
             </div>
-            <p className="text-lookup-black font-medium">Aucun look enregistré</p>
-            <p className="text-lookup-gray text-sm mt-1">
-              Publie ton premier look du jour !
-            </p>
-            <Link
-              to="/add-look"
-              className="inline-block mt-4 bg-lookup-mint text-white font-medium py-2.5 px-6 rounded-full text-sm"
-            >
-              Ajouter un look
-            </Link>
-          </div>
+          ) : (
+            <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+              <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Camera size={28} className="text-lookup-mint" />
+              </div>
+              <p className="text-lookup-black font-medium">Aucun look enregistre</p>
+              <p className="text-lookup-gray text-sm mt-1">
+                Publie ton premier look du jour !
+              </p>
+              <Link
+                to="/add-look"
+                className="inline-block mt-4 bg-lookup-mint text-white font-medium py-2.5 px-6 rounded-full text-sm"
+              >
+                Ajouter un look
+              </Link>
+            </div>
+          )
+        ) : (
+          /* Saved Looks */
+          savedLooks.length > 0 ? (
+            <div className="grid grid-cols-3 gap-2">
+              {savedLooks.map((look) => (
+                <div key={look.id} className="relative">
+                  <div
+                    className="relative aspect-[3/4] group cursor-pointer"
+                    onClick={() => {
+                      setSelectedSavedLook(look)
+                      setShowSavedModal(true)
+                    }}
+                  >
+                    <img
+                      src={getPhotoUrl(look.photo_url)}
+                      alt=""
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-lg">
+                      <div className="absolute top-2 right-2">
+                        <Bookmark size={16} className="text-white fill-white" />
+                      </div>
+                      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 text-white text-xs">
+                            <Eye size={12} />
+                            <span className="font-medium">{look.views_count || 0}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-white text-xs">
+                            <Heart size={12} />
+                            <span className="font-medium">{look.likes_count || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="mt-1.5 text-sm text-lookup-black font-medium truncate px-0.5">
+                    {look.title || 'Look sauvegarde'}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+              <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
+                <Bookmark size={28} className="text-lookup-mint" />
+              </div>
+              <p className="text-lookup-black font-medium">Aucun look sauvegarde</p>
+              <p className="text-lookup-gray text-sm mt-1">
+                Sauvegarde les looks que tu croises pour les retrouver ici
+              </p>
+            </div>
+          )
         )}
       </div>
 
@@ -528,6 +611,92 @@ export default function Profile() {
                 Supprimer
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Saved Look Detail Modal */}
+      {showSavedModal && selectedSavedLook && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex flex-col">
+          {/* Modal Header */}
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              onClick={() => {
+                setShowSavedModal(false)
+                setSelectedSavedLook(null)
+              }}
+              className="p-2 -ml-2 text-white/80 hover:text-white"
+            >
+              <X size={24} />
+            </button>
+            <div className="text-white text-center flex-1 px-4">
+              <p className="font-semibold text-lg flex items-center justify-center gap-2">
+                <Bookmark size={18} className="text-lookup-mint" />
+                {selectedSavedLook.title || 'Look sauvegarde'}
+              </p>
+            </div>
+            <div className="w-10"></div>
+          </div>
+
+          {/* Modal Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Photo */}
+            <div className="px-4 pt-4">
+              <img
+                src={getPhotoUrl(selectedSavedLook.photo_url)}
+                alt="Look sauvegarde"
+                className="w-full max-h-[50vh] object-contain rounded-2xl"
+              />
+            </div>
+
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-8 py-4">
+              <div className="flex items-center gap-2 text-white">
+                <Eye size={20} />
+                <span className="font-semibold">{selectedSavedLook.views_count || 0} vues</span>
+              </div>
+              <div className="flex items-center gap-2 text-white">
+                <Heart size={20} className="text-pink-400" />
+                <span className="font-semibold">{selectedSavedLook.likes_count || 0} likes</span>
+              </div>
+            </div>
+
+            {/* Items/Pieces */}
+            {selectedSavedLook.items && selectedSavedLook.items.length > 0 && (
+              <div className="px-4 pb-4">
+                <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                  <Tag size={16} />
+                  Pieces du look ({selectedSavedLook.items.length})
+                </h3>
+                <div className="space-y-2">
+                  {selectedSavedLook.items.map((item, index) => (
+                    <div key={index} className="bg-white/10 backdrop-blur rounded-xl p-3">
+                      <span className="inline-block text-xs text-white bg-lookup-mint px-2 py-0.5 rounded-full font-medium">
+                        {CATEGORY_LABELS[item.category] || item.category}
+                      </span>
+                      {item.brand && (
+                        <p className="text-white font-semibold mt-1">{item.brand}</p>
+                      )}
+                      {item.product_name && (
+                        <p className="text-white/70 text-sm">{item.product_name}</p>
+                      )}
+                      {item.color && (
+                        <p className="text-white/50 text-xs mt-1">Couleur: {item.color}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* No items message */}
+            {(!selectedSavedLook.items || selectedSavedLook.items.length === 0) && (
+              <div className="px-4 pb-4">
+                <div className="bg-white/10 backdrop-blur rounded-xl p-4 text-center">
+                  <p className="text-white/70 text-sm">Aucune piece renseignee pour ce look</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
