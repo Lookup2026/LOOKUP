@@ -241,7 +241,9 @@ async def get_my_crossings(
             other_avatar_url=other_user.avatar_url,
             other_look_id=other_look_id,
             other_look_photo_url=other_look.photo_url if other_look else None,
-            other_look_items=look_items
+            other_look_items=look_items,
+            views_count=other_look.views_count if other_look else 0,
+            likes_count=other_look.likes_count if other_look else 0
         ))
 
     return result

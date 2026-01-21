@@ -49,5 +49,9 @@ class CrossingWithDetails(BaseModel):
     other_look_photo_url: Optional[str] = None
     other_look_items: list = []
 
+    # Stats du look
+    views_count: int = 0
+    likes_count: int = 0
+
     class Config:
         from_attributes = True
