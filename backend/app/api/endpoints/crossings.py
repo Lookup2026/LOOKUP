@@ -15,24 +15,37 @@ from app.api.deps import get_current_user
 # Geocoder pour reverse geocoding
 geolocator = Nominatim(user_agent="lookup_app")
 
+def round_coordinates(lat: float, lon: float, precision: int = 3) -> tuple:
+    """
+    Arrondir les coordonnees pour proteger la vie privee.
+    precision=3 donne une precision d'environ 100m
+    precision=2 donne une precision d'environ 1km
+    """
+    if lat and lon:
+        return round(lat, precision), round(lon, precision)
+    return 0, 0
+
 def get_location_name(latitude: float, longitude: float) -> str:
-    """Obtenir le nom du lieu a partir des coordonnees"""
+    """
+    Obtenir le nom du lieu a partir des coordonnees.
+    Pour la vie privee, on montre le quartier/arrondissement, PAS la rue exacte.
+    """
     try:
         location = geolocator.reverse(f"{latitude}, {longitude}", language="fr", timeout=5)
         if location and location.raw.get("address"):
             addr = location.raw["address"]
-            # Priorite: rue > quartier > ville
-            if addr.get("road"):
-                return addr["road"]
-            elif addr.get("neighbourhood"):
+            # Pour la vie privee: quartier > arrondissement > ville (jamais la rue exacte)
+            if addr.get("neighbourhood"):
                 return addr["neighbourhood"]
             elif addr.get("suburb"):
                 return addr["suburb"]
+            elif addr.get("city_district"):  # Arrondissement a Paris
+                return addr["city_district"]
             elif addr.get("city") or addr.get("town"):
                 return addr.get("city") or addr.get("town")
-        return None
+        return "Zone de croisement"
     except Exception:
-        return None
+        return "Zone de croisement"
 
 router = APIRouter(prefix="/crossings", tags=["Crossings"])
 
@@ -214,11 +227,14 @@ async def get_my_crossings(
                     for item in other_look.items
                 ]
 
+        # Arrondir les coordonnees pour la vie privee
+        rounded_lat, rounded_lon = round_coordinates(c.latitude, c.longitude)
+
         result.append(CrossingWithDetails(
             id=c.id,
             crossed_at=c.crossed_at,
-            latitude=c.latitude or 0,
-            longitude=c.longitude or 0,
+            latitude=rounded_lat,
+            longitude=rounded_lon,
             location_name=c.location_name,
             other_user_id=other_user.id,
             other_username=other_user.username,
@@ -270,13 +286,16 @@ async def get_crossing_detail(
     other_user = db.query(User).filter(User.id == other_user_id).first()
     other_look = db.query(Look).filter(Look.id == other_look_id).first() if other_look_id else None
 
+    # Arrondir les coordonnees pour la vie privee
+    rounded_lat, rounded_lon = round_coordinates(crossing.latitude, crossing.longitude)
+
     return {
         "crossing": {
             "id": crossing.id,
             "crossed_at": crossing.crossed_at.isoformat(),
             "zone_id": crossing.zone_id,
-            "latitude": crossing.latitude,
-            "longitude": crossing.longitude,
+            "latitude": rounded_lat,
+            "longitude": rounded_lon,
             "location_name": crossing.location_name
         },
         "other_user": {
