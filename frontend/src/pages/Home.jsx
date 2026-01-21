@@ -167,7 +167,7 @@ export default function Home() {
       <div className="pt-4">
         <div className="flex items-center justify-between mb-3 px-4">
           <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">
-            Mes looks du jour {todayLooks.length > 0 && `(${todayLooks.length})`}
+            Mes looks {todayLooks.length > 0 && `(${todayLooks.length})`}
           </h2>
           <Link to="/add-look" className="text-lookup-mint text-sm font-medium">
             Ajouter

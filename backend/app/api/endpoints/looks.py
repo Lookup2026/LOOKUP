@@ -111,10 +111,12 @@ async def get_today_looks(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Obtenir tous les looks du jour"""
+    """Obtenir les looks des dernieres 24h"""
+    from datetime import datetime, timedelta
+    yesterday = datetime.utcnow() - timedelta(hours=24)
     looks = db.query(Look).filter(
         Look.user_id == current_user.id,
-        Look.look_date == date.today()
+        Look.created_at >= yesterday
     ).order_by(Look.created_at.desc()).all()
     return looks
 
