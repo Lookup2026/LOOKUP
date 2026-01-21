@@ -202,7 +202,8 @@ export default function Home() {
                   <img
                     src={getPhotoUrl(look.photo_url)}
                     alt="Mon look"
-                    className="w-36 h-44 object-cover"
+                    className="w-36 h-44 object-cover bg-gray-100"
+                    loading="lazy"
                   />
                   <div className="p-2">
                     <p className="text-xs text-lookup-gray truncate">
@@ -277,7 +278,8 @@ export default function Home() {
                     <img
                       src={getPhotoUrl(crossing.other_look_photo_url)}
                       alt=""
-                      className="w-full aspect-[4/5] object-cover"
+                      className="w-full aspect-[4/5] object-cover bg-gray-100"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
