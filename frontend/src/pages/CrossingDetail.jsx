@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, UserPlus, Map, Bookmark, Camera } from 'lucide-react'
+import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, UserPlus, Map, Bookmark, Camera, Share2 } from 'lucide-react'
 import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl, saveLook } from '../api/client'
 import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
@@ -143,6 +143,32 @@ export default function CrossingDetail() {
     }
   }
 
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/crossings/${id}`
+    const shareData = {
+      title: `Look de ${data?.other_user?.username || 'quelqu\'un'} sur LOOKUP`,
+      text: `Regarde ce look que j'ai croise sur LOOKUP !`,
+      url: shareUrl
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (err) {
+        // User cancelled or error
+        if (err.name !== 'AbortError') {
+          // Fallback: copy to clipboard
+          navigator.clipboard.writeText(shareUrl)
+          toast.success('Lien copie !')
+        }
+      }
+    } else {
+      // Fallback for browsers without Web Share API
+      navigator.clipboard.writeText(shareUrl)
+      toast.success('Lien copie !')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-lookup-cream flex items-center justify-center">
@@ -251,10 +277,11 @@ export default function CrossingDetail() {
         </div>
       )}
 
-      {/* Action buttons - like et save */}
-      {other_look?.id && (
-        <div className="px-4 mb-4">
-          <div className="flex items-center gap-3">
+      {/* Action buttons */}
+      <div className="px-4 mb-4">
+        <div className="flex items-center gap-3">
+          {/* Like - only when look exists */}
+          {other_look?.id && (
             <button
               onClick={handleLike}
               disabled={liking}
@@ -270,6 +297,9 @@ export default function CrossingDetail() {
               />
               <span className="font-semibold">{stats.likes_count}</span>
             </button>
+          )}
+          {/* Save - only when look exists */}
+          {other_look?.id && (
             <button
               onClick={handleSave}
               disabled={saving}
@@ -285,9 +315,17 @@ export default function CrossingDetail() {
               />
               <span className="font-medium">{stats.user_saved ? 'Sauvegarde' : 'Sauvegarder'}</span>
             </button>
-          </div>
+          )}
+          {/* Share - always visible */}
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 bg-white text-lookup-black border border-gray-100 ml-auto"
+          >
+            <Share2 size={22} />
+            <span className="font-medium">Partager</span>
+          </button>
         </div>
-      )}
+      </div>
 
       {/* User info card */}
       <div className="px-4 mb-4">
