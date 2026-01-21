@@ -5,6 +5,7 @@ import { getTodayLook, getMyCrossings, getPhotoUrl } from '../api/client'
 import { useLocationStore } from '../stores/locationStore'
 import toast from 'react-hot-toast'
 import PullToRefresh from 'react-simple-pull-to-refresh'
+import { HomeSkeleton } from '../components/Skeleton'
 
 export default function Home() {
   const navigate = useNavigate()
@@ -125,11 +126,7 @@ export default function Home() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-lookup-cream flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    )
+    return <HomeSkeleton />
   }
 
   return (
