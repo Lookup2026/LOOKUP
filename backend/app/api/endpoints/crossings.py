@@ -8,7 +8,7 @@ from geopy.geocoders import Nominatim
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.zones import get_zone_id, get_adjacent_zones
-from app.models import User, Look, LocationPing, Crossing
+from app.models import User, Look, LocationPing, Crossing, BlockedUser
 from app.schemas import LocationPingCreate, CrossingWithDetails
 from app.api.deps import get_current_user
 
@@ -145,9 +145,19 @@ async def get_my_crossings(
     Obtenir la liste de mes croisements des dernieres 24h.
     Les looks croises restent visibles pendant 24h.
     Ne montre que le croisement le plus recent par utilisateur.
+    Filtre les utilisateurs bloques.
     """
     # Seulement les croisements des dernieres 24h
     since_24h = datetime.utcnow() - timedelta(hours=24)
+
+    # Obtenir les IDs des utilisateurs bloques (dans les deux sens)
+    blocked_by_me = db.query(BlockedUser.blocked_id).filter(
+        BlockedUser.blocker_id == current_user.id
+    ).all()
+    blocked_me = db.query(BlockedUser.blocker_id).filter(
+        BlockedUser.blocked_id == current_user.id
+    ).all()
+    blocked_ids = set([b[0] for b in blocked_by_me] + [b[0] for b in blocked_me])
 
     all_crossings = db.query(Crossing).filter(
         or_(
@@ -158,10 +168,14 @@ async def get_my_crossings(
     ).order_by(Crossing.crossed_at.desc()).all()
 
     # Dedupliquer: garder seulement le croisement le plus recent par utilisateur
+    # Et filtrer les utilisateurs bloques
     seen_users = set()
     crossings = []
     for c in all_crossings:
         other_user_id = c.user2_id if c.user1_id == current_user.id else c.user1_id
+        # Ignorer si utilisateur bloque
+        if other_user_id in blocked_ids:
+            continue
         if other_user_id not in seen_users:
             seen_users.add(other_user_id)
             crossings.append(c)

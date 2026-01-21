@@ -72,4 +72,9 @@ export const sendLocationPing = (data) => api.post('/crossings/ping', data)
 export const getMyCrossings = () => api.get('/crossings/')
 export const getCrossingDetail = (id) => api.get(`/crossings/${id}`)
 
+// Users
+export const blockUser = (id) => api.post(`/users/${id}/block`)
+export const getBlockedUsers = () => api.get('/users/blocked')
+export const checkIfBlocked = (id) => api.get(`/users/${id}/is-blocked`)
+
 export default api

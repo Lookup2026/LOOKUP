@@ -32,3 +32,17 @@ class User(Base):
     looks = relationship("Look", back_populates="user", cascade="all, delete-orphan")
     location_pings = relationship("LocationPing", back_populates="user", cascade="all, delete-orphan")
     referred_by = relationship("User", remote_side=[id], foreign_keys=[referred_by_id])
+
+
+class BlockedUser(Base):
+    """Table pour stocker les utilisateurs bloques"""
+    __tablename__ = "blocked_users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    blocker_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Celui qui bloque
+    blocked_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Celui qui est bloque
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relations
+    blocker = relationship("User", foreign_keys=[blocker_id])
+    blocked = relationship("User", foreign_keys=[blocked_id])

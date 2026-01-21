@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, UserPlus, Map, Bookmark, Camera, Share2 } from 'lucide-react'
-import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl, saveLook } from '../api/client'
+import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, MoreVertical, Map, Bookmark, Camera, Share2, ShieldOff, AlertTriangle, X } from 'lucide-react'
+import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl, saveLook, blockUser } from '../api/client'
 import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -68,10 +68,22 @@ export default function CrossingDetail() {
   const [showMap, setShowMap] = useState(false)
   const [imageLoading, setImageLoading] = useState(true)
   const [imageError, setImageError] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false)
+  const [blocking, setBlocking] = useState(false)
 
   useEffect(() => {
     loadDetail()
   }, [id])
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setShowMenu(false)
+    if (showMenu) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showMenu])
 
   useEffect(() => {
     if (data?.crossing?.crossed_at) {
@@ -169,6 +181,27 @@ export default function CrossingDetail() {
     }
   }
 
+  const handleBlock = async () => {
+    if (!data?.other_user?.id || blocking) return
+
+    setBlocking(true)
+    try {
+      const { data: blockData } = await blockUser(data.other_user.id)
+      setShowBlockConfirm(false)
+      if (blockData.blocked) {
+        toast.success('Utilisateur bloque')
+        // Retourner a l'accueil car on ne veut plus voir ce croisement
+        navigate('/')
+      } else {
+        toast.success('Utilisateur debloque')
+      }
+    } catch (error) {
+      toast.error('Erreur')
+    } finally {
+      setBlocking(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-lookup-cream flex items-center justify-center">
@@ -214,9 +247,36 @@ export default function CrossingDetail() {
               </div>
             )}
           </div>
-          <button className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
-            <UserPlus size={18} className="text-lookup-gray" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowMenu(!showMenu)
+              }}
+              className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center"
+            >
+              <MoreVertical size={18} className="text-lookup-gray" />
+            </button>
+
+            {/* Dropdown menu */}
+            {showMenu && (
+              <div
+                className="absolute top-10 right-0 bg-white rounded-xl shadow-lg overflow-hidden z-10 min-w-[160px]"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  onClick={() => {
+                    setShowMenu(false)
+                    setShowBlockConfirm(true)
+                  }}
+                  className="flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50 w-full"
+                >
+                  <ShieldOff size={16} />
+                  <span>Bloquer</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -491,6 +551,42 @@ export default function CrossingDetail() {
           </div>
         )}
       </div>
+
+      {/* Block Confirmation Modal */}
+      {showBlockConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div className="w-12 h-12 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <ShieldOff size={24} className="text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-lookup-black text-center">
+              Bloquer {other_user?.username} ?
+            </h3>
+            <p className="text-lookup-gray text-sm text-center mt-2">
+              Cette personne ne pourra plus voir tes looks et tu ne verras plus les siens.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowBlockConfirm(false)}
+                className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleBlock}
+                disabled={blocking}
+                className="flex-1 py-3 rounded-full bg-red-500 font-medium text-white flex items-center justify-center gap-2"
+              >
+                {blocking ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  'Bloquer'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
