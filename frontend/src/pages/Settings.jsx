@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, MapPin, Globe, ChevronRight, Bell, Shield, HelpCircle, LogOut, User, Trash2 } from 'lucide-react'
+import { ChevronLeft, MapPin, Globe, ChevronRight, Bell, Shield, HelpCircle, LogOut, User, Trash2, AlertTriangle } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import { deleteAccount } from '../api/client'
 import toast from 'react-hot-toast'
 
 const LANGUAGES = [
@@ -20,6 +21,8 @@ export default function Settings() {
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   // Notifications settings
   const [notifCrossings, setNotifCrossings] = useState(
@@ -60,6 +63,21 @@ export default function Settings() {
     logout()
     navigate('/welcome')
     toast.success('Deconnexion reussie')
+  }
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true)
+    try {
+      await deleteAccount()
+      logout()
+      navigate('/welcome')
+      toast.success('Ton compte a ete supprime')
+    } catch (error) {
+      console.error('Erreur suppression:', error)
+      toast.error('Erreur lors de la suppression du compte')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const currentLang = LANGUAGES.find(l => l.code === language)
@@ -234,6 +252,20 @@ export default function Settings() {
                 <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${profileVisible ? 'translate-x-6' : 'translate-x-1'}`}></div>
               </button>
             </div>
+
+            {/* Supprimer mon compte */}
+            <div className="pt-4 border-t border-lookup-gray-light">
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-3 text-red-500"
+              >
+                <Trash2 size={18} />
+                <div className="text-left">
+                  <p className="font-medium text-sm">Supprimer mon compte</p>
+                  <p className="text-xs text-red-400">Toutes vos donnees seront effacees</p>
+                </div>
+              </button>
+            </div>
           </div>
         )}
 
@@ -320,6 +352,50 @@ export default function Settings() {
                 className="flex-1 py-3 rounded-full bg-red-500 font-medium text-white"
               >
                 Deconnecter
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete account confirmation modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div className="w-14 h-14 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <AlertTriangle size={28} className="text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-lookup-black text-center">Supprimer ton compte ?</h3>
+            <p className="text-lookup-gray text-sm text-center mt-2">
+              Cette action est <span className="font-semibold text-red-500">irreversible</span>. Toutes tes donnees seront supprimees :
+            </p>
+            <ul className="text-xs text-lookup-gray mt-3 space-y-1">
+              <li>• Tous tes looks et photos</li>
+              <li>• Ton historique de croisements</li>
+              <li>• Tes likes et sauvegardes</li>
+              <li>• Ton profil et tes parametres</li>
+            </ul>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-full bg-red-500 font-medium text-white flex items-center justify-center gap-2"
+              >
+                {deleting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Suppression...</span>
+                  </>
+                ) : (
+                  'Supprimer'
+                )}
               </button>
             </div>
           </div>

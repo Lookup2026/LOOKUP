@@ -47,6 +47,7 @@ export const uploadAvatar = (formData) =>
   api.post('/auth/avatar', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
+export const deleteAccount = () => api.delete('/auth/account')
 
 // Looks
 export const createLook = (formData) =>
