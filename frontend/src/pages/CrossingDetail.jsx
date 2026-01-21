@@ -201,31 +201,41 @@ export default function CrossingDetail() {
               alt="Look"
               className="w-full rounded-2xl object-cover max-h-[55vh] shadow-sm"
             />
+            {/* Views badge - discret en bas à droite */}
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 text-white text-xs backdrop-blur-sm">
+              <Eye size={14} />
+              <span>{stats.views_count}</span>
+            </div>
           </div>
         </div>
       ) : (
         <div className="px-4 pt-4 mb-4">
-          <div className="w-full aspect-[3/4] rounded-2xl bg-white flex items-center justify-center shadow-sm">
+          <div className="relative w-full aspect-[3/4] rounded-2xl bg-white flex items-center justify-center shadow-sm">
             <p className="text-lookup-gray">Pas de photo</p>
+            {/* Views badge même sans photo */}
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-lookup-gray-light text-lookup-gray text-xs">
+              <Eye size={14} />
+              <span>{stats.views_count}</span>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Action buttons - always visible */}
-      <div className="px-4 mb-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
+      {/* Action buttons - like et save */}
+      {other_look?.id && (
+        <div className="px-4 mb-4">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleLike}
               disabled={liking}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition shadow-sm ${
+              className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
                 stats.user_liked
                   ? 'bg-pink-500 text-white'
-                  : 'bg-white text-lookup-black'
+                  : 'bg-white text-lookup-black border border-gray-100'
               }`}
             >
               <Heart
-                size={20}
+                size={22}
                 fill={stats.user_liked ? 'currentColor' : 'none'}
               />
               <span className="font-semibold">{stats.likes_count}</span>
@@ -233,24 +243,21 @@ export default function CrossingDetail() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition shadow-sm ${
+              className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
                 stats.user_saved
                   ? 'bg-lookup-mint text-white'
-                  : 'bg-white text-lookup-black'
+                  : 'bg-white text-lookup-black border border-gray-100'
               }`}
             >
               <Bookmark
-                size={20}
+                size={22}
                 fill={stats.user_saved ? 'currentColor' : 'none'}
               />
+              <span className="font-medium">{stats.user_saved ? 'Sauvegarde' : 'Sauvegarder'}</span>
             </button>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-white text-lookup-black shadow-sm">
-            <Eye size={20} />
-            <span className="font-semibold">{stats.views_count}</span>
-          </div>
         </div>
-      </div>
+      )}
 
       {/* User info card */}
       <div className="px-4 mb-4">
