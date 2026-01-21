@@ -1,9 +1,10 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, Wifi } from 'lucide-react'
+import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, RefreshCw } from 'lucide-react'
 import { getTodayLook, getMyCrossings, getPhotoUrl } from '../api/client'
 import { useLocationStore } from '../stores/locationStore'
 import toast from 'react-hot-toast'
+import PullToRefresh from 'react-simple-pull-to-refresh'
 
 export default function Home() {
   const navigate = useNavigate()
@@ -109,6 +110,11 @@ export default function Home() {
     return 'Près de vous'
   }
 
+  // Fonction de rafraichissement pour pull-to-refresh
+  const handleRefresh = async () => {
+    await Promise.all([loadData(), doPing()])
+  }
+
   // Ne pas rendre si redirection vers onboarding en cours
   if (shouldShowOnboarding) {
     return (
@@ -127,6 +133,19 @@ export default function Home() {
   }
 
   return (
+    <PullToRefresh
+      onRefresh={handleRefresh}
+      pullingContent={
+        <div className="flex justify-center py-4">
+          <RefreshCw size={24} className="text-lookup-mint animate-pulse" />
+        </div>
+      }
+      refreshingContent={
+        <div className="flex justify-center py-4">
+          <RefreshCw size={24} className="text-lookup-mint animate-spin" />
+        </div>
+      }
+    >
     <div className="min-h-full bg-lookup-cream pb-4">
       {/* Header */}
       <div className="bg-white px-4 pt-4 pb-3">
@@ -305,5 +324,6 @@ export default function Home() {
         )}
       </div>
     </div>
+    </PullToRefresh>
   )
 }
