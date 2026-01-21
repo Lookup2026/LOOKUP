@@ -1,3 +1,4 @@
 from .user import User, BlockedUser
 from .look import Look, LookItem, LookLike, LookView, SavedLook
 from .location import LocationPing, Crossing
+from .report import Report

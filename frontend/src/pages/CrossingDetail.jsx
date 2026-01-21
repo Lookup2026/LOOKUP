@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, MoreVertical, Map, Bookmark, Camera, Share2, ShieldOff, AlertTriangle, X } from 'lucide-react'
-import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl, saveLook, blockUser } from '../api/client'
+import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl, saveLook, blockUser, reportContent } from '../api/client'
 import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -71,6 +71,9 @@ export default function CrossingDetail() {
   const [showMenu, setShowMenu] = useState(false)
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
   const [blocking, setBlocking] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reporting, setReporting] = useState(false)
 
   useEffect(() => {
     loadDetail()
@@ -202,6 +205,26 @@ export default function CrossingDetail() {
     }
   }
 
+  const handleReport = async () => {
+    if (!reportReason || reporting) return
+
+    setReporting(true)
+    try {
+      await reportContent({
+        user_id: data?.other_user?.id,
+        look_id: data?.other_look?.id,
+        reason: reportReason
+      })
+      setShowReportModal(false)
+      setReportReason('')
+      toast.success('Merci pour ton signalement')
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Erreur')
+    } finally {
+      setReporting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-lookup-cream flex items-center justify-center">
@@ -267,9 +290,19 @@ export default function CrossingDetail() {
                 <button
                   onClick={() => {
                     setShowMenu(false)
+                    setShowReportModal(true)
+                  }}
+                  className="flex items-center gap-2 px-4 py-3 text-sm text-lookup-black hover:bg-gray-50 w-full"
+                >
+                  <AlertTriangle size={16} className="text-orange-500" />
+                  <span>Signaler</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMenu(false)
                     setShowBlockConfirm(true)
                   }}
-                  className="flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50 w-full"
+                  className="flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50 w-full border-t border-gray-100"
                 >
                   <ShieldOff size={16} />
                   <span>Bloquer</span>
@@ -581,6 +614,68 @@ export default function CrossingDetail() {
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   'Bloquer'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div className="w-12 h-12 bg-orange-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <AlertTriangle size={24} className="text-orange-500" />
+            </div>
+            <h3 className="text-lg font-bold text-lookup-black text-center">
+              Signaler ce contenu
+            </h3>
+            <p className="text-lookup-gray text-sm text-center mt-2">
+              Pourquoi signales-tu ce contenu ?
+            </p>
+
+            <div className="mt-4 space-y-2">
+              {[
+                { value: 'inappropriate_content', label: 'Contenu inapproprie' },
+                { value: 'harassment', label: 'Harcelement' },
+                { value: 'spam', label: 'Spam' },
+                { value: 'fake_profile', label: 'Faux profil' },
+                { value: 'other', label: 'Autre' }
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => setReportReason(option.value)}
+                  className={`w-full py-3 px-4 rounded-xl text-left transition ${
+                    reportReason === option.value
+                      ? 'bg-orange-100 text-orange-700 border-2 border-orange-300'
+                      : 'bg-gray-50 text-lookup-black hover:bg-gray-100'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowReportModal(false)
+                  setReportReason('')
+                }}
+                className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleReport}
+                disabled={!reportReason || reporting}
+                className="flex-1 py-3 rounded-full bg-orange-500 font-medium text-white flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {reporting ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  'Envoyer'
                 )}
               </button>
             </div>

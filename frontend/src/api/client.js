@@ -76,5 +76,6 @@ export const getCrossingDetail = (id) => api.get(`/crossings/${id}`)
 export const blockUser = (id) => api.post(`/users/${id}/block`)
 export const getBlockedUsers = () => api.get('/users/blocked')
 export const checkIfBlocked = (id) => api.get(`/users/${id}/is-blocked`)
+export const reportContent = (data) => api.post('/users/report', null, { params: data })
 
 export default api

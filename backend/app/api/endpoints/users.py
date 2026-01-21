@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.core.database import get_db
-from app.models import User, BlockedUser
+from app.models import User, BlockedUser, Report, Look
 from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -83,3 +83,89 @@ async def check_if_blocked(
     ).first()
 
     return {"is_blocked": blocked is not None}
+
+
+# ============== SIGNALEMENTS ==============
+
+REPORT_REASONS = [
+    "inappropriate_content",  # Contenu inapproprie
+    "harassment",             # Harcelement
+    "spam",                   # Spam
+    "fake_profile",           # Faux profil
+    "other"                   # Autre
+]
+
+@router.post("/report")
+async def report_content(
+    reason: str,
+    user_id: int = None,
+    look_id: int = None,
+    details: str = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Signaler un utilisateur ou un look"""
+    if not user_id and not look_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tu dois specifier un utilisateur ou un look a signaler"
+        )
+
+    if reason not in REPORT_REASONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Raison invalide. Choisis parmi: {', '.join(REPORT_REASONS)}"
+        )
+
+    # Verifier que l'utilisateur/look existe
+    if user_id:
+        if user_id == current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tu ne peux pas te signaler toi-meme"
+            )
+        target_user = db.query(User).filter(User.id == user_id).first()
+        if not target_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Utilisateur non trouve"
+            )
+
+    if look_id:
+        target_look = db.query(Look).filter(Look.id == look_id).first()
+        if not target_look:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Look non trouve"
+            )
+        # Si on signale un look, on recupere aussi l'utilisateur
+        if not user_id:
+            user_id = target_look.user_id
+
+    # Verifier si deja signale recemment (eviter le spam)
+    from datetime import datetime, timedelta
+    recent = db.query(Report).filter(
+        Report.reporter_id == current_user.id,
+        Report.reported_user_id == user_id if user_id else True,
+        Report.reported_look_id == look_id if look_id else True,
+        Report.created_at >= datetime.utcnow() - timedelta(hours=24)
+    ).first()
+
+    if recent:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tu as deja signale ce contenu recemment"
+        )
+
+    # Creer le signalement
+    report = Report(
+        reporter_id=current_user.id,
+        reported_user_id=user_id,
+        reported_look_id=look_id,
+        reason=reason,
+        details=details
+    )
+    db.add(report)
+    db.commit()
+
+    return {"success": True, "message": "Signalement envoye. Merci de nous aider a garder LOOKUP sur."}
