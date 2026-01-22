@@ -373,42 +373,42 @@ export default function CrossingDetail() {
       {/* Action buttons */}
       <div className="px-4 mb-4">
         <div className="flex items-center gap-3">
-          {/* Like - only when look exists */}
-          {other_look?.id && (
-            <button
-              onClick={handleLike}
-              disabled={liking}
-              className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
-                stats.user_liked
-                  ? 'bg-pink-500 text-white'
-                  : 'bg-white text-lookup-black border border-gray-100'
-              }`}
-            >
-              <Heart
-                size={22}
-                fill={stats.user_liked ? 'currentColor' : 'none'}
-              />
-              <span className="font-semibold">{stats.likes_count}</span>
-            </button>
-          )}
-          {/* Save - only when look exists */}
-          {other_look?.id && (
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
-                stats.user_saved
-                  ? 'bg-lookup-mint text-white'
-                  : 'bg-white text-lookup-black border border-gray-100'
-              }`}
-            >
-              <Bookmark
-                size={22}
-                fill={stats.user_saved ? 'currentColor' : 'none'}
-              />
-              <span className="font-medium">{stats.user_saved ? 'Sauvegarde' : 'Sauvegarder'}</span>
-            </button>
-          )}
+          {/* Like - always visible, disabled if no look */}
+          <button
+            onClick={handleLike}
+            disabled={liking || !other_look?.id}
+            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm ${
+              !other_look?.id
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : stats.user_liked
+                  ? 'bg-pink-500 text-white active:scale-95'
+                  : 'bg-white text-lookup-black border border-gray-100 active:scale-95'
+            }`}
+          >
+            <Heart
+              size={22}
+              fill={stats.user_liked ? 'currentColor' : 'none'}
+            />
+            <span className="font-semibold">{stats.likes_count}</span>
+          </button>
+          {/* Save - always visible, disabled if no look */}
+          <button
+            onClick={handleSave}
+            disabled={saving || !other_look?.id}
+            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm ${
+              !other_look?.id
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : stats.user_saved
+                  ? 'bg-lookup-mint text-white active:scale-95'
+                  : 'bg-white text-lookup-black border border-gray-100 active:scale-95'
+            }`}
+          >
+            <Bookmark
+              size={22}
+              fill={stats.user_saved ? 'currentColor' : 'none'}
+            />
+            <span className="font-medium">{stats.user_saved ? 'Sauvegarde' : 'Sauvegarder'}</span>
+          </button>
           {/* Share - always visible */}
           <button
             onClick={handleShare}
