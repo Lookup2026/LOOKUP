@@ -8,7 +8,7 @@ from geopy.geocoders import Nominatim
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.zones import get_zone_id, get_adjacent_zones
-from app.models import User, Look, LocationPing, Crossing, BlockedUser
+from app.models import User, Look, LocationPing, Crossing, BlockedUser, CrossingLike, SavedCrossing
 from app.schemas import LocationPingCreate, CrossingWithDetails
 from app.api.deps import get_current_user
 
@@ -270,11 +270,13 @@ async def get_crossing_detail(
             detail="Croisement non trouve"
         )
 
-    # Marquer comme vu
+    # Marquer comme vu et incrementer le compteur de vues
     if crossing.user1_id == current_user.id and not crossing.user1_viewed:
         crossing.user1_viewed = datetime.utcnow()
+        crossing.views_count += 1
     elif crossing.user2_id == current_user.id and not crossing.user2_viewed:
         crossing.user2_viewed = datetime.utcnow()
+        crossing.views_count += 1
     db.commit()
 
     # Retourner les details complets
@@ -288,6 +290,17 @@ async def get_crossing_detail(
     other_user = db.query(User).filter(User.id == other_user_id).first()
     other_look = db.query(Look).filter(Look.id == other_look_id).first() if other_look_id else None
 
+    # Verifier si l'utilisateur a like/sauvegarde ce croisement
+    user_liked = db.query(CrossingLike).filter(
+        CrossingLike.crossing_id == crossing_id,
+        CrossingLike.user_id == current_user.id
+    ).first() is not None
+
+    user_saved = db.query(SavedCrossing).filter(
+        SavedCrossing.crossing_id == crossing_id,
+        SavedCrossing.user_id == current_user.id
+    ).first() is not None
+
     # Arrondir les coordonnees pour la vie privee
     rounded_lat, rounded_lon = round_coordinates(crossing.latitude, crossing.longitude)
 
@@ -298,7 +311,15 @@ async def get_crossing_detail(
             "zone_id": crossing.zone_id,
             "latitude": rounded_lat,
             "longitude": rounded_lon,
-            "location_name": crossing.location_name
+            "location_name": crossing.location_name,
+            "likes_count": crossing.likes_count,
+            "views_count": crossing.views_count
+        },
+        "stats": {
+            "likes_count": crossing.likes_count,
+            "views_count": crossing.views_count,
+            "user_liked": user_liked,
+            "user_saved": user_saved
         },
         "other_user": {
             "id": other_user.id,
@@ -321,4 +342,133 @@ async def get_crossing_detail(
                 for item in other_look.items
             ]
         } if other_look else None
+    }
+
+
+@router.post("/{crossing_id}/like")
+async def like_crossing(
+    crossing_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Liker un croisement.
+    """
+    crossing = db.query(Crossing).filter(
+        Crossing.id == crossing_id,
+        or_(
+            Crossing.user1_id == current_user.id,
+            Crossing.user2_id == current_user.id
+        )
+    ).first()
+
+    if not crossing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Croisement non trouve"
+        )
+
+    # Verifier si deja like
+    existing_like = db.query(CrossingLike).filter(
+        CrossingLike.crossing_id == crossing_id,
+        CrossingLike.user_id == current_user.id
+    ).first()
+
+    if existing_like:
+        # Unlike
+        db.delete(existing_like)
+        crossing.likes_count = max(0, crossing.likes_count - 1)
+        db.commit()
+        return {"liked": False, "likes_count": crossing.likes_count}
+    else:
+        # Like
+        new_like = CrossingLike(crossing_id=crossing_id, user_id=current_user.id)
+        db.add(new_like)
+        crossing.likes_count += 1
+        db.commit()
+        return {"liked": True, "likes_count": crossing.likes_count}
+
+
+@router.post("/{crossing_id}/save")
+async def save_crossing(
+    crossing_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Sauvegarder un croisement.
+    """
+    crossing = db.query(Crossing).filter(
+        Crossing.id == crossing_id,
+        or_(
+            Crossing.user1_id == current_user.id,
+            Crossing.user2_id == current_user.id
+        )
+    ).first()
+
+    if not crossing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Croisement non trouve"
+        )
+
+    # Verifier si deja sauvegarde
+    existing = db.query(SavedCrossing).filter(
+        SavedCrossing.crossing_id == crossing_id,
+        SavedCrossing.user_id == current_user.id
+    ).first()
+
+    if existing:
+        # Retirer la sauvegarde
+        db.delete(existing)
+        db.commit()
+        return {"saved": False}
+    else:
+        # Sauvegarder
+        new_save = SavedCrossing(crossing_id=crossing_id, user_id=current_user.id)
+        db.add(new_save)
+        db.commit()
+        return {"saved": True}
+
+
+@router.get("/{crossing_id}/stats")
+async def get_crossing_stats(
+    crossing_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Obtenir les stats d'un croisement (likes, vues, etc.)
+    """
+    crossing = db.query(Crossing).filter(
+        Crossing.id == crossing_id,
+        or_(
+            Crossing.user1_id == current_user.id,
+            Crossing.user2_id == current_user.id
+        )
+    ).first()
+
+    if not crossing:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Croisement non trouve"
+        )
+
+    # Verifier si l'utilisateur a like
+    user_liked = db.query(CrossingLike).filter(
+        CrossingLike.crossing_id == crossing_id,
+        CrossingLike.user_id == current_user.id
+    ).first() is not None
+
+    # Verifier si l'utilisateur a sauvegarde
+    user_saved = db.query(SavedCrossing).filter(
+        SavedCrossing.crossing_id == crossing_id,
+        SavedCrossing.user_id == current_user.id
+    ).first() is not None
+
+    return {
+        "likes_count": crossing.likes_count,
+        "views_count": crossing.views_count,
+        "user_liked": user_liked,
+        "user_saved": user_saved
     }

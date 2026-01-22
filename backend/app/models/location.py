@@ -42,3 +42,37 @@ class Crossing(Base):
     # Indicateurs de visibilite
     user1_viewed = Column(DateTime, nullable=True)
     user2_viewed = Column(DateTime, nullable=True)
+
+    # Compteurs (pour le croisement, pas le look)
+    likes_count = Column(Integer, default=0)
+    views_count = Column(Integer, default=0)
+
+    # Relations
+    likes = relationship("CrossingLike", back_populates="crossing", cascade="all, delete-orphan")
+    saves = relationship("SavedCrossing", back_populates="crossing", cascade="all, delete-orphan")
+
+
+class CrossingLike(Base):
+    """Like sur un croisement"""
+    __tablename__ = "crossing_likes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    crossing_id = Column(Integer, ForeignKey("crossings.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relations
+    crossing = relationship("Crossing", back_populates="likes")
+
+
+class SavedCrossing(Base):
+    """Croisement sauvegarde par un utilisateur"""
+    __tablename__ = "saved_crossings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    crossing_id = Column(Integer, ForeignKey("crossings.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relations
+    crossing = relationship("Crossing", back_populates="saves")

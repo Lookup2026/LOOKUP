@@ -72,6 +72,9 @@ export const getSavedLooks = () => api.get('/looks/saved/list')
 export const sendLocationPing = (data) => api.post('/crossings/ping', data)
 export const getMyCrossings = () => api.get('/crossings/')
 export const getCrossingDetail = (id) => api.get(`/crossings/${id}`)
+export const likeCrossing = (id) => api.post(`/crossings/${id}/like`)
+export const saveCrossing = (id) => api.post(`/crossings/${id}/save`)
+export const getCrossingStats = (id) => api.get(`/crossings/${id}/stats`)
 
 // Users
 export const blockUser = (id) => api.post(`/users/${id}/block`)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, MoreVertical, Map, Bookmark, Camera, Share2, ShieldOff, AlertTriangle, X } from 'lucide-react'
-import { getCrossingDetail, likeLook, viewLook, getLookStats, getPhotoUrl, saveLook, blockUser, reportContent } from '../api/client'
+import { getCrossingDetail, likeCrossing, saveCrossing, getPhotoUrl, blockUser, reportContent } from '../api/client'
 import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -103,10 +103,9 @@ export default function CrossingDetail() {
       const { data: crossingData } = await getCrossingDetail(id)
       setData(crossingData)
 
-      if (crossingData.other_look?.id) {
-        await viewLook(crossingData.other_look.id)
-        const { data: statsData } = await getLookStats(crossingData.other_look.id)
-        setStats(statsData)
+      // Les stats viennent maintenant directement de l'API crossing detail
+      if (crossingData.stats) {
+        setStats(crossingData.stats)
       }
     } catch (error) {
       console.error('Erreur:', error)
@@ -116,18 +115,18 @@ export default function CrossingDetail() {
   }
 
   const handleLike = async () => {
-    if (!data?.other_look?.id || liking) return
+    if (liking) return
 
     setLiking(true)
     try {
-      const { data: likeData } = await likeLook(data.other_look.id)
+      const { data: likeData } = await likeCrossing(id)
       setStats(prev => ({
         ...prev,
         likes_count: likeData.likes_count,
         user_liked: likeData.liked
       }))
       if (likeData.liked) {
-        toast.success('Look like !')
+        toast.success('Croisement like !')
       }
     } catch (error) {
       toast.error('Erreur')
@@ -137,19 +136,19 @@ export default function CrossingDetail() {
   }
 
   const handleSave = async () => {
-    if (!data?.other_look?.id || saving) return
+    if (saving) return
 
     setSaving(true)
     try {
-      const { data: saveData } = await saveLook(data.other_look.id)
+      const { data: saveData } = await saveCrossing(id)
       setStats(prev => ({
         ...prev,
         user_saved: saveData.saved
       }))
       if (saveData.saved) {
-        toast.success('Look sauvegarde !')
+        toast.success('Croisement sauvegarde !')
       } else {
-        toast.success('Look retire des sauvegardes')
+        toast.success('Croisement retire des sauvegardes')
       }
     } catch (error) {
       toast.error('Erreur')
@@ -373,16 +372,14 @@ export default function CrossingDetail() {
       {/* Action buttons */}
       <div className="px-4 mb-4">
         <div className="flex items-center gap-3">
-          {/* Like - always visible, disabled if no look */}
+          {/* Like - toujours actif (like le croisement) */}
           <button
             onClick={handleLike}
-            disabled={liking || !other_look?.id}
-            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm ${
-              !other_look?.id
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : stats.user_liked
-                  ? 'bg-pink-500 text-white active:scale-95'
-                  : 'bg-white text-lookup-black border border-gray-100 active:scale-95'
+            disabled={liking}
+            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
+              stats.user_liked
+                ? 'bg-pink-500 text-white'
+                : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >
             <Heart
@@ -391,16 +388,14 @@ export default function CrossingDetail() {
             />
             <span className="font-semibold">{stats.likes_count}</span>
           </button>
-          {/* Save - always visible, disabled if no look */}
+          {/* Save - toujours actif (save le croisement) */}
           <button
             onClick={handleSave}
-            disabled={saving || !other_look?.id}
-            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm ${
-              !other_look?.id
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : stats.user_saved
-                  ? 'bg-lookup-mint text-white active:scale-95'
-                  : 'bg-white text-lookup-black border border-gray-100 active:scale-95'
+            disabled={saving}
+            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
+              stats.user_saved
+                ? 'bg-lookup-mint text-white'
+                : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >
             <Bookmark
