@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar, getSavedLooks } from '../api/client'
+import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar, getSavedCrossings } from '../api/client'
 import toast from 'react-hot-toast'
 
 const CATEGORY_LABELS = {
@@ -46,12 +46,12 @@ export default function Profile() {
 
   const loadLooks = async () => {
     try {
-      const [myLooksRes, savedLooksRes] = await Promise.all([
+      const [myLooksRes, savedCrossingsRes] = await Promise.all([
         getMyLooks(),
-        getSavedLooks()
+        getSavedCrossings()
       ])
       setLooks(myLooksRes.data)
-      setSavedLooks(savedLooksRes.data)
+      setSavedLooks(savedCrossingsRes.data || [])
     } catch (error) {
       console.error('Erreur:', error)
     } finally {
@@ -321,23 +321,26 @@ export default function Profile() {
             </div>
           )
         ) : (
-          /* Saved Looks */
+          /* Saved Crossings */
           savedLooks.length > 0 ? (
             <div className="grid grid-cols-3 gap-2">
-              {savedLooks.map((look) => (
-                <div key={look.id} className="relative">
+              {savedLooks.map((crossing) => (
+                <div key={crossing.id} className="relative">
                   <div
                     className="relative aspect-[3/4] group cursor-pointer"
-                    onClick={() => {
-                      setSelectedSavedLook(look)
-                      setShowSavedModal(true)
-                    }}
+                    onClick={() => navigate(`/crossings/${crossing.id}`)}
                   >
-                    <img
-                      src={getPhotoUrl(look.photo_url)}
-                      alt=""
-                      className="w-full h-full object-cover rounded-lg"
-                    />
+                    {crossing.other_look_photo_url ? (
+                      <img
+                        src={getPhotoUrl(crossing.other_look_photo_url)}
+                        alt=""
+                        className="w-full h-full object-cover rounded-lg bg-gray-100"
+                      />
+                    ) : (
+                      <div className="w-full h-full rounded-lg bg-lookup-mint-light flex items-center justify-center">
+                        <MapPin size={32} className="text-lookup-mint" />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent rounded-lg">
                       <div className="absolute top-2 right-2">
                         <Bookmark size={16} className="text-white fill-white" />
@@ -346,18 +349,18 @@ export default function Profile() {
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1 text-white text-xs">
                             <Eye size={12} />
-                            <span className="font-medium">{look.views_count || 0}</span>
+                            <span className="font-medium">{crossing.views_count || 0}</span>
                           </div>
                           <div className="flex items-center gap-1 text-white text-xs">
                             <Heart size={12} />
-                            <span className="font-medium">{look.likes_count || 0}</span>
+                            <span className="font-medium">{crossing.likes_count || 0}</span>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                   <p className="mt-1.5 text-sm text-lookup-black font-medium truncate px-0.5">
-                    {look.title || 'Look sauvegarde'}
+                    {crossing.other_user?.username || 'Croisement'}
                   </p>
                 </div>
               ))}
@@ -367,9 +370,9 @@ export default function Profile() {
               <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
                 <Bookmark size={28} className="text-lookup-mint" />
               </div>
-              <p className="text-lookup-black font-medium">Aucun look sauvegarde</p>
+              <p className="text-lookup-black font-medium">Aucun croisement sauvegarde</p>
               <p className="text-lookup-gray text-sm mt-1">
-                Sauvegarde les looks que tu croises pour les retrouver ici
+                Sauvegarde les croisements pour les retrouver ici
               </p>
             </div>
           )

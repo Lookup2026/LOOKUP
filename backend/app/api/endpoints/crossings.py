@@ -431,6 +431,51 @@ async def save_crossing(
         return {"saved": True}
 
 
+@router.get("/saved/list")
+async def get_saved_crossings(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Obtenir tous les croisements sauvegardes"""
+    saved = db.query(SavedCrossing).filter(
+        SavedCrossing.user_id == current_user.id
+    ).order_by(SavedCrossing.created_at.desc()).all()
+
+    result = []
+    for s in saved:
+        crossing = db.query(Crossing).filter(Crossing.id == s.crossing_id).first()
+        if not crossing:
+            continue
+
+        # Determiner l'autre utilisateur
+        if crossing.user1_id == current_user.id:
+            other_user_id = crossing.user2_id
+            other_look_id = crossing.user2_look_id
+        else:
+            other_user_id = crossing.user1_id
+            other_look_id = crossing.user1_look_id
+
+        other_user = db.query(User).filter(User.id == other_user_id).first()
+        other_look = db.query(Look).filter(Look.id == other_look_id).first() if other_look_id else None
+
+        result.append({
+            "id": crossing.id,
+            "crossed_at": crossing.crossed_at.isoformat(),
+            "location_name": crossing.location_name,
+            "likes_count": crossing.likes_count,
+            "views_count": crossing.views_count,
+            "saved_at": s.created_at.isoformat(),
+            "other_user": {
+                "id": other_user.id,
+                "username": other_user.username,
+                "avatar_url": other_user.avatar_url
+            } if other_user else None,
+            "other_look_photo_url": other_look.photo_url if other_look else None
+        })
+
+    return result
+
+
 @router.get("/{crossing_id}/stats")
 async def get_crossing_stats(
     crossing_id: int,
