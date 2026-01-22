@@ -14,6 +14,10 @@ from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/looks", tags=["Looks"])
 
+# Limite de looks par jour
+MAX_LOOKS_PER_DAY = 5
+
+
 @router.post("/", response_model=LookResponse, status_code=status.HTTP_201_CREATED)
 async def create_look(
     photo: UploadFile = File(...),
@@ -26,6 +30,19 @@ async def create_look(
 ):
     """Creer un nouveau look du jour avec photo"""
     import json
+
+    # Verifier la limite de looks par jour
+    today = date.today()
+    looks_today = db.query(Look).filter(
+        Look.user_id == current_user.id,
+        Look.look_date == today
+    ).count()
+
+    if looks_today >= MAX_LOOKS_PER_DAY:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Tu as atteint la limite de {MAX_LOOKS_PER_DAY} looks par jour. Reviens demain !"
+        )
 
     # Verifier le type de fichier
     if not photo.content_type.startswith("image/"):
@@ -105,6 +122,26 @@ async def get_my_looks(
         Look.user_id == current_user.id
     ).order_by(Look.look_date.desc()).offset(skip).limit(limit).all()
     return looks
+
+
+@router.get("/limit")
+async def get_looks_limit(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Obtenir le nombre de looks restants pour aujourd'hui"""
+    today = date.today()
+    looks_today = db.query(Look).filter(
+        Look.user_id == current_user.id,
+        Look.look_date == today
+    ).count()
+
+    return {
+        "looks_today": looks_today,
+        "max_per_day": MAX_LOOKS_PER_DAY,
+        "remaining": max(0, MAX_LOOKS_PER_DAY - looks_today)
+    }
+
 
 @router.get("/today", response_model=List[LookResponse])
 async def get_today_looks(

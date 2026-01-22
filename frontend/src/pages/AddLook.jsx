@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Camera, Plus, X, Upload, ChevronLeft, MapPin, Save } from 'lucide-react'
-import { createLook, getLook, updateLook, getPhotoUrl } from '../api/client'
+import { Camera, Plus, X, Upload, ChevronLeft, MapPin, Save, AlertCircle } from 'lucide-react'
+import { createLook, getLook, updateLook, getPhotoUrl, getLooksLimit } from '../api/client'
 import toast from 'react-hot-toast'
 
 const CATEGORIES = [
@@ -23,13 +23,26 @@ export default function AddLook() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingLook, setLoadingLook] = useState(isEditing)
+  const [looksLimit, setLooksLimit] = useState({ remaining: 5, max_per_day: 5, looks_today: 0 })
 
   // Charger le look existant si on est en mode édition
   useEffect(() => {
     if (isEditing) {
       loadExistingLook()
+    } else {
+      // Charger la limite de looks
+      loadLooksLimit()
     }
   }, [id])
+
+  const loadLooksLimit = async () => {
+    try {
+      const { data } = await getLooksLimit()
+      setLooksLimit(data)
+    } catch (error) {
+      console.error('Erreur chargement limite:', error)
+    }
+  }
 
   const loadExistingLook = async () => {
     try {
@@ -96,6 +109,12 @@ export default function AddLook() {
       return
     }
 
+    // Vérifier la limite (sauf en édition)
+    if (!isEditing && looksLimit.remaining <= 0) {
+      toast.error('Tu as atteint la limite de looks pour aujourd\'hui')
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -151,6 +170,41 @@ export default function AddLook() {
       <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide px-4 pt-4 mb-3">
         {isEditing ? 'Modifier mon look' : 'Ajouter mon look du jour'}
       </h2>
+
+      {/* Limite de looks - seulement en mode création */}
+      {!isEditing && (
+        <div className="px-4">
+          {looksLimit.remaining > 0 ? (
+            <div className="bg-lookup-mint-light rounded-xl p-3 flex items-center gap-3">
+              <div className="w-10 h-10 bg-lookup-mint rounded-full flex items-center justify-center text-white font-bold">
+                {looksLimit.remaining}
+              </div>
+              <div>
+                <p className="text-lookup-black font-medium text-sm">
+                  {looksLimit.remaining} look{looksLimit.remaining > 1 ? 's' : ''} restant{looksLimit.remaining > 1 ? 's' : ''} aujourd'hui
+                </p>
+                <p className="text-lookup-gray text-xs">
+                  {looksLimit.looks_today}/{looksLimit.max_per_day} utilisés
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-red-50 rounded-xl p-3 flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <AlertCircle size={20} className="text-red-500" />
+              </div>
+              <div>
+                <p className="text-red-600 font-medium text-sm">
+                  Limite atteinte pour aujourd'hui
+                </p>
+                <p className="text-red-400 text-xs">
+                  Tu as déjà posté {looksLimit.max_per_day} looks. Reviens demain !
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="px-4 space-y-4">
         {/* Photo */}
@@ -280,7 +334,7 @@ export default function AddLook() {
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading || (!isEditing && !photo)}
+          disabled={loading || (!isEditing && !photo) || (!isEditing && looksLimit.remaining <= 0)}
           className="w-full flex items-center justify-center gap-2 bg-lookup-mint text-white font-semibold py-4 rounded-full shadow-lg hover:bg-lookup-mint-dark transition-all disabled:opacity-50 mt-2"
         >
           {isEditing ? <Save size={20} /> : <Upload size={20} />}

@@ -55,6 +55,7 @@ export const createLook = (formData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 export const getMyLooks = () => api.get('/looks/')
+export const getLooksLimit = () => api.get('/looks/limit')
 export const getTodayLook = () => api.get('/looks/today')
 export const getLook = (id) => api.get(`/looks/${id}`)
 export const updateLook = (id, formData) =>
