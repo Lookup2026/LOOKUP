@@ -211,20 +211,77 @@ async def get_today_looks(
     ).order_by(Look.created_at.desc()).all()
     return looks
 
-@router.get("/{look_id}", response_model=LookResponse)
+@router.get("/{look_id}")
 async def get_look(
     look_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Obtenir un look par ID"""
+    """Obtenir un look par ID avec infos utilisateur"""
     look = db.query(Look).filter(Look.id == look_id).first()
     if not look:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Look non trouve"
         )
-    return look
+
+    user = db.query(User).filter(User.id == look.user_id).first()
+
+    # Verifier si l'utilisateur courant like/saved ce look
+    user_liked = db.query(LookLike).filter(
+        LookLike.look_id == look_id,
+        LookLike.user_id == current_user.id
+    ).first() is not None
+
+    user_saved = db.query(SavedLook).filter(
+        SavedLook.look_id == look_id,
+        SavedLook.user_id == current_user.id
+    ).first() is not None
+
+    # Enregistrer la vue
+    existing_view = db.query(LookView).filter(
+        LookView.look_id == look_id,
+        LookView.user_id == current_user.id
+    ).first()
+    if not existing_view and look.user_id != current_user.id:
+        db.add(LookView(look_id=look_id, user_id=current_user.id))
+        look.views_count += 1
+        db.commit()
+        db.refresh(look)
+
+    return {
+        "id": look.id,
+        "title": look.title,
+        "description": look.description,
+        "photo_url": look.photo_url,
+        "look_date": look.look_date.isoformat(),
+        "created_at": look.created_at.isoformat(),
+        "likes_count": look.likes_count,
+        "views_count": look.views_count,
+        "user": {
+            "id": user.id,
+            "username": user.username,
+            "avatar_url": user.avatar_url
+        } if user else None,
+        "items": [
+            {
+                "id": item.id,
+                "category": item.category,
+                "brand": item.brand,
+                "product_name": item.product_name,
+                "product_reference": item.product_reference,
+                "product_url": item.product_url,
+                "color": item.color
+            }
+            for item in look.items
+        ],
+        "stats": {
+            "likes_count": look.likes_count,
+            "views_count": look.views_count,
+            "user_liked": user_liked,
+            "user_saved": user_saved
+        }
+    }
 
 @router.put("/{look_id}", response_model=LookResponse)
 async def update_look(
