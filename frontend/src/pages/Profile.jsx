@@ -48,21 +48,29 @@ export default function Profile() {
 
   const loadLooks = async () => {
     try {
-      const [myLooksRes, savedCrossingsRes, followingRes, followersRes] = await Promise.all([
+      const [myLooksRes, savedCrossingsRes] = await Promise.all([
         getMyLooks(),
-        getSavedCrossings(),
-        getFollowing(),
-        getFollowers()
+        getSavedCrossings()
       ])
       setLooks(myLooksRes.data)
       setSavedLooks(savedCrossingsRes.data || [])
+    } catch (error) {
+      console.error('Erreur:', error)
+    }
+
+    // Charger followers/following separement (non bloquant)
+    try {
+      const [followingRes, followersRes] = await Promise.all([
+        getFollowing(),
+        getFollowers()
+      ])
       setFollowingCount(followingRes.data?.length || 0)
       setFollowersCount(followersRes.data?.length || 0)
     } catch (error) {
-      console.error('Erreur:', error)
-    } finally {
-      setLoading(false)
+      console.error('Erreur followers:', error)
     }
+
+    setLoading(false)
   }
 
   const handleAvatarChange = async (e) => {
