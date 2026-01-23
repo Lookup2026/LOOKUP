@@ -84,4 +84,14 @@ export const getBlockedUsers = () => api.get('/users/blocked')
 export const checkIfBlocked = (id) => api.get(`/users/${id}/is-blocked`)
 export const reportContent = (data) => api.post('/users/report', null, { params: data })
 
+// Follow
+export const followUser = (id) => api.post(`/users/${id}/follow`)
+export const isFollowing = (id) => api.get(`/users/${id}/is-following`)
+export const getFollowing = () => api.get('/users/following')
+export const getFollowers = () => api.get('/users/followers')
+export const searchUsers = (q) => api.get('/users/search', { params: { q } })
+
+// Feed
+export const getFriendsFeed = () => api.get('/looks/feed')
+
 export default api

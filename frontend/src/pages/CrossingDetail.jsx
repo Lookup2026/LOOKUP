@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, MoreVertical, Map, Bookmark, Camera, Share2, ShieldOff, AlertTriangle, X } from 'lucide-react'
-import { getCrossingDetail, likeCrossing, saveCrossing, getPhotoUrl, blockUser, reportContent } from '../api/client'
+import { getCrossingDetail, likeCrossing, saveCrossing, getPhotoUrl, blockUser, reportContent, followUser, isFollowing } from '../api/client'
 import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -74,6 +74,8 @@ export default function CrossingDetail() {
   const [showReportModal, setShowReportModal] = useState(false)
   const [reportReason, setReportReason] = useState('')
   const [reporting, setReporting] = useState(false)
+  const [following, setFollowing] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
 
   useEffect(() => {
     loadDetail()
@@ -107,10 +109,35 @@ export default function CrossingDetail() {
       if (crossingData.stats) {
         setStats(crossingData.stats)
       }
+
+      // Verifier si on suit cet utilisateur
+      if (crossingData.other_user?.id) {
+        try {
+          const { data: followData } = await isFollowing(crossingData.other_user.id)
+          setFollowing(followData.is_following)
+        } catch (e) {
+          // Ignore - non critique
+        }
+      }
     } catch (error) {
       console.error('Erreur:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleFollow = async () => {
+    if (!data?.other_user?.id || followLoading) return
+
+    setFollowLoading(true)
+    try {
+      const { data: followData } = await followUser(data.other_user.id)
+      setFollowing(followData.following)
+      toast.success(followData.following ? `Tu suis ${data.other_user.username}` : `Tu ne suis plus ${data.other_user.username}`)
+    } catch (error) {
+      toast.error('Erreur')
+    } finally {
+      setFollowLoading(false)
     }
   }
 
@@ -431,7 +458,22 @@ export default function CrossingDetail() {
               </div>
             )}
             <div className="flex-1">
-              <p className="font-semibold text-lookup-black">{other_user?.username}</p>
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-lookup-black">{other_user?.username}</p>
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition active:scale-95 ${
+                    following
+                      ? 'bg-lookup-cream text-lookup-gray border border-gray-200'
+                      : 'bg-lookup-mint text-white'
+                  }`}
+                >
+                  {followLoading ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  ) : following ? 'Suivi' : 'Suivre'}
+                </button>
+              </div>
               <div className="flex items-center gap-1 text-lookup-gray text-sm">
                 <Clock size={12} />
                 <span>

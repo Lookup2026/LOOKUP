@@ -8,7 +8,7 @@ import uuid
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.storage import upload_photo, delete_photo
-from app.models import User, Look, LookItem, LookLike, LookView, SavedLook
+from app.models import User, Look, LookItem, LookLike, LookView, SavedLook, Follow
 from app.schemas import LookCreate, LookResponse, LookItemCreate
 from app.api.deps import get_current_user
 
@@ -141,6 +141,60 @@ async def get_looks_limit(
         "max_per_day": MAX_LOOKS_PER_DAY,
         "remaining": max(0, MAX_LOOKS_PER_DAY - looks_today)
     }
+
+
+@router.get("/feed")
+async def get_friends_feed(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Obtenir les looks du jour des gens que je suis"""
+    today = date.today()
+
+    # Obtenir les IDs des gens suivis
+    following_ids = [
+        f.followed_id for f in db.query(Follow).filter(
+            Follow.follower_id == current_user.id
+        ).all()
+    ]
+
+    if not following_ids:
+        return []
+
+    # Obtenir leurs looks du jour
+    looks = db.query(Look).filter(
+        Look.user_id.in_(following_ids),
+        Look.look_date == today
+    ).order_by(Look.created_at.desc()).all()
+
+    result = []
+    for look in looks:
+        user = db.query(User).filter(User.id == look.user_id).first()
+        result.append({
+            "id": look.id,
+            "title": look.title,
+            "photo_url": look.photo_url,
+            "look_date": look.look_date.isoformat(),
+            "created_at": look.created_at.isoformat(),
+            "likes_count": look.likes_count,
+            "views_count": look.views_count,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "avatar_url": user.avatar_url
+            } if user else None,
+            "items": [
+                {
+                    "category": item.category,
+                    "brand": item.brand,
+                    "product_name": item.product_name,
+                    "color": item.color
+                }
+                for item in look.items
+            ]
+        })
+
+    return result
 
 
 @router.get("/today", response_model=List[LookResponse])

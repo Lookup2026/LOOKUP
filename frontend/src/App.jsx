@@ -13,6 +13,7 @@ import AddLook from './pages/AddLook'
 import CrossingDetail from './pages/CrossingDetail'
 import Profile from './pages/Profile'
 import Settings from './pages/Settings'
+import Search from './pages/Search'
 
 // Components
 import Layout from './components/Layout'
@@ -123,6 +124,7 @@ function App() {
           <Route path="edit-look/:id" element={<AddLook />} />
           <Route path="crossings/:id" element={<CrossingDetail />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="search" element={<Search />} />
           <Route path="settings" element={<Settings />} />
         </Route>
 

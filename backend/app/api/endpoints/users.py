@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from app.core.database import get_db
-from app.models import User, BlockedUser, Report, Look
+from app.models import User, BlockedUser, Report, Look, Follow
 from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -83,6 +83,135 @@ async def check_if_blocked(
     ).first()
 
     return {"is_blocked": blocked is not None}
+
+
+# ============== FOLLOW ==============
+
+@router.post("/{user_id}/follow")
+async def follow_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Suivre/Ne plus suivre un utilisateur (toggle)"""
+    if user_id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tu ne peux pas te suivre toi-meme"
+        )
+
+    target_user = db.query(User).filter(User.id == user_id).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouve"
+        )
+
+    # Verifier si deja suivi
+    existing = db.query(Follow).filter(
+        Follow.follower_id == current_user.id,
+        Follow.followed_id == user_id
+    ).first()
+
+    if existing:
+        # Unfollow
+        db.delete(existing)
+        db.commit()
+        return {"following": False, "message": "Tu ne suis plus cet utilisateur"}
+    else:
+        # Follow
+        follow = Follow(follower_id=current_user.id, followed_id=user_id)
+        db.add(follow)
+        db.commit()
+        return {"following": True, "message": "Tu suis maintenant cet utilisateur"}
+
+
+@router.get("/{user_id}/is-following")
+async def check_if_following(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Verifier si on suit un utilisateur"""
+    following = db.query(Follow).filter(
+        Follow.follower_id == current_user.id,
+        Follow.followed_id == user_id
+    ).first()
+
+    return {"is_following": following is not None}
+
+
+@router.get("/following")
+async def get_following(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Obtenir la liste des gens que je suis"""
+    follows = db.query(Follow).filter(
+        Follow.follower_id == current_user.id
+    ).all()
+
+    return [
+        {
+            "id": f.followed.id,
+            "username": f.followed.username,
+            "avatar_url": f.followed.avatar_url,
+            "followed_at": f.created_at
+        }
+        for f in follows
+    ]
+
+
+@router.get("/followers")
+async def get_followers(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Obtenir la liste de mes followers"""
+    followers = db.query(Follow).filter(
+        Follow.followed_id == current_user.id
+    ).all()
+
+    return [
+        {
+            "id": f.follower.id,
+            "username": f.follower.username,
+            "avatar_url": f.follower.avatar_url,
+            "followed_at": f.created_at
+        }
+        for f in followers
+    ]
+
+
+@router.get("/search")
+async def search_users(
+    q: str = Query(..., min_length=2),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Rechercher un utilisateur par username"""
+    users = db.query(User).filter(
+        User.username.ilike(f"%{q}%"),
+        User.id != current_user.id,
+        User.is_active == True
+    ).limit(20).all()
+
+    # Verifier le statut de suivi pour chaque resultat
+    result = []
+    for user in users:
+        is_following = db.query(Follow).filter(
+            Follow.follower_id == current_user.id,
+            Follow.followed_id == user.id
+        ).first() is not None
+
+        result.append({
+            "id": user.id,
+            "username": user.username,
+            "avatar_url": user.avatar_url,
+            "is_following": is_following
+        })
+
+    return result
 
 
 # ============== SIGNALEMENTS ==============

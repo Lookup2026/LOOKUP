@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
-import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar, getSavedCrossings } from '../api/client'
+import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar, getSavedCrossings, getFollowing, getFollowers } from '../api/client'
 import toast from 'react-hot-toast'
 
 const CATEGORY_LABELS = {
@@ -30,6 +30,8 @@ export default function Profile() {
   const [linkCopied, setLinkCopied] = useState(false)
   const [selectedSavedLook, setSelectedSavedLook] = useState(null)
   const [showSavedModal, setShowSavedModal] = useState(false)
+  const [followersCount, setFollowersCount] = useState(0)
+  const [followingCount, setFollowingCount] = useState(0)
 
   useEffect(() => {
     loadLooks()
@@ -46,12 +48,16 @@ export default function Profile() {
 
   const loadLooks = async () => {
     try {
-      const [myLooksRes, savedCrossingsRes] = await Promise.all([
+      const [myLooksRes, savedCrossingsRes, followingRes, followersRes] = await Promise.all([
         getMyLooks(),
-        getSavedCrossings()
+        getSavedCrossings(),
+        getFollowing(),
+        getFollowers()
       ])
       setLooks(myLooksRes.data)
       setSavedLooks(savedCrossingsRes.data || [])
+      setFollowingCount(followingRes.data?.length || 0)
+      setFollowersCount(followersRes.data?.length || 0)
     } catch (error) {
       console.error('Erreur:', error)
     } finally {
@@ -202,17 +208,18 @@ export default function Profile() {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-2 pt-4 border-t border-lookup-gray-light">
+          <div className="grid grid-cols-4 gap-2 pt-4 border-t border-lookup-gray-light">
             <div className="text-center">
               <p className="text-2xl font-bold text-lookup-black">{looks.length}</p>
               <p className="text-lookup-gray text-xs">Looks</p>
             </div>
             <div className="text-center">
-              <div className="flex items-center justify-center gap-1">
-                <Eye size={14} className="text-lookup-mint" />
-                <p className="text-2xl font-bold text-lookup-black">{totalViews}</p>
-              </div>
-              <p className="text-lookup-gray text-xs">Vues</p>
+              <p className="text-2xl font-bold text-lookup-black">{followersCount}</p>
+              <p className="text-lookup-gray text-xs">Abonnés</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-lookup-black">{followingCount}</p>
+              <p className="text-lookup-gray text-xs">Suivis</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">

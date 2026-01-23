@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, RefreshCw } from 'lucide-react'
-import { getTodayLook, getMyCrossings, getPhotoUrl } from '../api/client'
+import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, RefreshCw, Search, Users } from 'lucide-react'
+import { getTodayLook, getMyCrossings, getPhotoUrl, getFriendsFeed } from '../api/client'
 import { useLocationStore } from '../stores/locationStore'
 import toast from 'react-hot-toast'
 import PullToRefresh from 'react-simple-pull-to-refresh'
@@ -24,6 +24,8 @@ export default function Home() {
 
   const [todayLooks, setTodayLooks] = useState([])
   const [crossings, setCrossings] = useState([])
+  const [friendsFeed, setFriendsFeed] = useState([])
+  const [feedTab, setFeedTab] = useState('crossings') // 'crossings' or 'friends'
   const [loading, setLoading] = useState(true)
   const [lastPing, setLastPing] = useState(null)
   const [pingStatus, setPingStatus] = useState('waiting') // waiting, success, error
@@ -71,9 +73,10 @@ export default function Home() {
 
   const loadData = async () => {
     try {
-      const [lookRes, crossingsRes] = await Promise.all([
+      const [lookRes, crossingsRes, feedRes] = await Promise.all([
         getTodayLook(),
-        getMyCrossings()
+        getMyCrossings(),
+        getFriendsFeed()
       ])
       // Gerer les deux cas: ancien endpoint (objet) et nouveau (tableau)
       const looksData = lookRes.data
@@ -86,6 +89,7 @@ export default function Home() {
         setTodayLooks([])
       }
       setCrossings(crossingsRes.data || [])
+      setFriendsFeed(feedRes.data || [])
     } catch (error) {
       console.error('Erreur chargement:', error)
     } finally {
@@ -147,9 +151,14 @@ export default function Home() {
       {/* Header */}
       <div className="bg-white px-4 pt-4 pb-3">
         <div className="flex items-center justify-between">
-          <Link to="/settings" className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
-            <Settings size={18} className="text-lookup-gray" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/search" className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+              <Search size={18} className="text-lookup-gray" />
+            </Link>
+            <Link to="/settings" className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+              <Settings size={18} className="text-lookup-gray" />
+            </Link>
+          </div>
           <div className="flex items-center gap-2">
             {/* Status indicator */}
             <div className={`w-2 h-2 rounded-full ${
@@ -248,78 +257,183 @@ export default function Home() {
         )}
       </div>
 
-      {/* Crossed Looks Feed */}
+      {/* Feed Tabs + Content */}
       <div className="px-4 pt-6">
-        <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide mb-3">
-          Looks récemment croisés
-        </h2>
+        {/* Tabs */}
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setFeedTab('crossings')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              feedTab === 'crossings'
+                ? 'bg-lookup-mint text-white'
+                : 'bg-white text-lookup-gray border border-gray-200'
+            }`}
+          >
+            <MapPin size={14} />
+            Croisements
+          </button>
+          <button
+            onClick={() => setFeedTab('friends')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              feedTab === 'friends'
+                ? 'bg-lookup-mint text-white'
+                : 'bg-white text-lookup-gray border border-gray-200'
+            }`}
+          >
+            <Users size={14} />
+            Amis
+          </button>
+        </div>
 
-        {crossings.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
-            <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
-              <MapPin size={28} className="text-lookup-mint" />
-            </div>
-            <p className="text-lookup-black font-medium">Aucun croisement pour l'instant</p>
-            <p className="text-lookup-gray text-sm mt-1">
-              Déplacez-vous pour croiser d'autres passionnés de mode
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {crossings.map((crossing) => (
-              <Link
-                key={crossing.id}
-                to={`/crossings/${crossing.id}`}
-                className="block bg-white rounded-2xl overflow-hidden shadow-sm"
-              >
-                {/* Photo */}
-                <div className="relative">
-                  {crossing.other_look_photo_url ? (
-                    <img
-                      src={getPhotoUrl(crossing.other_look_photo_url)}
-                      alt=""
-                      className="w-full aspect-[4/5] object-cover bg-gray-100"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
-                      <MapPin size={48} className="text-lookup-mint" />
-                    </div>
-                  )}
-
-                  {/* Gradient overlay at bottom */}
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                    <p className="text-white font-semibold text-lg">{crossing.other_username}</p>
-                    <div className="flex items-center gap-4 mt-1">
-                      <div className="flex items-center gap-1 text-white/90 text-sm">
-                        <Clock size={14} />
-                        <span>{getTimeAgo(crossing.crossed_at)}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-white/90 text-sm">
-                        <MapPin size={14} />
-                        <span>{getApproxLocation(crossing)}</span>
-                      </div>
-                    </div>
-                  </div>
+        {/* Crossings Feed */}
+        {feedTab === 'crossings' && (
+          <>
+            {crossings.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+                <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <MapPin size={28} className="text-lookup-mint" />
                 </div>
+                <p className="text-lookup-black font-medium">Aucun croisement pour l'instant</p>
+                <p className="text-lookup-gray text-sm mt-1">
+                  Déplacez-vous pour croiser d'autres passionnés de mode
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {crossings.map((crossing) => (
+                  <Link
+                    key={crossing.id}
+                    to={`/crossings/${crossing.id}`}
+                    className="block bg-white rounded-2xl overflow-hidden shadow-sm"
+                  >
+                    <div className="relative">
+                      {crossing.other_look_photo_url ? (
+                        <img
+                          src={getPhotoUrl(crossing.other_look_photo_url)}
+                          alt=""
+                          className="w-full aspect-[4/5] object-cover bg-gray-100"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
+                          <MapPin size={48} className="text-lookup-mint" />
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                        <p className="text-white font-semibold text-lg">{crossing.other_username}</p>
+                        <div className="flex items-center gap-4 mt-1">
+                          <div className="flex items-center gap-1 text-white/90 text-sm">
+                            <Clock size={14} />
+                            <span>{getTimeAgo(crossing.crossed_at)}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-white/90 text-sm">
+                            <MapPin size={14} />
+                            <span>{getApproxLocation(crossing)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3 bg-white">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 text-lookup-gray">
+                          <Eye size={18} />
+                          <span className="text-sm font-medium">{crossing.views_count || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-lookup-gray">
+                          <Heart size={18} />
+                          <span className="text-sm font-medium">{crossing.likes_count || 0}</span>
+                        </div>
+                      </div>
+                      <span className="text-lookup-mint text-sm font-medium">Voir les détails</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
-                {/* Stats bar */}
-                <div className="flex items-center justify-between px-4 py-3 bg-white">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5 text-lookup-gray">
-                      <Eye size={18} />
-                      <span className="text-sm font-medium">{crossing.views_count || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-lookup-gray">
-                      <Heart size={18} />
-                      <span className="text-sm font-medium">{crossing.likes_count || 0}</span>
-                    </div>
-                  </div>
-                  <span className="text-lookup-mint text-sm font-medium">Voir les détails</span>
+        {/* Friends Feed */}
+        {feedTab === 'friends' && (
+          <>
+            {friendsFeed.length === 0 ? (
+              <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+                <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
+                  <Users size={28} className="text-lookup-mint" />
                 </div>
-              </Link>
-            ))}
-          </div>
+                <p className="text-lookup-black font-medium">Aucun look d'amis</p>
+                <p className="text-lookup-gray text-sm mt-1">
+                  Suis des personnes pour voir leurs looks ici
+                </p>
+                <Link to="/search" className="inline-block mt-3 text-lookup-mint text-sm font-medium">
+                  Rechercher des amis
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {friendsFeed.map((look) => (
+                  <Link
+                    key={look.id}
+                    to={`/look/${look.id}`}
+                    className="block bg-white rounded-2xl overflow-hidden shadow-sm"
+                  >
+                    <div className="relative">
+                      {look.photo_url ? (
+                        <img
+                          src={getPhotoUrl(look.photo_url)}
+                          alt=""
+                          className="w-full aspect-[4/5] object-cover bg-gray-100"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
+                          <Heart size={48} className="text-lookup-mint" />
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                        <div className="flex items-center gap-2">
+                          {look.user?.avatar_url && (
+                            <img
+                              src={getPhotoUrl(look.user.avatar_url)}
+                              alt=""
+                              className="w-8 h-8 rounded-full object-cover border-2 border-white"
+                            />
+                          )}
+                          <p className="text-white font-semibold text-lg">{look.user?.username}</p>
+                        </div>
+                        <div className="flex items-center gap-4 mt-1">
+                          <div className="flex items-center gap-1 text-white/90 text-sm">
+                            <Clock size={14} />
+                            <span>{getTimeAgo(look.created_at)}</span>
+                          </div>
+                          {look.title && (
+                            <span className="text-white/90 text-sm">{look.title}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3 bg-white">
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 text-lookup-gray">
+                          <Eye size={18} />
+                          <span className="text-sm font-medium">{look.views_count || 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-lookup-gray">
+                          <Heart size={18} />
+                          <span className="text-sm font-medium">{look.likes_count || 0}</span>
+                        </div>
+                      </div>
+                      {look.items?.length > 0 && (
+                        <span className="text-lookup-gray text-xs">
+                          {look.items.map(i => i.brand).filter(Boolean).join(', ')}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

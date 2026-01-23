@@ -34,6 +34,20 @@ class User(Base):
     referred_by = relationship("User", remote_side=[id], foreign_keys=[referred_by_id])
 
 
+class Follow(Base):
+    """Table pour stocker les abonnements (followers)"""
+    __tablename__ = "follows"
+
+    id = Column(Integer, primary_key=True, index=True)
+    follower_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Qui suit
+    followed_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Qui est suivi
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relations
+    follower = relationship("User", foreign_keys=[follower_id])
+    followed = relationship("User", foreign_keys=[followed_id])
+
+
 class BlockedUser(Base):
     """Table pour stocker les utilisateurs bloques"""
     __tablename__ = "blocked_users"
