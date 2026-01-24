@@ -92,6 +92,7 @@ export default function Home() {
       setFriendsFeed(feedRes.data || [])
     } catch (error) {
       console.error('Erreur chargement:', error)
+      toast.error('Erreur de chargement')
     } finally {
       setLoading(false)
     }

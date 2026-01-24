@@ -33,6 +33,7 @@ export default function Search() {
       setSearched(true)
     } catch (error) {
       console.error('Erreur recherche:', error)
+      toast.error('Erreur de recherche')
     } finally {
       setLoading(false)
     }

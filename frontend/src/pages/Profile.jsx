@@ -56,6 +56,7 @@ export default function Profile() {
       setSavedLooks(savedCrossingsRes.data || [])
     } catch (error) {
       console.error('Erreur:', error)
+      toast.error('Erreur de chargement du profil')
     }
 
     // Charger followers/following separement (non bloquant)

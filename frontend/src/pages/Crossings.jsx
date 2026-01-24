@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MapPin, Clock, Eye, Heart, Settings } from 'lucide-react'
 import { getMyCrossings, getPhotoUrl } from '../api/client'
+import toast from 'react-hot-toast'
 
 export default function Crossings() {
   const [crossings, setCrossings] = useState([])
@@ -17,6 +18,7 @@ export default function Crossings() {
       setCrossings(data)
     } catch (error) {
       console.error('Erreur:', error)
+      toast.error('Erreur de chargement')
     } finally {
       setLoading(false)
     }

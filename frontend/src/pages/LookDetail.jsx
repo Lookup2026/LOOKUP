@@ -44,6 +44,7 @@ export default function LookDetail() {
       }
     } catch (error) {
       console.error('Erreur:', error)
+      toast.error('Erreur de chargement')
     } finally {
       setLoading(false)
     }
