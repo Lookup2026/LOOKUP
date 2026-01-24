@@ -93,6 +93,8 @@ export const isFollowing = (id) => api.get(`/users/${id}/is-following`)
 export const getFollowing = () => api.get('/users/following')
 export const getFollowers = () => api.get('/users/followers')
 export const searchUsers = (q) => api.get('/users/search', { params: { q } })
+export const getVisibility = () => api.get('/users/me/visibility')
+export const updateVisibility = (visible) => api.put('/users/me/visibility', null, { params: { visible } })
 
 // Feed
 export const getFriendsFeed = () => api.get('/looks/feed')

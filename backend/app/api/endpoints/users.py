@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 from typing import List, Optional
 
 from app.core.database import get_db
@@ -193,7 +194,8 @@ async def search_users(
     users = db.query(User).filter(
         User.username.ilike(f"%{q}%"),
         User.id != current_user.id,
-        User.is_active == True
+        User.is_active == True,
+        or_(User.is_visible == True, User.is_visible == None)
     ).limit(20).all()
 
     # Verifier le statut de suivi pour chaque resultat
@@ -298,3 +300,25 @@ async def report_content(
     db.commit()
 
     return {"success": True, "message": "Signalement envoye. Merci de nous aider a garder LOOKUP sur."}
+
+
+# ============== VISIBILITE ==============
+
+@router.put("/me/visibility")
+async def update_visibility(
+    visible: bool,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Changer la visibilite du profil"""
+    current_user.is_visible = visible
+    db.commit()
+    return {"is_visible": current_user.is_visible}
+
+
+@router.get("/me/visibility")
+async def get_visibility(
+    current_user: User = Depends(get_current_user)
+):
+    """Obtenir l'etat de visibilite du profil"""
+    return {"is_visible": current_user.is_visible if current_user.is_visible is not None else True}

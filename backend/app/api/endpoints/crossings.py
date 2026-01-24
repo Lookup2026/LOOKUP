@@ -91,6 +91,11 @@ async def send_location_ping(
     dedup_window = datetime.utcnow() - timedelta(hours=1)
 
     for other_ping in users_in_same_zone:
+        # Verifier que l'autre utilisateur est visible
+        other_user = db.query(User).filter(User.id == other_ping.user_id).first()
+        if other_user and other_user.is_visible == False:
+            continue
+
         # Verifier qu'on n'a pas deja detecte ce croisement recemment
         existing = db.query(Crossing).filter(
             or_(

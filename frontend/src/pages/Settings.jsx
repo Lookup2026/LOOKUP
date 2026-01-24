@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, MapPin, Globe, ChevronRight, Bell, Shield, HelpCircle, LogOut, User, Trash2, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, MapPin, Globe, ChevronRight, Shield, HelpCircle, LogOut, User, Trash2, AlertTriangle } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
-import { deleteAccount } from '../api/client'
+import { deleteAccount, getVisibility, updateVisibility } from '../api/client'
 import toast from 'react-hot-toast'
 
 const LANGUAGES = [
@@ -17,25 +17,25 @@ export default function Settings() {
   const { logout, user } = useAuthStore()
   const [language, setLanguage] = useState(localStorage.getItem('language') || 'fr')
   const [showLanguages, setShowLanguages] = useState(false)
-  const [showNotifications, setShowNotifications] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  // Notifications settings
-  const [notifCrossings, setNotifCrossings] = useState(
-    localStorage.getItem('notif_crossings') !== 'false'
-  )
-  const [notifLikes, setNotifLikes] = useState(
-    localStorage.getItem('notif_likes') !== 'false'
-  )
-
   // Privacy settings
-  const [profileVisible, setProfileVisible] = useState(
-    localStorage.getItem('profile_visible') !== 'false'
-  )
+  const [profileVisible, setProfileVisible] = useState(true)
+
+  useEffect(() => {
+    loadVisibility()
+  }, [])
+
+  const loadVisibility = async () => {
+    try {
+      const { data } = await getVisibility()
+      setProfileVisible(data.is_visible)
+    } catch (e) {}
+  }
 
   const handleLanguageChange = (code) => {
     setLanguage(code)
@@ -44,19 +44,15 @@ export default function Settings() {
     toast.success('Langue changee')
   }
 
-  const handleNotifChange = (type, value) => {
-    if (type === 'crossings') {
-      setNotifCrossings(value)
-      localStorage.setItem('notif_crossings', value)
-    } else {
-      setNotifLikes(value)
-      localStorage.setItem('notif_likes', value)
-    }
-  }
-
-  const handlePrivacyChange = (value) => {
+  const handlePrivacyChange = async (value) => {
     setProfileVisible(value)
-    localStorage.setItem('profile_visible', value)
+    try {
+      await updateVisibility(value)
+      toast.success(value ? 'Profil visible' : 'Profil masque')
+    } catch (e) {
+      setProfileVisible(!value)
+      toast.error('Erreur lors de la mise a jour')
+    }
   }
 
   const handleLogout = () => {
@@ -170,53 +166,6 @@ export default function Settings() {
                 )}
               </button>
             ))}
-          </div>
-        )}
-
-        {/* Notifications */}
-        <button
-          onClick={() => setShowNotifications(!showNotifications)}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
-              <Bell size={18} className="text-lookup-mint" />
-            </div>
-            <div className="text-left">
-              <p className="font-medium text-lookup-black">Notifications</p>
-              <p className="text-sm text-lookup-gray">Gerer les alertes</p>
-            </div>
-          </div>
-          <ChevronRight size={18} className={`text-lookup-gray transition ${showNotifications ? 'rotate-90' : ''}`} />
-        </button>
-
-        {/* Notifications options */}
-        {showNotifications && (
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-lookup-black text-sm">Nouveaux croisements</p>
-                <p className="text-xs text-lookup-gray">Quand quelqu'un croise votre chemin</p>
-              </div>
-              <button
-                onClick={() => handleNotifChange('crossings', !notifCrossings)}
-                className={`w-12 h-7 rounded-full transition-colors ${notifCrossings ? 'bg-lookup-mint' : 'bg-gray-300'}`}
-              >
-                <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${notifCrossings ? 'translate-x-6' : 'translate-x-1'}`}></div>
-              </button>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-lookup-black text-sm">Likes</p>
-                <p className="text-xs text-lookup-gray">Quand quelqu'un aime votre look</p>
-              </div>
-              <button
-                onClick={() => handleNotifChange('likes', !notifLikes)}
-                className={`w-12 h-7 rounded-full transition-colors ${notifLikes ? 'bg-lookup-mint' : 'bg-gray-300'}`}
-              >
-                <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${notifLikes ? 'translate-x-6' : 'translate-x-1'}`}></div>
-              </button>
-            </div>
           </div>
         )}
 
