@@ -5,7 +5,7 @@ import os
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api.endpoints import auth, looks, crossings, users
+from app.api.endpoints import auth, looks, crossings, users, photos
 
 # Creer les tables
 Base.metadata.create_all(bind=engine)
@@ -37,6 +37,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(looks.router, prefix="/api")
 app.include_router(crossings.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
+app.include_router(photos.router, prefix="/api")
 
 @app.get("/")
 async def root():

@@ -66,8 +66,6 @@ export default function CrossingDetail() {
   const [liking, setLiking] = useState(false)
   const [saving, setSaving] = useState(false)
   const [showMap, setShowMap] = useState(false)
-  const [imageLoading, setImageLoading] = useState(true)
-  const [imageError, setImageError] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
   const [blocking, setBlocking] = useState(false)
@@ -340,33 +338,19 @@ export default function CrossingDetail() {
       </div>
 
       {/* Photo */}
-      {other_look?.photo_url && !imageError ? (
+      {other_look?.photo_url ? (
         <div className="px-4 pt-4 mb-4">
           <div className="relative">
-            {/* Loading placeholder */}
-            {imageLoading && (
-              <div className="w-full aspect-[3/4] rounded-2xl bg-gray-100 flex items-center justify-center animate-pulse">
-                <div className="w-8 h-8 border-3 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            )}
             <img
               src={getPhotoUrl(other_look.photo_url)}
               alt="Look"
-              className={`w-full rounded-2xl object-cover max-h-[55vh] shadow-sm ${imageLoading ? 'hidden' : ''}`}
-              loading="lazy"
-              onLoad={() => setImageLoading(false)}
-              onError={() => {
-                setImageLoading(false)
-                setImageError(true)
-              }}
+              className="w-full rounded-2xl object-cover max-h-[55vh] shadow-sm"
             />
-            {/* Views badge - discret en bas à droite */}
-            {!imageLoading && (
-              <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 text-white text-xs backdrop-blur-sm">
-                <Eye size={14} />
-                <span>{stats.views_count}</span>
-              </div>
-            )}
+            {/* Views badge */}
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 text-white text-xs backdrop-blur-sm">
+              <Eye size={14} />
+              <span>{stats.views_count}</span>
+            </div>
           </div>
         </div>
       ) : (
@@ -374,20 +358,8 @@ export default function CrossingDetail() {
           <div className="relative w-full aspect-[3/4] rounded-2xl bg-white flex items-center justify-center shadow-sm">
             <div className="text-center">
               <Camera size={32} className="mx-auto text-lookup-gray mb-2" />
-              <p className="text-lookup-gray">{imageError ? 'Erreur de chargement' : 'Pas de photo'}</p>
-              {imageError && (
-                <button
-                  onClick={() => {
-                    setImageError(false)
-                    setImageLoading(true)
-                  }}
-                  className="mt-2 text-lookup-mint text-sm font-medium"
-                >
-                  Reessayer
-                </button>
-              )}
+              <p className="text-lookup-gray">Pas de photo</p>
             </div>
-            {/* Views badge même sans photo */}
             <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-lookup-gray-light text-lookup-gray text-xs">
               <Eye size={14} />
               <span>{stats.views_count}</span>
@@ -448,7 +420,7 @@ export default function CrossingDetail() {
           <div className="flex items-center gap-3">
             {other_user?.avatar_url ? (
               <img
-                src={other_user.avatar_url}
+                src={getPhotoUrl(other_user.avatar_url)}
                 alt=""
                 className="w-12 h-12 rounded-full object-cover"
               />

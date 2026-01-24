@@ -15,6 +15,7 @@ import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import Search from './pages/Search'
 import LookDetail from './pages/LookDetail'
+import Crossings from './pages/Crossings'
 
 // Components
 import Layout from './components/Layout'
@@ -123,6 +124,7 @@ function App() {
           <Route path="onboarding" element={<Onboarding />} />
           <Route path="add-look" element={<AddLook />} />
           <Route path="edit-look/:id" element={<AddLook />} />
+          <Route path="crossings" element={<Crossings />} />
           <Route path="crossings/:id" element={<CrossingDetail />} />
           <Route path="look/:id" element={<LookDetail />} />
           <Route path="profile" element={<Profile />} />

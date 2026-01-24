@@ -7,8 +7,11 @@ const API_URL = import.meta.env.VITE_API_URL || ''
 // Helper pour construire l'URL complete des photos
 export const getPhotoUrl = (path) => {
   if (!path) return null
-  if (path.startsWith('http')) return path
-  return `${API_URL}${path}`
+  // Extraire le nom du fichier (gere les URLs Supabase completes et les simples noms de fichiers)
+  let filename = path.split('/').pop()
+  filename = filename.split('?')[0]
+  if (!filename) return null
+  return `${API_URL}/api/photos/${filename}`
 }
 
 const api = axios.create({

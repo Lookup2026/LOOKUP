@@ -201,10 +201,10 @@ export default function Crossings() {
       {/* CTA Button */}
       <div className="px-4 mt-6">
         <Link
-          to="/crossings"
+          to="/"
           className="block w-full bg-lookup-mint text-white font-semibold py-4 rounded-full text-center shadow-button"
         >
-          Explorer les looks croises
+          Retour a l'accueil
         </Link>
       </div>
     </div>
