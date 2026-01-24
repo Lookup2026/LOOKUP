@@ -26,6 +26,12 @@ export default {
       boxShadow: {
         'card': '0 2px 12px rgba(0, 0, 0, 0.08)',
         'button': '0 4px 14px rgba(232, 160, 160, 0.4)',
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.06)',
+        'glass-lg': '0 12px 40px rgba(0, 0, 0, 0.08)',
+      },
+      backdropBlur: {
+        'glass': '16px',
+        'glass-lg': '24px',
       }
     },
   },

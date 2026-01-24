@@ -121,9 +121,9 @@ export default function LookDetail() {
   }
 
   return (
-    <div className="min-h-full bg-lookup-cream pb-4">
+    <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="bg-white px-4 pt-4 pb-3">
+      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-lookup-gray" />

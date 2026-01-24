@@ -50,9 +50,9 @@ export default function Search() {
   }
 
   return (
-    <div className="min-h-full bg-lookup-cream pb-4">
+    <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="bg-white px-4 pt-4 pb-3">
+      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -83,7 +83,7 @@ export default function Search() {
         )}
 
         {!loading && searched && results.length === 0 && (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+          <div className="glass rounded-2xl p-8 text-center shadow-glass">
             <div className="w-14 h-14 bg-lookup-cream rounded-full mx-auto mb-3 flex items-center justify-center">
               <SearchIcon size={24} className="text-lookup-gray" />
             </div>
@@ -99,7 +99,7 @@ export default function Search() {
             {results.map((user) => (
               <div
                 key={user.id}
-                className="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-3"
+                className="glass rounded-2xl p-4 shadow-glass flex items-center gap-3"
               >
                 {user.avatar_url ? (
                   <img

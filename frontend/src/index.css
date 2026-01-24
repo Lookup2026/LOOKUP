@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 * {
   margin: 0;
@@ -12,13 +12,40 @@
 
 html, body {
   height: 100%;
-  background-color: #FFFFFF;
   color: #1A1A1A;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 #root {
   height: 100%;
+}
+
+/* Glassmorphism background gradient */
+.bg-glass-gradient {
+  background: linear-gradient(135deg, #FDF2F2 0%, #F5E6F0 25%, #EDE7F6 50%, #F0F4FD 75%, #FDF2F2 100%);
+  min-height: 100%;
+}
+
+/* Glass card effect */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+}
+
+.glass-dark {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 /* PWA safe areas */
@@ -36,11 +63,11 @@ html, body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F5F5F5;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #9DC08B;
+  background: rgba(232, 160, 160, 0.4);
   border-radius: 2px;
 }
 
@@ -51,19 +78,36 @@ html, body {
 
 /* Custom classes */
 .btn-primary {
-  @apply bg-lookup-mint text-white font-semibold py-3 px-6 rounded-full shadow-button hover:bg-lookup-mint-dark transition-all duration-200;
+  @apply bg-gradient-to-r from-lookup-mint to-lookup-mint-dark text-white font-semibold py-3 px-6 rounded-full shadow-button hover:shadow-lg transition-all duration-300 active:scale-95;
 }
 
 .btn-secondary {
-  @apply bg-white text-lookup-black font-semibold py-3 px-6 rounded-full border-2 border-lookup-gray-light hover:border-lookup-mint transition-all duration-200;
+  @apply font-semibold py-3 px-6 rounded-full transition-all duration-300 active:scale-95;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .card {
-  @apply bg-white rounded-2xl shadow-card p-4;
+  @apply rounded-2xl shadow-glass p-4;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 .input-field {
-  @apply w-full bg-lookup-cream border border-lookup-gray-light rounded-xl px-4 py-3 text-lookup-black placeholder-lookup-gray focus:outline-none focus:border-lookup-mint transition-colors;
+  @apply w-full rounded-xl px-4 py-3 text-lookup-black placeholder-lookup-gray focus:outline-none transition-all duration-300;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.input-field:focus {
+  border-color: #E8A0A0;
+  box-shadow: 0 0 0 3px rgba(232, 160, 160, 0.15);
 }
 
 /* Hide scrollbar for horizontal carousels */

@@ -148,15 +148,15 @@ export default function Home() {
         </div>
       }
     >
-    <div className="min-h-full bg-lookup-cream pb-4">
+    <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="bg-white px-4 pt-4 pb-3">
+      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Link to="/search" className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+            <Link to="/search" className="w-9 h-9 glass rounded-full flex items-center justify-center">
               <Search size={18} className="text-lookup-gray" />
             </Link>
-            <Link to="/settings" className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+            <Link to="/settings" className="w-9 h-9 glass rounded-full flex items-center justify-center">
               <Settings size={18} className="text-lookup-gray" />
             </Link>
           </div>
@@ -169,7 +169,7 @@ export default function Home() {
             <div className="w-7 h-7 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center">
               <MapPin size={14} className="text-white" />
             </div>
-            <span className="text-xl font-bold text-lookup-black">LOOKUP</span>
+            <span className="text-xl font-extrabold text-lookup-black">LOOKUP</span>
           </div>
           <div className="w-9"></div>
         </div>
@@ -208,7 +208,7 @@ export default function Home() {
                 to={`/edit-look/${look.id}`}
                 className="flex-shrink-0 snap-start"
               >
-                <div className="bg-white rounded-2xl overflow-hidden shadow-sm w-36">
+                <div className="glass rounded-2xl overflow-hidden shadow-glass w-36">
                   <img
                     src={getPhotoUrl(look.photo_url)}
                     alt="Mon look"
@@ -235,7 +235,7 @@ export default function Home() {
             ))}
             {/* Add new look card */}
             <Link to="/add-look" className="flex-shrink-0 snap-start">
-              <div className="bg-white rounded-2xl overflow-hidden shadow-sm w-36 h-[212px] flex flex-col items-center justify-center border-2 border-dashed border-lookup-gray-light">
+              <div className="glass rounded-2xl overflow-hidden shadow-glass w-36 h-[212px] flex flex-col items-center justify-center border-2 border-dashed border-white/60">
                 <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center mb-2">
                   <Plus size={20} className="text-lookup-mint" />
                 </div>
@@ -246,7 +246,7 @@ export default function Home() {
         ) : (
           <div className="px-4">
             <Link to="/add-look" className="block">
-              <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+              <div className="glass rounded-2xl p-6 text-center shadow-glass">
                 <div className="w-14 h-14 bg-lookup-mint-light rounded-full mx-auto mb-3 flex items-center justify-center">
                   <Plus size={24} className="text-lookup-mint" />
                 </div>
@@ -264,10 +264,10 @@ export default function Home() {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setFeedTab('crossings')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
               feedTab === 'crossings'
-                ? 'bg-lookup-mint text-white'
-                : 'bg-white text-lookup-gray border border-gray-200'
+                ? 'bg-gradient-to-r from-lookup-mint to-lookup-mint-dark text-white shadow-button'
+                : 'glass text-lookup-gray'
             }`}
           >
             <MapPin size={14} />
@@ -275,10 +275,10 @@ export default function Home() {
           </button>
           <button
             onClick={() => setFeedTab('friends')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
               feedTab === 'friends'
-                ? 'bg-lookup-mint text-white'
-                : 'bg-white text-lookup-gray border border-gray-200'
+                ? 'bg-gradient-to-r from-lookup-mint to-lookup-mint-dark text-white shadow-button'
+                : 'glass text-lookup-gray'
             }`}
           >
             <Users size={14} />
@@ -290,7 +290,7 @@ export default function Home() {
         {feedTab === 'crossings' && (
           <>
             {crossings.length === 0 ? (
-              <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+              <div className="glass rounded-2xl p-8 text-center shadow-glass">
                 <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
                   <MapPin size={28} className="text-lookup-mint" />
                 </div>
@@ -305,7 +305,7 @@ export default function Home() {
                   <Link
                     key={crossing.id}
                     to={`/crossings/${crossing.id}`}
-                    className="block bg-white rounded-2xl overflow-hidden shadow-sm"
+                    className="block glass rounded-2xl overflow-hidden shadow-glass"
                   >
                     <div className="relative">
                       {crossing.other_look_photo_url ? (
@@ -334,7 +334,7 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between px-4 py-3 bg-white">
+                    <div className="flex items-center justify-between px-4 py-3">
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1.5 text-lookup-gray">
                           <Eye size={18} />
@@ -376,7 +376,7 @@ export default function Home() {
                   <Link
                     key={look.id}
                     to={`/look/${look.id}`}
-                    className="block bg-white rounded-2xl overflow-hidden shadow-sm"
+                    className="block glass rounded-2xl overflow-hidden shadow-glass"
                   >
                     <div className="relative">
                       {look.photo_url ? (
@@ -413,7 +413,7 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between px-4 py-3 bg-white">
+                    <div className="flex items-center justify-between px-4 py-3">
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-1.5 text-lookup-gray">
                           <Eye size={18} />

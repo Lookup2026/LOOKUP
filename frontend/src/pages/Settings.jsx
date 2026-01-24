@@ -79,9 +79,9 @@ export default function Settings() {
   const currentLang = LANGUAGES.find(l => l.code === language)
 
   return (
-    <div className="min-h-full bg-lookup-cream pb-4">
+    <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="bg-white px-4 pt-4 pb-3">
+      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-lookup-gray" />
@@ -105,7 +105,7 @@ export default function Settings() {
       <div className="px-4 space-y-2 mb-4">
         <button
           onClick={() => navigate('/profile')}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm"
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
@@ -125,7 +125,7 @@ export default function Settings() {
         {/* Language */}
         <button
           onClick={() => setShowLanguages(!showLanguages)}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm"
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
@@ -144,7 +144,7 @@ export default function Settings() {
 
         {/* Language options */}
         {showLanguages && (
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+          <div className="glass rounded-2xl overflow-hidden shadow-glass">
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.code}
@@ -172,7 +172,7 @@ export default function Settings() {
         {/* Privacy */}
         <button
           onClick={() => setShowPrivacy(!showPrivacy)}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm"
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
@@ -188,7 +188,7 @@ export default function Settings() {
 
         {/* Privacy options */}
         {showPrivacy && (
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm p-4 space-y-4">
+          <div className="glass rounded-2xl overflow-hidden shadow-glass p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium text-lookup-black text-sm">Profil visible</p>
@@ -221,7 +221,7 @@ export default function Settings() {
         {/* Help */}
         <button
           onClick={() => setShowHelp(!showHelp)}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm"
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
@@ -237,7 +237,7 @@ export default function Settings() {
 
         {/* Help content */}
         {showHelp && (
-          <div className="bg-white rounded-2xl overflow-hidden shadow-sm p-4 space-y-3">
+          <div className="glass rounded-2xl overflow-hidden shadow-glass p-4 space-y-3">
             <div>
               <p className="font-medium text-lookup-black text-sm">Comment ca marche ?</p>
               <p className="text-xs text-lookup-gray mt-1">
@@ -264,7 +264,7 @@ export default function Settings() {
       <div className="px-4 mt-6">
         <button
           onClick={() => setShowLogoutConfirm(true)}
-          className="w-full bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm"
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">

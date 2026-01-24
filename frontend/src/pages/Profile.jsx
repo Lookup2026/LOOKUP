@@ -134,11 +134,11 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-full bg-lookup-cream pb-4">
+    <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="bg-white px-4 pt-4 pb-3">
+      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
         <div className="flex items-center justify-between">
-          <Link to="/settings" className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+          <Link to="/settings" className="w-9 h-9 glass rounded-full flex items-center justify-center">
             <Settings size={18} className="text-lookup-gray" />
           </Link>
           <div className="flex items-center gap-2">
@@ -167,7 +167,7 @@ export default function Profile() {
 
       {/* Profile Card */}
       <div className="px-4 pt-4">
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
+        <div className="glass rounded-2xl p-4 shadow-glass">
           {/* User Info */}
           <div className="flex items-center gap-4 mb-4">
             <div
@@ -320,7 +320,7 @@ export default function Profile() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+            <div className="glass rounded-2xl p-8 text-center shadow-glass">
               <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
                 <Camera size={28} className="text-lookup-mint" />
               </div>
@@ -382,7 +382,7 @@ export default function Profile() {
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-2xl p-8 text-center shadow-sm">
+            <div className="glass rounded-2xl p-8 text-center shadow-glass">
               <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
                 <Bookmark size={28} className="text-lookup-mint" />
               </div>

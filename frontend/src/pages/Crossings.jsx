@@ -45,7 +45,7 @@ export default function Crossings() {
   }
 
   return (
-    <div className="min-h-full bg-white pb-24">
+    <div className="min-h-full pb-24">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <Link to="/settings" className="w-8 h-8 bg-lookup-cream rounded-full flex items-center justify-center">
@@ -87,7 +87,7 @@ export default function Crossings() {
               <Link
                 key={crossing.id}
                 to={`/crossings/${crossing.id}`}
-                className="bg-lookup-mint-light rounded-2xl overflow-hidden"
+                className="glass rounded-2xl overflow-hidden shadow-glass"
               >
                 {crossing.other_look_photo_url ? (
                   <div className="aspect-square">
