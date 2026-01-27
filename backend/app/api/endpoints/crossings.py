@@ -112,25 +112,14 @@ async def send_location_ping(
         ).first()
 
         if not existing:
-            # Obtenir les looks du jour des deux utilisateurs
-            # Chercher le look le plus recent (moins de 24h)
-            # pour eviter les problemes de timezone entre date.today() et utcnow()
+            # Obtenir le dernier look de chaque utilisateur
             my_look = db.query(Look).filter(
                 Look.user_id == current_user.id,
             ).order_by(Look.created_at.desc()).first()
-            # Verifier que le look date de moins de 24h
-            if my_look and my_look.created_at:
-                look_age = datetime.utcnow() - my_look.created_at
-                if look_age.total_seconds() > 86400:  # 24h
-                    my_look = None
 
             other_look = db.query(Look).filter(
                 Look.user_id == other_ping.user_id,
             ).order_by(Look.created_at.desc()).first()
-            if other_look and other_look.created_at:
-                look_age = datetime.utcnow() - other_look.created_at
-                if look_age.total_seconds() > 86400:  # 24h
-                    other_look = None
 
             # Obtenir le nom du lieu
             location_name = get_location_name(location.latitude, location.longitude)
@@ -236,16 +225,11 @@ async def get_my_crossings(
         if other_look_id:
             other_look = db.query(Look).filter(Look.id == other_look_id).first()
 
-        # Fallback: si pas de look_id stocke, chercher le look le plus recent (< 24h)
+        # Fallback: si pas de look_id stocke, chercher le dernier look de l'utilisateur
         if not other_look:
             other_look = db.query(Look).filter(
                 Look.user_id == other_user_id,
             ).order_by(Look.created_at.desc()).first()
-            # Verifier que le look date de moins de 24h
-            if other_look and other_look.created_at:
-                look_age = datetime.utcnow() - other_look.created_at
-                if look_age.total_seconds() > 86400:
-                    other_look = None
             # Mettre a jour le croisement pour les prochaines requetes
             if other_look:
                 if c.user1_id == current_user.id:
