@@ -1,3 +1,4 @@
+import secrets
 from pydantic_settings import BaseSettings
 from typing import Optional
 
@@ -9,10 +10,23 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "sqlite:///./lookup.db"  # SQLite pour dev, PostgreSQL pour prod
 
-    # JWT
-    SECRET_KEY: str = "your-secret-key-change-in-production"
+    # JWT - La clé sera chargée depuis .env ou générée si absente
+    # IMPORTANT: En production, définir SECRET_KEY dans les variables d'environnement
+    SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 jours
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Générer une clé sécurisée si non définie (pour dev uniquement)
+        if not self.SECRET_KEY:
+            import warnings
+            warnings.warn(
+                "SECRET_KEY non définie! Génération d'une clé temporaire. "
+                "Définissez SECRET_KEY dans .env pour la production.",
+                UserWarning
+            )
+            object.__setattr__(self, 'SECRET_KEY', secrets.token_urlsafe(32))
 
     # Upload
     UPLOAD_DIR: str = "uploads"

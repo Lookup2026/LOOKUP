@@ -275,12 +275,20 @@ async def report_content(
 
     # Verifier si deja signale recemment (eviter le spam)
     from datetime import datetime, timedelta
-    recent = db.query(Report).filter(
+    from sqlalchemy import and_
+
+    # Construire les filtres dynamiquement
+    filters = [
         Report.reporter_id == current_user.id,
-        Report.reported_user_id == user_id if user_id else True,
-        Report.reported_look_id == look_id if look_id else True,
         Report.created_at >= datetime.utcnow() - timedelta(hours=24)
-    ).first()
+    ]
+
+    if user_id:
+        filters.append(Report.reported_user_id == user_id)
+    if look_id:
+        filters.append(Report.reported_look_id == look_id)
+
+    recent = db.query(Report).filter(and_(*filters)).first()
 
     if recent:
         raise HTTPException(

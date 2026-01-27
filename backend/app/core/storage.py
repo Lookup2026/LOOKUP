@@ -25,18 +25,14 @@ def extract_filename(photo_url: str) -> str:
 
 async def download_photo(photo_url: str) -> tuple[bytes, str]:
     """
-    Download a photo from Supabase Storage.
+    Download a photo from Supabase Storage ou depuis le dossier local uploads/.
     Returns (file_content, content_type)
     """
-    client = get_supabase_client()
-    if not client:
-        raise Exception("Supabase not configured")
+    import os
 
     filename = extract_filename(photo_url)
     if not filename:
         raise Exception("Invalid photo URL")
-
-    data = client.storage.from_(settings.SUPABASE_BUCKET).download(filename)
 
     # Determine content type from extension
     ext = filename.split(".")[-1].lower() if "." in filename else "jpg"
@@ -44,31 +40,48 @@ async def download_photo(photo_url: str) -> tuple[bytes, str]:
     if ext == "jpg":
         content_type = "image/jpeg"
 
-    return data, content_type
+    # Essayer Supabase d'abord
+    client = get_supabase_client()
+    if client:
+        data = client.storage.from_(settings.SUPABASE_BUCKET).download(filename)
+        return data, content_type
+
+    # Fallback: servir depuis le dossier local uploads/
+    local_path = os.path.join(settings.UPLOAD_DIR, filename)
+    if os.path.exists(local_path):
+        with open(local_path, "rb") as f:
+            return f.read(), content_type
+
+    raise Exception(f"Photo not found: {filename}")
 
 
 async def upload_photo(file_content: bytes, filename: str) -> str:
     """
-    Upload a photo to Supabase Storage.
+    Upload a photo to Supabase Storage ou dans le dossier local uploads/.
     Returns the filename (to be served via /api/photos/ endpoint).
     """
-    client = get_supabase_client()
-
-    if not client:
-        raise Exception("Supabase not configured")
+    import os
 
     # Generate unique filename
     file_ext = filename.split(".")[-1] if "." in filename else "jpg"
     unique_filename = f"{uuid.uuid4()}.{file_ext}"
 
-    # Upload to Supabase Storage
-    client.storage.from_(settings.SUPABASE_BUCKET).upload(
-        path=unique_filename,
-        file=file_content,
-        file_options={"content-type": f"image/{file_ext}"}
-    )
+    # Essayer Supabase d'abord
+    client = get_supabase_client()
+    if client:
+        client.storage.from_(settings.SUPABASE_BUCKET).upload(
+            path=unique_filename,
+            file=file_content,
+            file_options={"content-type": f"image/{file_ext}"}
+        )
+        return unique_filename
 
-    # Return just the filename - served via /api/photos/{filename}
+    # Fallback: sauvegarder localement
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+    local_path = os.path.join(settings.UPLOAD_DIR, unique_filename)
+    with open(local_path, "wb") as f:
+        f.write(file_content)
+
     return unique_filename
 
 

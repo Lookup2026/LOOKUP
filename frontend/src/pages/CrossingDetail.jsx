@@ -88,15 +88,17 @@ export default function CrossingDetail() {
     }
   }, [showMenu])
 
+  const crossedAt = data?.crossing?.crossed_at
   useEffect(() => {
-    if (data?.crossing?.crossed_at) {
-      setTimeRemaining(getTimeRemaining(data.crossing.crossed_at))
+    if (crossedAt) {
+      setTimeRemaining(getTimeRemaining(crossedAt))
       const interval = setInterval(() => {
-        setTimeRemaining(getTimeRemaining(data.crossing.crossed_at))
+        const remaining = getTimeRemaining(crossedAt)
+        setTimeRemaining(remaining)
       }, 60000)
       return () => clearInterval(interval)
     }
-  }, [data])
+  }, [crossedAt])
 
   const loadDetail = async () => {
     try {

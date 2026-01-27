@@ -105,8 +105,11 @@ async def create_look(
                 db.add(item)
             db.commit()
             db.refresh(look)
-        except json.JSONDecodeError:
-            pass
+        except json.JSONDecodeError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Format JSON invalide pour les items: {str(e)}"
+            )
 
     return look
 
@@ -360,8 +363,11 @@ async def update_look(
                     color=item_data.get("color")
                 )
                 db.add(item)
-        except json.JSONDecodeError:
-            pass
+        except json.JSONDecodeError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Format JSON invalide pour les items: {str(e)}"
+            )
 
     db.commit()
     db.refresh(look)
@@ -418,17 +424,26 @@ async def like_look(
     ).first()
 
     if existing_like:
-        # Unlike (retirer le like)
+        # Unlike (retirer le like) - Opération atomique
         db.delete(existing_like)
-        look.likes_count = max(0, look.likes_count - 1)
+        db.query(Look).filter(Look.id == look_id).update(
+            {Look.likes_count: Look.likes_count - 1},
+            synchronize_session=False
+        )
         db.commit()
-        return {"liked": False, "likes_count": look.likes_count}
+        # Récupérer la valeur mise à jour
+        db.refresh(look)
+        return {"liked": False, "likes_count": max(0, look.likes_count)}
     else:
-        # Like
+        # Like - Opération atomique
         new_like = LookLike(look_id=look_id, user_id=current_user.id)
         db.add(new_like)
-        look.likes_count += 1
+        db.query(Look).filter(Look.id == look_id).update(
+            {Look.likes_count: Look.likes_count + 1},
+            synchronize_session=False
+        )
         db.commit()
+        db.refresh(look)
         return {"liked": True, "likes_count": look.likes_count}
 
 

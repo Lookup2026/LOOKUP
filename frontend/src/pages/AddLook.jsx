@@ -50,8 +50,8 @@ export default function AddLook() {
       setTitle(data.title || '')
       setPhotoPreview(getPhotoUrl(data.photo_url))
       if (data.items && data.items.length > 0) {
-        setItems(data.items.map(item => ({
-          id: item.id || Date.now() + Math.random(),
+        setItems(data.items.map((item, index) => ({
+          id: item.id || `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
           category: item.category,
           brand: item.brand || '',
           product_name: item.product_name || '',

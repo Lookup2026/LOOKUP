@@ -113,15 +113,24 @@ async def send_location_ping(
 
         if not existing:
             # Obtenir les looks du jour des deux utilisateurs
-            today = datetime.utcnow().date()
+            # Chercher le look le plus recent (moins de 24h)
+            # pour eviter les problemes de timezone entre date.today() et utcnow()
             my_look = db.query(Look).filter(
                 Look.user_id == current_user.id,
-                Look.look_date == today
-            ).first()
+            ).order_by(Look.created_at.desc()).first()
+            # Verifier que le look date de moins de 24h
+            if my_look and my_look.created_at:
+                look_age = datetime.utcnow() - my_look.created_at
+                if look_age.total_seconds() > 86400:  # 24h
+                    my_look = None
+
             other_look = db.query(Look).filter(
                 Look.user_id == other_ping.user_id,
-                Look.look_date == today
-            ).first()
+            ).order_by(Look.created_at.desc()).first()
+            if other_look and other_look.created_at:
+                look_age = datetime.utcnow() - other_look.created_at
+                if look_age.total_seconds() > 86400:  # 24h
+                    other_look = None
 
             # Obtenir le nom du lieu
             location_name = get_location_name(location.latitude, location.longitude)
@@ -143,7 +152,12 @@ async def send_location_ping(
                 "zone": zone_id
             })
 
-    db.commit()
+    try:
+        db.commit()
+    except Exception:
+        # En cas de race condition (doublon), rollback et ignorer
+        db.rollback()
+        new_crossings = []
 
     return {
         "ping_saved": True,
@@ -221,16 +235,35 @@ async def get_my_crossings(
         look_items = []
         if other_look_id:
             other_look = db.query(Look).filter(Look.id == other_look_id).first()
+
+        # Fallback: si pas de look_id stocke, chercher le look le plus recent (< 24h)
+        if not other_look:
+            other_look = db.query(Look).filter(
+                Look.user_id == other_user_id,
+            ).order_by(Look.created_at.desc()).first()
+            # Verifier que le look date de moins de 24h
+            if other_look and other_look.created_at:
+                look_age = datetime.utcnow() - other_look.created_at
+                if look_age.total_seconds() > 86400:
+                    other_look = None
+            # Mettre a jour le croisement pour les prochaines requetes
             if other_look:
-                look_items = [
-                    {
-                        "category": item.category,
-                        "brand": item.brand,
-                        "product_name": item.product_name,
-                        "color": item.color
-                    }
-                    for item in other_look.items
-                ]
+                if c.user1_id == current_user.id:
+                    c.user2_look_id = other_look.id
+                else:
+                    c.user1_look_id = other_look.id
+                db.commit()
+
+        if other_look:
+            look_items = [
+                {
+                    "category": item.category,
+                    "brand": item.brand,
+                    "product_name": item.product_name,
+                    "color": item.color
+                }
+                for item in other_look.items
+            ]
 
         # Arrondir les coordonnees pour la vie privee
         rounded_lat, rounded_lon = round_coordinates(c.latitude, c.longitude)
@@ -245,6 +278,7 @@ async def get_my_crossings(
             other_username=other_user.username,
             other_avatar_url=other_user.avatar_url,
             other_look_id=other_look_id,
+            other_look_title=other_look.title if other_look else None,
             other_look_photo_url=other_look.photo_url if other_look else None,
             other_look_items=look_items,
             views_count=other_look.views_count if other_look else 0,
@@ -294,6 +328,23 @@ async def get_crossing_detail(
 
     other_user = db.query(User).filter(User.id == other_user_id).first()
     other_look = db.query(Look).filter(Look.id == other_look_id).first() if other_look_id else None
+
+    # Fallback: chercher le look le plus recent (< 24h) si pas de look lie
+    if not other_look:
+        other_look = db.query(Look).filter(
+            Look.user_id == other_user_id,
+        ).order_by(Look.created_at.desc()).first()
+        if other_look and other_look.created_at:
+            look_age = datetime.utcnow() - other_look.created_at
+            if look_age.total_seconds() > 86400:
+                other_look = None
+        # Mettre a jour le croisement
+        if other_look:
+            if crossing.user1_id == current_user.id:
+                crossing.user2_look_id = other_look.id
+            else:
+                crossing.user1_look_id = other_look.id
+            db.commit()
 
     # Verifier si l'utilisateur a like/sauvegarde ce croisement
     user_liked = db.query(CrossingLike).filter(
@@ -380,17 +431,25 @@ async def like_crossing(
     ).first()
 
     if existing_like:
-        # Unlike
+        # Unlike - Opération atomique
         db.delete(existing_like)
-        crossing.likes_count = max(0, crossing.likes_count - 1)
+        db.query(Crossing).filter(Crossing.id == crossing_id).update(
+            {Crossing.likes_count: Crossing.likes_count - 1},
+            synchronize_session=False
+        )
         db.commit()
-        return {"liked": False, "likes_count": crossing.likes_count}
+        db.refresh(crossing)
+        return {"liked": False, "likes_count": max(0, crossing.likes_count)}
     else:
-        # Like
+        # Like - Opération atomique
         new_like = CrossingLike(crossing_id=crossing_id, user_id=current_user.id)
         db.add(new_like)
-        crossing.likes_count += 1
+        db.query(Crossing).filter(Crossing.id == crossing_id).update(
+            {Crossing.likes_count: Crossing.likes_count + 1},
+            synchronize_session=False
+        )
         db.commit()
+        db.refresh(crossing)
         return {"liked": True, "likes_count": crossing.likes_count}
 
 

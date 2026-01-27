@@ -48,21 +48,19 @@ export const useLocationStore = create((set, get) => ({
 
   // Ping manuel
   sendPing: async () => {
-    return new Promise((resolve, reject) => {
+    // D'abord récupérer la position de manière synchrone
+    const position = await new Promise((resolve, reject) => {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude, accuracy } = position.coords
-          try {
-            const { data } = await sendLocationPing({ latitude, longitude, accuracy })
-            set({ lastPing: new Date() })
-            resolve(data)
-          } catch (err) {
-            reject(err)
-          }
-        },
+        (pos) => resolve(pos),
         (error) => reject(error),
         { enableHighAccuracy: true }
       )
     })
+
+    // Ensuite envoyer le ping de manière async
+    const { latitude, longitude, accuracy } = position.coords
+    const { data } = await sendLocationPing({ latitude, longitude, accuracy })
+    set({ lastPing: new Date() })
+    return data
   },
 }))

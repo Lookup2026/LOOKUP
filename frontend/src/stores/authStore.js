@@ -26,8 +26,15 @@ export const useAuthStore = create((set) => ({
   login: async (email, password) => {
     const { data } = await apiLogin({ email, password })
     localStorage.setItem('token', data.access_token)
-    const { data: user } = await getMe()
-    set({ user, isAuthenticated: true })
+    try {
+      const { data: user } = await getMe()
+      set({ user, isAuthenticated: true, isLoading: false })
+    } catch (error) {
+      // Si getMe échoue, nettoyer le token et rejeter l'erreur
+      localStorage.removeItem('token')
+      set({ user: null, isAuthenticated: false, isLoading: false })
+      throw new Error('Erreur lors de la récupération du profil')
+    }
   },
 
   // Register
@@ -40,8 +47,15 @@ export const useAuthStore = create((set) => ({
     // Login automatique apres inscription
     const { data } = await apiLogin({ email, password })
     localStorage.setItem('token', data.access_token)
-    const { data: user } = await getMe()
-    set({ user, isAuthenticated: true })
+    try {
+      const { data: user } = await getMe()
+      set({ user, isAuthenticated: true, isLoading: false })
+    } catch (error) {
+      // Si getMe échoue, nettoyer le token et rejeter l'erreur
+      localStorage.removeItem('token')
+      set({ user: null, isAuthenticated: false, isLoading: false })
+      throw new Error('Erreur lors de la récupération du profil')
+    }
   },
 
   // Logout
