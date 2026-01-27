@@ -320,8 +320,19 @@ export default function Home() {
                           <MapPin size={48} className="text-lookup-mint" />
                         </div>
                       )}
+                      {/* Username en haut à droite */}
+                      <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm">
+                        {crossing.other_avatar_url ? (
+                          <img src={getPhotoUrl(crossing.other_avatar_url)} alt="" className="w-5 h-5 rounded-full object-cover" />
+                        ) : (
+                          <div className="w-5 h-5 rounded-full bg-lookup-mint flex items-center justify-center text-white text-xs font-bold">
+                            {crossing.other_username?.[0]?.toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-white text-sm font-medium">{crossing.other_username}</span>
+                      </div>
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                        <p className="text-white font-semibold text-lg">{crossing.other_username}</p>
+                        <p className="text-white font-semibold text-lg">{crossing.other_look_title || 'Look du jour'}</p>
                         <div className="flex items-center gap-4 mt-1">
                           <div className="flex items-center gap-1 text-white/90 text-sm">
                             <Clock size={14} />
@@ -402,14 +413,14 @@ export default function Home() {
                           )}
                           <p className="text-white font-semibold text-lg">{look.user?.username}</p>
                         </div>
+                        {look.title && (
+                          <p className="text-white/90 text-sm">{look.title}</p>
+                        )}
                         <div className="flex items-center gap-4 mt-1">
                           <div className="flex items-center gap-1 text-white/90 text-sm">
                             <Clock size={14} />
                             <span>{getTimeAgo(look.created_at)}</span>
                           </div>
-                          {look.title && (
-                            <span className="text-white/90 text-sm">{look.title}</span>
-                          )}
                         </div>
                       </div>
                     </div>
