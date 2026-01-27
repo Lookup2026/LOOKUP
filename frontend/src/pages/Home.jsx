@@ -320,8 +320,8 @@ export default function Home() {
                           <MapPin size={48} className="text-lookup-mint" />
                         </div>
                       )}
-                      {/* Username en haut à droite */}
-                      <div className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm">
+                      {/* Username en haut à gauche */}
+                      <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm">
                         {crossing.other_avatar_url ? (
                           <img src={getPhotoUrl(crossing.other_avatar_url)} alt="" className="w-5 h-5 rounded-full object-cover" />
                         ) : (
