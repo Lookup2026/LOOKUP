@@ -152,16 +152,10 @@ export default function Home() {
       {/* Header */}
       <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
         <div className="flex items-center justify-between">
+          <Link to="/search" className="w-9 h-9 glass rounded-full flex items-center justify-center">
+            <Search size={18} className="text-lookup-gray" />
+          </Link>
           <div className="flex items-center gap-2">
-            <Link to="/search" className="w-9 h-9 glass rounded-full flex items-center justify-center">
-              <Search size={18} className="text-lookup-gray" />
-            </Link>
-            <Link to="/settings" className="w-9 h-9 glass rounded-full flex items-center justify-center">
-              <Settings size={18} className="text-lookup-gray" />
-            </Link>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Status indicator */}
             <div className={`w-2 h-2 rounded-full ${
               pingStatus === 'success' ? 'bg-green-500' :
               pingStatus === 'error' ? 'bg-red-500' : 'bg-yellow-500'
@@ -171,7 +165,9 @@ export default function Home() {
             </div>
             <span className="text-xl font-extrabold text-lookup-black">LOOKUP</span>
           </div>
-          <div className="w-9"></div>
+          <Link to="/settings" className="w-9 h-9 glass rounded-full flex items-center justify-center">
+            <Settings size={18} className="text-lookup-gray" />
+          </Link>
         </div>
 
         {/* Debug Panel */}
