@@ -8,15 +8,14 @@ export default {
     extend: {
       colors: {
         'lookup': {
-          'mint': '#4A5568',
-          'mint-dark': '#2D3748',
-          'mint-light': '#F0F2F5',
-          'cream': '#F7F8FA',
+          'mint': '#2D2D2D',
+          'mint-dark': '#1A1A1A',
+          'mint-light': '#F5F5F5',
+          'cream': '#FAFAFA',
           'white': '#FFFFFF',
-          'black': '#1A202C',
-          'gray': '#718096',
-          'gray-light': '#E2E8F0',
-          'accent': '#5B6BBF',
+          'black': '#1A1A1A',
+          'gray': '#6B7280',
+          'gray-light': '#E5E7EB',
         }
       },
       borderRadius: {

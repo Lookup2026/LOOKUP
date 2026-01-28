@@ -14,7 +14,7 @@ const customIcon = new L.DivIcon({
     <div style="
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #4A5568 0%, #2D3748 100%);
+      background: linear-gradient(135deg, #2D2D2D 0%, #1A1A1A 100%);
       border-radius: 50% 50% 50% 0;
       transform: rotate(-45deg);
       display: flex;
@@ -371,121 +371,53 @@ export default function CrossingDetail() {
         </div>
       )}
 
-      {/* Action buttons - compact row */}
+      {/* Action buttons */}
       <div className="px-4 mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Like - toujours actif (like le croisement) */}
           <button
             onClick={handleLike}
             disabled={liking}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full transition shadow-sm active:scale-95 text-sm ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
               stats.user_liked
-                ? 'bg-lookup-black text-white'
+                ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >
-            <Heart size={18} fill={stats.user_liked ? 'currentColor' : 'none'} />
+            <Heart
+              size={22}
+              fill={stats.user_liked ? 'currentColor' : 'none'}
+            />
             <span className="font-semibold">{stats.likes_count}</span>
           </button>
+          {/* Save - toujours actif (save le croisement) */}
           <button
             onClick={handleSave}
             disabled={saving}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full transition shadow-sm active:scale-95 text-sm ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
               stats.user_saved
-                ? 'bg-lookup-black text-white'
+                ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >
-            <Bookmark size={18} fill={stats.user_saved ? 'currentColor' : 'none'} />
+            <Bookmark
+              size={22}
+              fill={stats.user_saved ? 'currentColor' : 'none'}
+            />
+            <span className="font-medium">{stats.user_saved ? 'Sauvegarde' : 'Sauvegarder'}</span>
           </button>
+          {/* Share - always visible */}
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-full transition shadow-sm active:scale-95 text-sm bg-white text-lookup-black border border-gray-100"
+            className="flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 bg-white text-lookup-black border border-gray-100 ml-auto"
           >
-            <Share2 size={18} />
+            <Share2 size={22} />
+            <span className="font-medium">Partager</span>
           </button>
-          <div className="ml-auto">
-            <button
-              onClick={handleFollow}
-              disabled={followLoading}
-              className={`px-5 py-2.5 rounded-full text-sm font-semibold transition active:scale-95 ${
-                following
-                  ? 'bg-lookup-cream text-lookup-gray border border-gray-200'
-                  : 'bg-lookup-accent text-white'
-              }`}
-            >
-              {followLoading ? (
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-              ) : following ? 'Suivi' : 'Suivre'}
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Pieces - THE CORE: shown first, right after photo */}
-      <div className="px-4 mb-4">
-        <h2 className="text-sm font-semibold text-lookup-black uppercase tracking-wide mb-3 flex items-center gap-2">
-          <Tag size={14} className="text-lookup-accent" />
-          Pieces du look ({other_look?.items?.length || 0})
-        </h2>
-
-        {other_look?.items?.length > 0 ? (
-          <div className="space-y-2">
-            {other_look.items.map((item, index) => (
-              <div
-                key={index}
-                className="glass rounded-2xl p-4 shadow-glass"
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <span className="inline-block text-xs text-white bg-lookup-black px-3 py-1 rounded-full font-medium">
-                      {CATEGORY_LABELS[item.category] || item.category}
-                    </span>
-
-                    {item.brand && (
-                      <p className="text-lookup-black font-bold text-lg mt-2">{item.brand}</p>
-                    )}
-
-                    {item.product_name && (
-                      <p className="text-lookup-gray">{item.product_name}</p>
-                    )}
-
-                    <div className="mt-2 space-y-1">
-                      {item.color && (
-                        <p className="text-lookup-gray text-sm">
-                          <span className="text-lookup-black font-medium">Couleur:</span> {item.color}
-                        </p>
-                      )}
-                      {item.product_reference && (
-                        <p className="text-lookup-gray text-sm">
-                          <span className="text-lookup-black font-medium">Ref:</span> {item.product_reference}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {item.product_url && (
-                    <a
-                      href={item.product_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-3 bg-lookup-accent text-white px-4 py-2 rounded-full flex items-center gap-1 text-sm font-semibold hover:opacity-90 transition"
-                    >
-                      <ExternalLink size={14} />
-                      Acheter
-                    </a>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="glass rounded-2xl p-6 text-center shadow-glass">
-            <p className="text-lookup-gray text-sm">Aucune piece renseignee pour ce look</p>
-          </div>
-        )}
-      </div>
-
-      {/* User info + location - secondary info below pieces */}
+      {/* User info card */}
       <div className="px-4 mb-4">
         <div className="glass rounded-2xl p-4 shadow-glass">
           <div className="flex items-center gap-3">
@@ -493,19 +425,34 @@ export default function CrossingDetail() {
               <img
                 src={getPhotoUrl(other_user.avatar_url)}
                 alt=""
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-12 h-12 rounded-full object-cover"
               />
             ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white font-bold">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white font-bold text-lg">
                 {other_user?.username?.[0]?.toUpperCase()}
               </div>
             )}
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-lookup-black text-sm">{other_user?.username}</p>
-              <div className="flex items-center gap-1 text-lookup-gray text-xs">
-                <Clock size={11} />
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-lookup-black">{other_user?.username}</p>
+                <button
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition active:scale-95 ${
+                    following
+                      ? 'bg-lookup-cream text-lookup-gray border border-gray-200'
+                      : 'bg-lookup-mint text-white'
+                  }`}
+                >
+                  {followLoading ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                  ) : following ? 'Suivi' : 'Suivre'}
+                </button>
+              </div>
+              <div className="flex items-center gap-1 text-lookup-gray text-sm">
+                <Clock size={12} />
                 <span>
-                  Croise {new Date(crossing.crossed_at).toLocaleString('fr-FR', {
+                  Croisé {new Date(crossing.crossed_at).toLocaleString('fr-FR', {
                     weekday: 'long',
                     day: 'numeric',
                     month: 'long',
@@ -520,27 +467,39 @@ export default function CrossingDetail() {
           {/* Location info */}
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-lookup-gray-light">
             <div className="flex items-center gap-2 text-lookup-gray text-sm">
-              <MapPin size={14} className="text-lookup-accent" />
+              <MapPin size={14} className="text-lookup-mint" />
               <span>{crossing.location_name || 'Zone de croisement'}</span>
             </div>
             {hasLocation && (
               <button
                 onClick={() => setShowMap(!showMap)}
-                className="flex items-center gap-1 text-lookup-accent text-sm font-medium"
+                className="flex items-center gap-1 text-lookup-mint text-sm font-medium"
               >
                 <Map size={14} />
-                <span>{showMap ? 'Masquer' : 'Carte'}</span>
+                <span>{showMap ? 'Masquer' : 'Voir la carte'}</span>
               </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Mini Map - collapsible, at the bottom */}
+      {/* Mini Map */}
       {showMap && hasLocation && (
         <div className="px-4 mb-4">
           <div className="bg-white rounded-2xl overflow-hidden shadow-lg border border-lookup-gray-light">
-            <div className="h-48 relative">
+            {/* Map Header */}
+            <div className="px-4 py-3 bg-gradient-to-r from-lookup-mint-light to-white flex items-center gap-2">
+              <div className="w-8 h-8 bg-lookup-mint rounded-full flex items-center justify-center">
+                <MapPin size={16} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-lookup-black">Zone de croisement</p>
+                <p className="text-xs text-lookup-gray">{crossing.location_name || 'Position approximative'}</p>
+              </div>
+            </div>
+
+            {/* Map Container */}
+            <div className="h-52 relative">
               <MapContainer
                 center={[crossing.latitude, crossing.longitude]}
                 zoom={16}
@@ -556,7 +515,7 @@ export default function CrossingDetail() {
                 <Marker position={[crossing.latitude, crossing.longitude]} icon={customIcon}>
                   <Popup>
                     <div className="text-center py-1">
-                      <p className="font-semibold text-lookup-black">Vous etiez ici</p>
+                      <p className="font-semibold text-lookup-black">Vous étiez ici</p>
                       {crossing.location_name && (
                         <p className="text-sm text-lookup-gray">{crossing.location_name}</p>
                       )}
@@ -564,6 +523,8 @@ export default function CrossingDetail() {
                   </Popup>
                 </Marker>
               </MapContainer>
+
+              {/* Pulse animation overlay */}
               <div className="absolute inset-0 pointer-events-none flex items-center justify-center" style={{ marginTop: '-20px' }}>
                 <div className="w-16 h-16 rounded-full bg-lookup-mint/20 animate-ping"></div>
               </div>
@@ -571,6 +532,70 @@ export default function CrossingDetail() {
           </div>
         </div>
       )}
+
+      {/* Pieces */}
+      <div className="px-4">
+        <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide mb-3 flex items-center gap-2">
+          <Tag size={14} />
+          Pièces du look ({other_look?.items?.length || 0})
+        </h2>
+
+        {other_look?.items?.length > 0 ? (
+          <div className="space-y-2">
+            {other_look.items.map((item, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-2xl p-4 shadow-sm"
+              >
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <span className="inline-block text-xs text-white bg-lookup-mint px-3 py-1 rounded-full font-medium">
+                      {CATEGORY_LABELS[item.category] || item.category}
+                    </span>
+
+                    {item.brand && (
+                      <p className="text-lookup-black font-semibold text-lg mt-2">{item.brand}</p>
+                    )}
+
+                    {item.product_name && (
+                      <p className="text-lookup-gray">{item.product_name}</p>
+                    )}
+
+                    <div className="mt-2 space-y-1">
+                      {item.color && (
+                        <p className="text-lookup-gray text-sm">
+                          <span className="text-lookup-black">Couleur:</span> {item.color}
+                        </p>
+                      )}
+                      {item.product_reference && (
+                        <p className="text-lookup-gray text-sm">
+                          <span className="text-lookup-black">Ref:</span> {item.product_reference}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {item.product_url && (
+                    <a
+                      href={item.product_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-3 bg-lookup-mint text-white px-4 py-2 rounded-full flex items-center gap-1 text-sm font-medium hover:bg-lookup-mint-dark transition"
+                    >
+                      <ExternalLink size={14} />
+                      Acheter
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+            <p className="text-lookup-gray text-sm">Aucune pièce renseignée pour ce look</p>
+          </div>
+        )}
+      </div>
 
       {/* Block Confirmation Modal */}
       {showBlockConfirm && (
