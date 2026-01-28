@@ -330,3 +330,42 @@ async def get_visibility(
 ):
     """Obtenir l'etat de visibilite du profil"""
     return {"is_visible": current_user.is_visible if current_user.is_visible is not None else True}
+
+
+# ============== PROFIL PRIVE ==============
+
+@router.put("/me/privacy")
+async def update_privacy(
+    is_private: bool,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Activer/desactiver le profil prive (seuls les amis voient le contenu)"""
+    current_user.is_private = is_private
+    db.commit()
+    return {"is_private": current_user.is_private}
+
+
+@router.get("/me/privacy")
+async def get_privacy(
+    current_user: User = Depends(get_current_user)
+):
+    """Obtenir l'etat du profil prive"""
+    return {"is_private": current_user.is_private if current_user.is_private is not None else False}
+
+
+def is_friend(db: Session, user_id: int, other_user_id: int) -> bool:
+    """Verifier si deux utilisateurs sont amis (se suivent mutuellement)"""
+    # Verifier si user_id suit other_user_id
+    follows = db.query(Follow).filter(
+        Follow.follower_id == user_id,
+        Follow.followed_id == other_user_id
+    ).first()
+
+    # Verifier si other_user_id suit user_id
+    followed_by = db.query(Follow).filter(
+        Follow.follower_id == other_user_id,
+        Follow.followed_id == user_id
+    ).first()
+
+    return follows is not None and followed_by is not None

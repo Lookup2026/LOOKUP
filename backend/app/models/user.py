@@ -21,6 +21,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     is_visible = Column(Boolean, default=True)
+    is_private = Column(Boolean, default=False)  # Profil prive: seuls les amis voient le contenu
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

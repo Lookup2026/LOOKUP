@@ -95,6 +95,8 @@ export const getFollowers = () => api.get('/users/followers')
 export const searchUsers = (q) => api.get('/users/search', { params: { q } })
 export const getVisibility = () => api.get('/users/me/visibility')
 export const updateVisibility = (visible) => api.put('/users/me/visibility', null, { params: { visible } })
+export const getPrivacy = () => api.get('/users/me/privacy')
+export const updatePrivacy = (is_private) => api.put('/users/me/privacy', null, { params: { is_private } })
 
 // Feed
 export const getFriendsFeed = () => api.get('/looks/feed')

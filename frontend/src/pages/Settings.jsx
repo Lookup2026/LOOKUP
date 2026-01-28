@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChevronLeft, MapPin, Globe, ChevronRight, Shield, HelpCircle, LogOut, User, Trash2, AlertTriangle } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
-import { deleteAccount, getVisibility, updateVisibility } from '../api/client'
+import { deleteAccount, getVisibility, updateVisibility, getPrivacy, updatePrivacy } from '../api/client'
 import toast from 'react-hot-toast'
 
 const LANGUAGES = [
@@ -25,15 +25,17 @@ export default function Settings() {
 
   // Privacy settings
   const [profileVisible, setProfileVisible] = useState(true)
+  const [profilePrivate, setProfilePrivate] = useState(false)
 
   useEffect(() => {
-    loadVisibility()
+    loadPrivacySettings()
   }, [])
 
-  const loadVisibility = async () => {
+  const loadPrivacySettings = async () => {
     try {
-      const { data } = await getVisibility()
-      setProfileVisible(data.is_visible)
+      const [visRes, privRes] = await Promise.all([getVisibility(), getPrivacy()])
+      setProfileVisible(visRes.data.is_visible)
+      setProfilePrivate(privRes.data.is_private)
     } catch (e) {}
   }
 
@@ -51,6 +53,17 @@ export default function Settings() {
       toast.success(value ? 'Profil visible' : 'Profil masque')
     } catch (e) {
       setProfileVisible(!value)
+      toast.error('Erreur lors de la mise a jour')
+    }
+  }
+
+  const handlePrivateChange = async (value) => {
+    setProfilePrivate(value)
+    try {
+      await updatePrivacy(value)
+      toast.success(value ? 'Profil prive active' : 'Profil public')
+    } catch (e) {
+      setProfilePrivate(!value)
       toast.error('Erreur lors de la mise a jour')
     }
   }
@@ -199,6 +212,19 @@ export default function Settings() {
                 className={`w-12 h-7 rounded-full transition-colors ${profileVisible ? 'bg-lookup-mint' : 'bg-gray-300'}`}
               >
                 <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${profileVisible ? 'translate-x-6' : 'translate-x-1'}`}></div>
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between pt-3 border-t border-lookup-gray-light">
+              <div>
+                <p className="font-medium text-lookup-black text-sm">Profil prive</p>
+                <p className="text-xs text-lookup-gray">Seuls vos amis voient votre contenu</p>
+              </div>
+              <button
+                onClick={() => handlePrivateChange(!profilePrivate)}
+                className={`w-12 h-7 rounded-full transition-colors ${profilePrivate ? 'bg-lookup-mint' : 'bg-gray-300'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${profilePrivate ? 'translate-x-6' : 'translate-x-1'}`}></div>
               </button>
             </div>
 

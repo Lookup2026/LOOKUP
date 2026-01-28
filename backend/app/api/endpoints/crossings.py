@@ -8,7 +8,7 @@ from geopy.geocoders import Nominatim
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.zones import get_zone_id, get_adjacent_zones
-from app.models import User, Look, LocationPing, Crossing, BlockedUser, CrossingLike, SavedCrossing
+from app.models import User, Look, LocationPing, Crossing, BlockedUser, CrossingLike, SavedCrossing, Follow
 from app.schemas import LocationPingCreate, CrossingWithDetails
 from app.api.deps import get_current_user
 
@@ -24,6 +24,19 @@ def round_coordinates(lat: float, lon: float, precision: int = 3) -> tuple:
     if lat and lon:
         return round(lat, precision), round(lon, precision)
     return 0, 0
+
+def are_friends(db: Session, user1_id: int, user2_id: int) -> bool:
+    """Verifier si deux utilisateurs sont amis (se suivent mutuellement)"""
+    follows = db.query(Follow).filter(
+        Follow.follower_id == user1_id,
+        Follow.followed_id == user2_id
+    ).first()
+    followed_by = db.query(Follow).filter(
+        Follow.follower_id == user2_id,
+        Follow.followed_id == user1_id
+    ).first()
+    return follows is not None and followed_by is not None
+
 
 def get_location_name(latitude: float, longitude: float) -> str:
     """
@@ -189,7 +202,7 @@ async def get_my_crossings(
     ).order_by(Crossing.crossed_at.desc()).all()
 
     # Dedupliquer: garder seulement le croisement le plus recent par utilisateur
-    # Et filtrer les utilisateurs bloques
+    # Et filtrer les utilisateurs bloques + profils prives (si pas amis)
     seen_users = set()
     crossings = []
     for c in all_crossings:
@@ -197,6 +210,12 @@ async def get_my_crossings(
         # Ignorer si utilisateur bloque
         if other_user_id in blocked_ids:
             continue
+        # Verifier si profil prive
+        other_user = db.query(User).filter(User.id == other_user_id).first()
+        if other_user and other_user.is_private:
+            # Profil prive: verifier si amis (se suivent mutuellement)
+            if not are_friends(db, current_user.id, other_user_id):
+                continue
         if other_user_id not in seen_users:
             seen_users.add(other_user_id)
             crossings.append(c)
