@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
+import ShareCard from '../components/ShareCard'
 
 // Custom marker icon matching app design
 const customIcon = new L.DivIcon({
@@ -74,6 +75,7 @@ export default function CrossingDetail() {
   const [reporting, setReporting] = useState(false)
   const [following, setFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
+  const [showShareCard, setShowShareCard] = useState(false)
 
   useEffect(() => {
     loadDetail()
@@ -185,30 +187,8 @@ export default function CrossingDetail() {
     }
   }
 
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/crossings/${id}`
-    const shareData = {
-      title: `Look de ${data?.other_user?.username || 'quelqu\'un'} sur LOOKUP`,
-      text: `Regarde ce look que j'ai croise sur LOOKUP !`,
-      url: shareUrl
-    }
-
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData)
-      } catch (err) {
-        // User cancelled or error
-        if (err.name !== 'AbortError') {
-          // Fallback: copy to clipboard
-          navigator.clipboard.writeText(shareUrl)
-          toast.success('Lien copie !')
-        }
-      }
-    } else {
-      // Fallback for browsers without Web Share API
-      navigator.clipboard.writeText(shareUrl)
-      toast.success('Lien copie !')
-    }
+  const handleShare = () => {
+    setShowShareCard(true)
   }
 
   const handleBlock = async () => {
@@ -693,6 +673,17 @@ export default function CrossingDetail() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share Card Modal */}
+      {showShareCard && (
+        <ShareCard
+          crossing={crossing}
+          look={other_look}
+          user={other_user}
+          stats={stats}
+          onClose={() => setShowShareCard(false)}
+        />
       )}
     </div>
   )
