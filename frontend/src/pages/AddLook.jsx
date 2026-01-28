@@ -109,6 +109,11 @@ export default function AddLook() {
       return
     }
 
+    if (!title.trim()) {
+      toast.error('Donnez un nom à votre look')
+      return
+    }
+
     // Vérifier la limite (sauf en édition)
     if (!isEditing && looksLimit.remaining <= 0) {
       toast.error('Tu as atteint la limite de looks pour aujourd\'hui')
@@ -240,9 +245,10 @@ export default function AddLook() {
         {/* Title */}
         <input
           type="text"
-          placeholder="Titre du look (optionnel)"
+          placeholder="Nom du look (ex: Casual Friday, Soirée, Sport...)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          required
           className="w-full bg-white rounded-xl px-4 py-3 text-lookup-black border border-lookup-gray-light placeholder-lookup-gray shadow-sm"
         />
 
@@ -334,7 +340,7 @@ export default function AddLook() {
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading || (!isEditing && !photo) || (!isEditing && looksLimit.remaining <= 0)}
+          disabled={loading || (!isEditing && !photo) || !title.trim() || (!isEditing && looksLimit.remaining <= 0)}
           className="w-full flex items-center justify-center gap-2 bg-lookup-mint text-white font-semibold py-4 rounded-full shadow-lg hover:bg-lookup-mint-dark transition-all disabled:opacity-50 mt-2"
         >
           {isEditing ? <Save size={20} /> : <Upload size={20} />}
