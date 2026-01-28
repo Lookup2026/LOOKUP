@@ -46,6 +46,7 @@ class CrossingWithDetails(BaseModel):
 
     # Le look de l'autre utilisateur
     other_look_id: Optional[int] = None
+    other_look_title: Optional[str] = None
     other_look_photo_url: Optional[str] = None
     other_look_items: list = []
 
