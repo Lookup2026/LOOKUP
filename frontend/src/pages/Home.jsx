@@ -332,12 +332,7 @@ export default function Home() {
                         <span className="text-white text-sm font-medium">{crossing.other_username}</span>
                       </div>
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                        <p className="text-white font-semibold text-lg">
-                          {crossing.other_look_title ||
-                           (crossing.other_look_items?.length > 0
-                             ? crossing.other_look_items.map(i => i.brand).filter(Boolean).slice(0, 3).join(' • ') || 'Look du jour'
-                             : 'Look du jour')}
-                        </p>
+                        <p className="text-white font-semibold text-lg">{crossing.other_look_title || 'Look du jour'}</p>
                         <div className="flex items-center gap-4 mt-1">
                           <div className="flex items-center gap-1 text-white/90 text-sm">
                             <Clock size={14} />
