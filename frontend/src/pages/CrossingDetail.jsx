@@ -14,7 +14,7 @@ const customIcon = new L.DivIcon({
     <div style="
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #E8A0A0 0%, #D4817F 100%);
+      background: linear-gradient(135deg, #2D2D2D 0%, #1A1A1A 100%);
       border-radius: 50% 50% 50% 0;
       transform: rotate(-45deg);
       display: flex;
@@ -380,7 +380,7 @@ export default function CrossingDetail() {
             disabled={liking}
             className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
               stats.user_liked
-                ? 'bg-pink-500 text-white'
+                ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >

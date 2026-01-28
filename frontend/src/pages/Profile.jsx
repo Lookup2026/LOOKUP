@@ -232,7 +232,7 @@ export default function Profile() {
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
-                <Heart size={14} className="text-pink-400" />
+                <Heart size={14} className="text-lookup-mint" />
                 <p className="text-2xl font-bold text-lookup-black">{totalLikes}</p>
               </div>
               <p className="text-lookup-gray text-xs">Likes</p>
@@ -562,7 +562,7 @@ export default function Profile() {
                 <span className="font-semibold">{selectedLook.views_count || 0} vues</span>
               </div>
               <div className="flex items-center gap-2 text-white">
-                <Heart size={20} className="text-pink-400" />
+                <Heart size={20} className="text-lookup-mint" />
                 <span className="font-semibold">{selectedLook.likes_count || 0} likes</span>
               </div>
             </div>
@@ -675,7 +675,7 @@ export default function Profile() {
                 <span className="font-semibold">{selectedSavedLook.views_count || 0} vues</span>
               </div>
               <div className="flex items-center gap-2 text-white">
-                <Heart size={20} className="text-pink-400" />
+                <Heart size={20} className="text-lookup-mint" />
                 <span className="font-semibold">{selectedSavedLook.likes_count || 0} likes</span>
               </div>
             </div>

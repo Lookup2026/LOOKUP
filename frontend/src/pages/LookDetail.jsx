@@ -153,7 +153,7 @@ export default function LookDetail() {
             disabled={liking}
             className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
               stats.user_liked
-                ? 'bg-pink-500 text-white'
+                ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >

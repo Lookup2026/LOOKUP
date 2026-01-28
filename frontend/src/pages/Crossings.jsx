@@ -52,7 +52,7 @@ export default function Crossings() {
           <Settings size={18} className="text-lookup-gray" />
         </Link>
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 bg-gradient-to-br from-lookup-mint to-pink-300 rounded-full flex items-center justify-center">
+          <div className="w-6 h-6 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center">
             <MapPin size={12} className="text-white" />
           </div>
           <span className="text-lg font-bold text-lookup-black">LOOKUP</span>
@@ -132,7 +132,7 @@ export default function Crossings() {
                   <div className="w-px bg-lookup-gray-light"></div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
-                      <Heart size={18} className="text-pink-400" />
+                      <Heart size={18} className="text-lookup-mint" />
                       <span className="text-xl font-bold text-lookup-black">
                         {crossings.reduce((sum, c) => sum + (c.likes_count || 0), 0)}
                       </span>
@@ -186,7 +186,7 @@ export default function Crossings() {
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Heart size={14} className="text-pink-400" />
+                        <Heart size={14} className="text-lookup-mint" />
                         <span className="text-sm text-lookup-gray">
                           {crossing.likes_count || 0}
                         </span>

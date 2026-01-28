@@ -8,10 +8,10 @@ export default {
     extend: {
       colors: {
         'lookup': {
-          'mint': '#E8A0A0',
-          'mint-dark': '#D4817F',
-          'mint-light': '#FDF2F2',
-          'cream': '#FBF8F8',
+          'mint': '#2D2D2D',
+          'mint-dark': '#1A1A1A',
+          'mint-light': '#F5F5F5',
+          'cream': '#FAFAFA',
           'white': '#FFFFFF',
           'black': '#1A1A1A',
           'gray': '#6B7280',
@@ -25,7 +25,7 @@ export default {
       },
       boxShadow: {
         'card': '0 2px 12px rgba(0, 0, 0, 0.08)',
-        'button': '0 4px 14px rgba(232, 160, 160, 0.4)',
+        'button': '0 4px 14px rgba(0, 0, 0, 0.15)',
         'glass': '0 8px 32px rgba(0, 0, 0, 0.06)',
         'glass-lg': '0 12px 40px rgba(0, 0, 0, 0.08)',
       },

@@ -22,7 +22,7 @@ html, body {
 
 /* Glassmorphism background gradient */
 .bg-glass-gradient {
-  background: linear-gradient(135deg, #FDF2F2 0%, #F5E6F0 25%, #EDE7F6 50%, #F0F4FD 75%, #FDF2F2 100%);
+  background: linear-gradient(135deg, #F5F5F5 0%, #EFEFEF 25%, #F0F0F0 50%, #EAEAEA 75%, #F5F5F5 100%);
   min-height: 100%;
 }
 
@@ -67,7 +67,7 @@ html, body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(232, 160, 160, 0.4);
+  background: rgba(45, 45, 45, 0.3);
   border-radius: 2px;
 }
 
@@ -106,8 +106,8 @@ html, body {
 }
 
 .input-field:focus {
-  border-color: #E8A0A0;
-  box-shadow: 0 0 0 3px rgba(232, 160, 160, 0.15);
+  border-color: #2D2D2D;
+  box-shadow: 0 0 0 3px rgba(45, 45, 45, 0.1);
 }
 
 /* Hide scrollbar for horizontal carousels */
