@@ -52,7 +52,7 @@ class Settings(BaseSettings):
     CROSSING_TIME_WINDOW_MINUTES: int = 10  # Fenetre de temps pour un croisement
 
     # CORS - Frontend URLs autorisees
-    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,https://lookup-gamma.vercel.app"
 
     class Config:
         env_file = ".env"

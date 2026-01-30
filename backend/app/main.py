@@ -27,12 +27,11 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# CORS pour le frontend - JAMAIS de "*" en fallback
+# CORS pour le frontend
 if not settings.CORS_ORIGINS:
-    raise ValueError(
-        "CORS_ORIGINS must be set! Example: CORS_ORIGINS=https://lookup-gamma.vercel.app,http://localhost:5173"
-    )
-cors_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",")]
+    import warnings
+    warnings.warn("CORS_ORIGINS not set - using localhost defaults (dev only)")
+cors_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
