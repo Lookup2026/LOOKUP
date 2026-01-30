@@ -130,13 +130,16 @@ async def send_location_ping(
         ).first()
 
         if not existing:
-            # Obtenir le dernier look de chaque utilisateur
+            # Obtenir le look du jour de chaque utilisateur
+            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             my_look = db.query(Look).filter(
                 Look.user_id == current_user.id,
+                Look.created_at >= today_start,
             ).order_by(Look.created_at.desc()).first()
 
             other_look = db.query(Look).filter(
                 Look.user_id == other_ping.user_id,
+                Look.created_at >= today_start,
             ).order_by(Look.created_at.desc()).first()
 
             # Obtenir le nom du lieu
@@ -264,10 +267,12 @@ async def get_my_crossings(
         if other_look_id:
             other_look = db.query(Look).filter(Look.id == other_look_id).first()
 
-        # Fallback: si pas de look_id stocke, chercher le dernier look de l'utilisateur
+        # Fallback: si pas de look_id stocke, chercher le look du jour de l'utilisateur
         if not other_look:
+            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             other_look = db.query(Look).filter(
                 Look.user_id == other_user_id,
+                Look.created_at >= today_start,
             ).order_by(Look.created_at.desc()).first()
             # Mettre a jour le croisement pour les prochaines requetes
             if other_look:
@@ -352,15 +357,13 @@ async def get_crossing_detail(
     other_user = db.query(User).filter(User.id == other_user_id).first()
     other_look = db.query(Look).filter(Look.id == other_look_id).first() if other_look_id else None
 
-    # Fallback: chercher le look le plus recent (< 24h) si pas de look lie
+    # Fallback: chercher le look du jour si pas de look lie
     if not other_look:
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         other_look = db.query(Look).filter(
             Look.user_id == other_user_id,
+            Look.created_at >= today_start,
         ).order_by(Look.created_at.desc()).first()
-        if other_look and other_look.created_at:
-            look_age = datetime.utcnow() - other_look.created_at
-            if look_age.total_seconds() > 86400:
-                other_look = None
         # Mettre a jour le croisement
         if other_look:
             if crossing.user1_id == current_user.id:
