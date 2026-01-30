@@ -73,7 +73,7 @@ async def register(request: Request, user_data: UserCreate, db: Session = Depend
 
     return user
 
-@router.post("/login", response_model=Token)
+@router.post("/login")
 @limiter.limit("10/minute")  # 10 tentatives max par minute par IP
 async def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db)):
     """Connexion utilisateur"""
