@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, and_
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from typing import List
 from datetime import datetime, timedelta
 from geopy.geocoders import Nominatim
@@ -61,9 +63,12 @@ def get_location_name(latitude: float, longitude: float) -> str:
         return "Zone de croisement"
 
 router = APIRouter(prefix="/crossings", tags=["Crossings"])
+limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/ping")
+@limiter.limit("30/minute")  # 30 pings max par minute par IP
 async def send_location_ping(
+    request: Request,
     location: LocationPingCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -156,9 +161,24 @@ async def send_location_ping(
 
     try:
         db.commit()
-    except Exception:
-        # En cas de race condition (doublon), rollback et ignorer
+    except Exception as e:
+        # En cas de race condition (doublon), rollback et retenter sans les doublons
         db.rollback()
+        import logging
+        logging.getLogger(__name__).warning(f"Race condition croisement, retry sans doublons: {e}")
+        # Le ping est perdu mais on le resauvegarde
+        ping_retry = LocationPing(
+            user_id=current_user.id,
+            latitude=location.latitude,
+            longitude=location.longitude,
+            zone_id=zone_id,
+            accuracy=location.accuracy
+        )
+        db.add(ping_retry)
+        try:
+            db.commit()
+        except Exception:
+            db.rollback()
         new_crossings = []
 
     return {

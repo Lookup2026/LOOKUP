@@ -1,32 +1,42 @@
 import secrets
+import os
 from pydantic_settings import BaseSettings
 from typing import Optional
 
 class Settings(BaseSettings):
     # App
     APP_NAME: str = "LOOKUP"
-    DEBUG: bool = True
+    DEBUG: bool = False  # False par defaut pour la securite
 
     # Database
     DATABASE_URL: str = "sqlite:///./lookup.db"  # SQLite pour dev, PostgreSQL pour prod
 
-    # JWT - La clé sera chargée depuis .env ou générée si absente
-    # IMPORTANT: En production, définir SECRET_KEY dans les variables d'environnement
+    # JWT - OBLIGATOIRE en production
     SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 jours
 
+    @property
+    def is_production(self) -> bool:
+        return "postgresql" in self.DATABASE_URL or "postgres" in self.DATABASE_URL
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        # Générer une clé sécurisée si non définie (pour dev uniquement)
         if not self.SECRET_KEY:
-            import warnings
-            warnings.warn(
-                "SECRET_KEY non définie! Génération d'une clé temporaire. "
-                "Définissez SECRET_KEY dans .env pour la production.",
-                UserWarning
-            )
-            object.__setattr__(self, 'SECRET_KEY', secrets.token_urlsafe(32))
+            if self.is_production:
+                raise ValueError(
+                    "CRITICAL: SECRET_KEY must be set in production! "
+                    "Add SECRET_KEY to your environment variables."
+                )
+            else:
+                # Dev only: generate temporary key with warning
+                import warnings
+                warnings.warn(
+                    "SECRET_KEY not set - using temporary key (dev only). "
+                    "Set SECRET_KEY in .env for production.",
+                    UserWarning
+                )
+                object.__setattr__(self, 'SECRET_KEY', secrets.token_urlsafe(32))
 
     # Upload
     UPLOAD_DIR: str = "uploads"

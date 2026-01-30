@@ -1,15 +1,32 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator, Field
 from typing import Optional
 from datetime import datetime
+import re
 
 class UserBase(BaseModel):
     email: EmailStr
-    username: str
-    full_name: Optional[str] = None
+    username: str = Field(..., min_length=3, max_length=30)
+    full_name: Optional[str] = Field(None, max_length=100)
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v):
+        if not re.match(r"^[a-zA-Z0-9_.-]+$", v):
+            raise ValueError("Le username ne peut contenir que des lettres, chiffres, _ . -")
+        return v
 
 class UserCreate(UserBase):
-    password: str
-    referral_code: Optional[str] = None  # Code du parrain (optionnel)
+    password: str = Field(..., min_length=8, max_length=128)
+    referral_code: Optional[str] = None
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v):
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Le mot de passe doit contenir au moins une majuscule")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Le mot de passe doit contenir au moins un chiffre")
+        return v
 
 class UserLogin(BaseModel):
     email: EmailStr

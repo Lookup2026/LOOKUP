@@ -1,13 +1,17 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Date
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Date, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime, date
 from app.core.database import Base
 
 class Look(Base):
     __tablename__ = "looks"
+    __table_args__ = (
+        Index("ix_looks_user_date", "user_id", "look_date"),
+        Index("ix_looks_created_at", "created_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     title = Column(String, nullable=True)
     description = Column(Text, nullable=True)
     photo_url = Column(String, nullable=False)
@@ -49,10 +53,13 @@ class LookItem(Base):
 class LookLike(Base):
     """Like anonyme sur un look (l'owner ne sait pas qui a like)"""
     __tablename__ = "look_likes"
+    __table_args__ = (
+        UniqueConstraint("look_id", "user_id", name="uq_look_like"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     look_id = Column(Integer, ForeignKey("looks.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Pour eviter double like
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relations
@@ -62,10 +69,13 @@ class LookLike(Base):
 class LookView(Base):
     """Vue anonyme sur un look (quand quelqu'un consulte un look croise)"""
     __tablename__ = "look_views"
+    __table_args__ = (
+        UniqueConstraint("look_id", "user_id", name="uq_look_view"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     look_id = Column(Integer, ForeignKey("looks.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Pour eviter double comptage
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relations
@@ -75,6 +85,9 @@ class LookView(Base):
 class SavedLook(Base):
     """Look sauvegarde par un utilisateur (bookmark)"""
     __tablename__ = "saved_looks"
+    __table_args__ = (
+        UniqueConstraint("look_id", "user_id", name="uq_saved_look"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     look_id = Column(Integer, ForeignKey("looks.id"), nullable=False)

@@ -1,11 +1,17 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import os
 
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.endpoints import auth, looks, crossings, users, photos
+
+# Rate limiter
+limiter = Limiter(key_func=get_remote_address)
 
 # Creer les tables
 Base.metadata.create_all(bind=engine)
@@ -17,15 +23,22 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS pour le frontend
-# En prod: definir CORS_ORIGINS avec l'URL Vercel
-cors_origins = settings.CORS_ORIGINS.split(",") if settings.CORS_ORIGINS else ["*"]
+# Rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# CORS pour le frontend - JAMAIS de "*" en fallback
+if not settings.CORS_ORIGINS:
+    raise ValueError(
+        "CORS_ORIGINS must be set! Example: CORS_ORIGINS=https://lookup-gamma.vercel.app,http://localhost:5173"
+    )
+cors_origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",")]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization"],
 )
 
 # Servir les fichiers uploades

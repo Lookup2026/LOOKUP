@@ -12,3 +12,4 @@ alembic>=1.13.1
 geopy>=2.4.1
 Pillow>=10.3.0
 supabase>=2.3.0
+slowapi>=0.1.9

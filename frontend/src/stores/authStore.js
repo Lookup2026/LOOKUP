@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { login as apiLogin, register as apiRegister, getMe } from '../api/client'
+import { login as apiLogin, register as apiRegister, getMe, logout as apiLogout } from '../api/client'
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -18,19 +18,26 @@ export const useAuthStore = create((set) => ({
         set({ user: null, isAuthenticated: false, isLoading: false })
       }
     } else {
-      set({ isLoading: false })
+      // Tenter avec le cookie httpOnly (pas de token en localStorage)
+      try {
+        const { data } = await getMe()
+        set({ user: data, isAuthenticated: true, isLoading: false })
+      } catch {
+        set({ user: null, isAuthenticated: false, isLoading: false })
+      }
     }
   },
 
-  // Login
+  // Login — stocke le token ET le backend set un cookie httpOnly
   login: async (email, password) => {
     const { data } = await apiLogin({ email, password })
-    localStorage.setItem('token', data.access_token)
+    if (data.access_token) {
+      localStorage.setItem('token', data.access_token)
+    }
     try {
       const { data: user } = await getMe()
       set({ user, isAuthenticated: true, isLoading: false })
     } catch (error) {
-      // Si getMe échoue, nettoyer le token et rejeter l'erreur
       localStorage.removeItem('token')
       set({ user: null, isAuthenticated: false, isLoading: false })
       throw new Error('Erreur lors de la récupération du profil')
@@ -46,20 +53,26 @@ export const useAuthStore = create((set) => ({
     await apiRegister(registerData)
     // Login automatique apres inscription
     const { data } = await apiLogin({ email, password })
-    localStorage.setItem('token', data.access_token)
+    if (data.access_token) {
+      localStorage.setItem('token', data.access_token)
+    }
     try {
       const { data: user } = await getMe()
       set({ user, isAuthenticated: true, isLoading: false })
     } catch (error) {
-      // Si getMe échoue, nettoyer le token et rejeter l'erreur
       localStorage.removeItem('token')
       set({ user: null, isAuthenticated: false, isLoading: false })
       throw new Error('Erreur lors de la récupération du profil')
     }
   },
 
-  // Logout
-  logout: () => {
+  // Logout — supprime le cookie httpOnly + localStorage
+  logout: async () => {
+    try {
+      await apiLogout()
+    } catch {
+      // Ignore si le serveur est down
+    }
     localStorage.removeItem('token')
     set({ user: null, isAuthenticated: false })
   },

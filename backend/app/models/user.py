@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import secrets
@@ -39,10 +39,13 @@ class User(Base):
 class Follow(Base):
     """Table pour stocker les abonnements (followers)"""
     __tablename__ = "follows"
+    __table_args__ = (
+        UniqueConstraint("follower_id", "followed_id", name="uq_follow"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    follower_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Qui suit
-    followed_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Qui est suivi
+    follower_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    followed_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relations
@@ -53,10 +56,13 @@ class Follow(Base):
 class BlockedUser(Base):
     """Table pour stocker les utilisateurs bloques"""
     __tablename__ = "blocked_users"
+    __table_args__ = (
+        UniqueConstraint("blocker_id", "blocked_id", name="uq_block"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
-    blocker_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Celui qui bloque
-    blocked_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Celui qui est bloque
+    blocker_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    blocked_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relations

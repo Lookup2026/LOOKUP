@@ -19,9 +19,10 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,  // Envoie les cookies httpOnly automatiquement
 })
 
-// Intercepteur pour ajouter le token
+// Intercepteur pour ajouter le token (fallback si cookie pas encore actif)
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
@@ -36,7 +37,10 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      const path = window.location.pathname
+      if (path !== '/login' && path !== '/register' && path !== '/') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
@@ -51,6 +55,7 @@ export const uploadAvatar = (formData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 export const deleteAccount = () => api.delete('/auth/account')
+export const logout = () => api.post('/auth/logout')
 
 // Looks
 export const createLook = (formData) =>
@@ -85,7 +90,7 @@ export const getSavedCrossings = () => api.get('/crossings/saved/list')
 export const blockUser = (id) => api.post(`/users/${id}/block`)
 export const getBlockedUsers = () => api.get('/users/blocked')
 export const checkIfBlocked = (id) => api.get(`/users/${id}/is-blocked`)
-export const reportContent = (data) => api.post('/users/report', null, { params: data })
+export const reportContent = (data) => api.post('/users/report', data)
 
 // Follow
 export const followUser = (id) => api.post(`/users/${id}/follow`)

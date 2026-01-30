@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, Field
 from typing import Optional
 from datetime import datetime
 
 class LocationPingCreate(BaseModel):
-    latitude: float
-    longitude: float
-    accuracy: Optional[float] = None
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    accuracy: Optional[float] = Field(None, ge=0, le=10000)
 
 class LocationPingResponse(LocationPingCreate):
     id: int

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Float, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.core.database import Base
@@ -22,6 +22,10 @@ class LocationPing(Base):
 class Crossing(Base):
     """Croisement entre deux utilisateurs dans la meme zone"""
     __tablename__ = "crossings"
+    __table_args__ = (
+        Index("ix_crossings_users", "user1_id", "user2_id"),
+        Index("ix_crossings_crossed_at", "crossed_at"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user1_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -55,6 +59,9 @@ class Crossing(Base):
 class CrossingLike(Base):
     """Like sur un croisement"""
     __tablename__ = "crossing_likes"
+    __table_args__ = (
+        UniqueConstraint("crossing_id", "user_id", name="uq_crossing_like"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     crossing_id = Column(Integer, ForeignKey("crossings.id"), nullable=False)
@@ -68,6 +75,9 @@ class CrossingLike(Base):
 class SavedCrossing(Base):
     """Croisement sauvegarde par un utilisateur"""
     __tablename__ = "saved_crossings"
+    __table_args__ = (
+        UniqueConstraint("crossing_id", "user_id", name="uq_saved_crossing"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     crossing_id = Column(Integer, ForeignKey("crossings.id"), nullable=False)

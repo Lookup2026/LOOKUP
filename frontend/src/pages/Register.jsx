@@ -31,8 +31,16 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (formData.password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caractères')
+    if (formData.password.length < 8) {
+      toast.error('Le mot de passe doit contenir au moins 8 caractères')
+      return
+    }
+    if (!/[A-Z]/.test(formData.password)) {
+      toast.error('Le mot de passe doit contenir au moins une majuscule')
+      return
+    }
+    if (!/[0-9]/.test(formData.password)) {
+      toast.error('Le mot de passe doit contenir au moins un chiffre')
       return
     }
 

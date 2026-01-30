@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from datetime import date
 import os
@@ -8,7 +8,7 @@ import uuid
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.storage import upload_photo, delete_photo
-from app.models import User, Look, LookItem, LookLike, LookView, SavedLook, Follow
+from app.models import User, Look, LookItem, LookLike, LookView, SavedLook, Follow, BlockedUser
 from app.schemas import LookCreate, LookResponse, LookItemCreate
 from app.api.deps import get_current_user
 
@@ -31,12 +31,12 @@ async def create_look(
     """Creer un nouveau look du jour avec photo"""
     import json
 
-    # Verifier la limite de looks par jour
+    # Verifier la limite de looks par jour (with_for_update pour eviter race condition)
     today = date.today()
     looks_today = db.query(Look).filter(
         Look.user_id == current_user.id,
         Look.look_date == today
-    ).count()
+    ).with_for_update().count()
 
     if looks_today >= MAX_LOOKS_PER_DAY:
         raise HTTPException(
@@ -44,15 +44,16 @@ async def create_look(
             detail=f"Tu as atteint la limite de {MAX_LOOKS_PER_DAY} looks par jour. Reviens demain !"
         )
 
-    # Verifier le type de fichier
-    if not photo.content_type.startswith("image/"):
+    # Verifier le type de fichier (whitelist stricte)
+    ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+    if photo.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Le fichier doit etre une image"
+            detail="Format accepte : JPEG, PNG ou WebP uniquement"
         )
 
-    # Lire le contenu du fichier
-    content = await photo.read()
+    # Lire le contenu du fichier (taille limitee)
+    content = await photo.read(settings.MAX_FILE_SIZE + 1)
     if len(content) > settings.MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -62,10 +63,10 @@ async def create_look(
     # Upload vers Supabase Storage
     try:
         photo_url = await upload_photo(content, photo.filename)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erreur upload photo: {str(e)}"
+            detail="Erreur lors de l'upload de la photo"
         )
 
     # Parser la date
@@ -89,26 +90,37 @@ async def create_look(
     db.refresh(look)
 
     # Ajouter les items si fournis
+    VALID_CATEGORIES = {"top", "bottom", "shoes", "accessory", "outerwear", "other"}
     if items_json:
         try:
             items = json.loads(items_json)
+            if not isinstance(items, list):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Les items doivent etre une liste"
+                )
             for item_data in items:
+                if not isinstance(item_data, dict):
+                    continue
+                category = item_data.get("category", "other")
+                if category not in VALID_CATEGORIES:
+                    category = "other"
                 item = LookItem(
                     look_id=look.id,
-                    category=item_data.get("category", "other"),
-                    brand=item_data.get("brand"),
-                    product_name=item_data.get("product_name"),
-                    product_reference=item_data.get("product_reference"),
-                    product_url=item_data.get("product_url"),
-                    color=item_data.get("color")
+                    category=category,
+                    brand=item_data.get("brand", "")[:100] if item_data.get("brand") else None,
+                    product_name=item_data.get("product_name", "")[:200] if item_data.get("product_name") else None,
+                    product_reference=item_data.get("product_reference", "")[:100] if item_data.get("product_reference") else None,
+                    product_url=item_data.get("product_url", "")[:500] if item_data.get("product_url") else None,
+                    color=item_data.get("color", "")[:50] if item_data.get("color") else None
                 )
                 db.add(item)
             db.commit()
             db.refresh(look)
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Format JSON invalide pour les items: {str(e)}"
+                detail="Format JSON invalide pour les items"
             )
 
     return look
@@ -164,15 +176,20 @@ async def get_friends_feed(
     if not following_ids:
         return []
 
-    # Obtenir leurs looks du jour
-    looks = db.query(Look).filter(
+    # Obtenir leurs looks du jour avec user precharge
+    looks = db.query(Look).options(
+        joinedload(Look.user),
+        joinedload(Look.items)
+    ).filter(
         Look.user_id.in_(following_ids),
         Look.look_date == today
     ).order_by(Look.created_at.desc()).all()
 
     result = []
     for look in looks:
-        user = db.query(User).filter(User.id == look.user_id).first()
+        user = look.user
+        if not user:
+            continue
         result.append({
             "id": look.id,
             "title": look.title,
@@ -229,6 +246,29 @@ async def get_look(
         )
 
     user = db.query(User).filter(User.id == look.user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Look non trouve")
+
+    # Verifier l'acces: bloques et profils prives
+    if user.id != current_user.id:
+        # Bloque ?
+        blocked = db.query(BlockedUser).filter(
+            ((BlockedUser.blocker_id == current_user.id) & (BlockedUser.blocked_id == user.id)) |
+            ((BlockedUser.blocker_id == user.id) & (BlockedUser.blocked_id == current_user.id))
+        ).first()
+        if blocked:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Look non trouve")
+
+        # Profil prive ?
+        if user.is_private:
+            is_friend = db.query(Follow).filter(
+                Follow.follower_id == current_user.id, Follow.followed_id == user.id
+            ).first() and db.query(Follow).filter(
+                Follow.follower_id == user.id, Follow.followed_id == current_user.id
+            ).first()
+            if not is_friend:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Ce profil est prive")
 
     # Verifier si l'utilisateur courant like/saved ce look
     user_liked = db.query(LookLike).filter(
@@ -317,14 +357,15 @@ async def update_look(
         look.description = description
 
     # Mettre a jour la photo si fournie
+    ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
     if photo:
-        if not photo.content_type.startswith("image/"):
+        if photo.content_type not in ALLOWED_IMAGE_TYPES:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Le fichier doit etre une image"
+                detail="Format accepte : JPEG, PNG ou WebP uniquement"
             )
 
-        content = await photo.read()
+        content = await photo.read(settings.MAX_FILE_SIZE + 1)
         if len(content) > settings.MAX_FILE_SIZE:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -338,35 +379,46 @@ async def update_look(
         # Upload la nouvelle
         try:
             look.photo_url = await upload_photo(content, photo.filename)
-        except Exception as e:
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Erreur upload photo: {str(e)}"
+                detail="Erreur lors de l'upload de la photo"
             )
 
     # Mettre a jour les items si fournis
+    ALLOWED_CATEGORIES = {"top", "bottom", "shoes", "accessory", "outerwear", "other"}
     if items_json is not None:
         try:
+            items = json.loads(items_json)
+            if not isinstance(items, list):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Les items doivent etre une liste"
+                )
             # Supprimer les anciens items
             db.query(LookItem).filter(LookItem.look_id == look_id).delete()
 
-            # Ajouter les nouveaux
-            items = json.loads(items_json)
+            # Ajouter les nouveaux avec validation
             for item_data in items:
+                if not isinstance(item_data, dict):
+                    continue
+                category = item_data.get("category", "other")
+                if category not in ALLOWED_CATEGORIES:
+                    category = "other"
                 item = LookItem(
                     look_id=look.id,
-                    category=item_data.get("category", "other"),
-                    brand=item_data.get("brand"),
-                    product_name=item_data.get("product_name"),
-                    product_reference=item_data.get("product_reference"),
-                    product_url=item_data.get("product_url"),
-                    color=item_data.get("color")
+                    category=category,
+                    brand=item_data.get("brand", "")[:100] if item_data.get("brand") else None,
+                    product_name=item_data.get("product_name", "")[:200] if item_data.get("product_name") else None,
+                    product_reference=item_data.get("product_reference", "")[:100] if item_data.get("product_reference") else None,
+                    product_url=item_data.get("product_url", "")[:500] if item_data.get("product_url") else None,
+                    color=item_data.get("color", "")[:50] if item_data.get("color") else None
                 )
                 db.add(item)
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Format JSON invalide pour les items: {str(e)}"
+                detail="Format JSON invalide pour les items"
             )
 
     db.commit()

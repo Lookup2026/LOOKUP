@@ -1,11 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from typing import List, Optional
+from typing import List, Optional, Literal
+from pydantic import BaseModel, Field
 
 from app.core.database import get_db
 from app.models import User, BlockedUser, Report, Look, Follow
 from app.api.deps import get_current_user
+
+
+class ReportRequest(BaseModel):
+    reason: Literal["inappropriate_content", "harassment", "spam", "fake_profile", "other"]
+    user_id: Optional[int] = None
+    look_id: Optional[int] = None
+    details: Optional[str] = Field(None, max_length=1000)
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -191,61 +199,54 @@ async def search_users(
     current_user: User = Depends(get_current_user)
 ):
     """Rechercher un utilisateur par username"""
+    # Echapper les caracteres speciaux SQL LIKE
+    safe_q = q.replace("%", "").replace("_", "").replace("\\", "")
     users = db.query(User).filter(
-        User.username.ilike(f"%{q}%"),
+        User.username.ilike(f"%{safe_q}%"),
         User.id != current_user.id,
         User.is_active == True,
         or_(User.is_visible == True, User.is_visible == None)
     ).limit(20).all()
 
-    # Verifier le statut de suivi pour chaque resultat
-    result = []
-    for user in users:
-        is_following = db.query(Follow).filter(
+    # Charger les follows en une seule requete
+    user_ids = [u.id for u in users]
+    following_ids = set()
+    if user_ids:
+        follows = db.query(Follow.followed_id).filter(
             Follow.follower_id == current_user.id,
-            Follow.followed_id == user.id
-        ).first() is not None
+            Follow.followed_id.in_(user_ids)
+        ).all()
+        following_ids = {f[0] for f in follows}
 
-        result.append({
+    return [
+        {
             "id": user.id,
             "username": user.username,
             "avatar_url": user.avatar_url,
-            "is_following": is_following
-        })
-
-    return result
+            "is_following": user.id in following_ids
+        }
+        for user in users
+    ]
 
 
 # ============== SIGNALEMENTS ==============
 
-REPORT_REASONS = [
-    "inappropriate_content",  # Contenu inapproprie
-    "harassment",             # Harcelement
-    "spam",                   # Spam
-    "fake_profile",           # Faux profil
-    "other"                   # Autre
-]
-
 @router.post("/report")
 async def report_content(
-    reason: str,
-    user_id: int = None,
-    look_id: int = None,
-    details: str = None,
+    report_data: ReportRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
     """Signaler un utilisateur ou un look"""
+    reason = report_data.reason
+    user_id = report_data.user_id
+    look_id = report_data.look_id
+    details = report_data.details
+
     if not user_id and not look_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Tu dois specifier un utilisateur ou un look a signaler"
-        )
-
-    if reason not in REPORT_REASONS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Raison invalide. Choisis parmi: {', '.join(REPORT_REASONS)}"
         )
 
     # Verifier que l'utilisateur/look existe

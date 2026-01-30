@@ -1,6 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Request
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+import logging
+
+logger = logging.getLogger(__name__)
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.core.database import get_db
 from app.core.security import get_password_hash, verify_password, create_access_token
 from app.core.storage import upload_photo, delete_photo
@@ -13,9 +19,11 @@ from app.schemas import UserCreate, UserLogin, UserResponse, Token
 from app.api.deps import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+limiter = Limiter(key_func=get_remote_address)
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")  # 5 inscriptions max par minute par IP
+async def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
     """Creer un nouveau compte utilisateur"""
 
     # Verifier si email existe deja
@@ -66,7 +74,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     return user
 
 @router.post("/login", response_model=Token)
-async def login(credentials: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")  # 10 tentatives max par minute par IP
+async def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db)):
     """Connexion utilisateur"""
 
     user = db.query(User).filter(User.email == credentials.email).first()
@@ -85,12 +94,31 @@ async def login(credentials: UserLogin, db: Session = Depends(get_db)):
 
     access_token = create_access_token(data={"sub": str(user.id)})
 
-    return Token(access_token=access_token)
+    response = JSONResponse(content={
+        "access_token": access_token,
+        "token_type": "bearer"
+    })
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.is_production,
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    return response
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
     """Obtenir les infos de l'utilisateur connecte"""
     return current_user
+
+@router.post("/logout")
+async def logout():
+    """Deconnecter l'utilisateur (supprime le cookie httpOnly)"""
+    response = JSONResponse(content={"success": True})
+    response.delete_cookie(key="access_token", httponly=True, secure=settings.is_production, samesite="lax")
+    return response
 
 
 @router.post("/avatar", response_model=UserResponse)
@@ -101,15 +129,16 @@ async def upload_avatar(
 ):
     """Upload une photo de profil"""
 
-    # Vérifier le type de fichier
-    if not photo.content_type.startswith("image/"):
+    # Vérifier le type de fichier (whitelist stricte)
+    ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+    if photo.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Le fichier doit être une image"
+            detail="Format accepte : JPEG, PNG ou WebP uniquement"
         )
 
-    # Lire le contenu
-    content = await photo.read()
+    # Lire le contenu (lecture limitee pour eviter memory exhaustion)
+    content = await photo.read(settings.MAX_FILE_SIZE + 1)
     if len(content) > settings.MAX_FILE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -123,10 +152,10 @@ async def upload_avatar(
     # Upload la nouvelle photo
     try:
         avatar_url = await upload_photo(content, photo.filename)
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erreur upload photo: {str(e)}"
+            detail="Erreur lors de l'upload de la photo"
         )
 
     # Mettre à jour l'utilisateur
@@ -147,6 +176,7 @@ async def delete_account(
     Cette action est irreversible.
     """
     user_id = current_user.id
+    logger.info(f"Suppression compte demandee par user {user_id} ({current_user.email})")
 
     # 1. Supprimer les photos des looks depuis le storage
     user_looks = db.query(Look).filter(Look.user_id == user_id).all()
@@ -154,15 +184,15 @@ async def delete_account(
         if look.photo_url:
             try:
                 await delete_photo(look.photo_url)
-            except Exception:
-                pass  # Continue meme si la photo n'existe plus
+            except Exception as e:
+                logger.warning(f"Echec suppression photo look {look.id}: {e}")
 
     # 2. Supprimer l'avatar
     if current_user.avatar_url:
         try:
             await delete_photo(current_user.avatar_url)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Echec suppression avatar user {user_id}: {e}")
 
     # 3. Supprimer les likes/vues donnes par l'utilisateur sur d'autres looks
     db.query(LookLike).filter(LookLike.user_id == user_id).delete()
