@@ -145,3 +145,48 @@ async def cleanup_crossings():
         "cleaned_user1_looks": result1.rowcount,
         "cleaned_user2_looks": result2.rowcount
     }
+
+@app.get("/debug-crossings")
+async def debug_crossings():
+    """Debug: voir les croisements recents et leurs looks associes"""
+    from sqlalchemy import text
+    from datetime import datetime, timedelta
+    since_24h = datetime.utcnow() - timedelta(hours=24)
+    with engine.connect() as conn:
+        crossings = conn.execute(text("""
+            SELECT c.id, c.crossed_at, c.user1_id, c.user2_id,
+                   c.user1_look_id, c.user2_look_id,
+                   l1.created_at as look1_created, l1.title as look1_title,
+                   l2.created_at as look2_created, l2.title as look2_title
+            FROM crossings c
+            LEFT JOIN looks l1 ON l1.id = c.user1_look_id
+            LEFT JOIN looks l2 ON l2.id = c.user2_look_id
+            ORDER BY c.crossed_at DESC
+            LIMIT 20
+        """)).fetchall()
+
+        # Aussi verifier les looks recents
+        looks = conn.execute(text("""
+            SELECT id, user_id, title, created_at
+            FROM looks
+            ORDER BY created_at DESC
+            LIMIT 10
+        """)).fetchall()
+
+    return {
+        "now_utc": datetime.utcnow().isoformat(),
+        "since_24h": since_24h.isoformat(),
+        "crossings": [
+            {
+                "id": r[0], "crossed_at": str(r[1]),
+                "user1_id": r[2], "user2_id": r[3],
+                "user1_look_id": r[4], "user2_look_id": r[5],
+                "look1_created": str(r[6]), "look1_title": r[7],
+                "look2_created": str(r[8]), "look2_title": r[9],
+            } for r in crossings
+        ],
+        "recent_looks": [
+            {"id": r[0], "user_id": r[1], "title": r[2], "created_at": str(r[3])}
+            for r in looks
+        ]
+    }
