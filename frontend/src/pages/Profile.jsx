@@ -482,7 +482,7 @@ export default function Profile() {
 
       {/* Look Detail Modal */}
       {showModal && selectedLook && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex flex-col">
+        <div className="fixed inset-0 bg-black/90 z-50 flex flex-col overflow-y-auto">
           {/* Modal Header - Clean minimal design */}
           <div className="flex items-center justify-between px-4 py-3">
             <button
