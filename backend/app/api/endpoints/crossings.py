@@ -130,16 +130,16 @@ async def send_location_ping(
         ).first()
 
         if not existing:
-            # Obtenir le look du jour de chaque utilisateur
-            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+            # Obtenir le look le plus recent (< 24h) de chaque utilisateur
+            since_24h = datetime.utcnow() - timedelta(hours=24)
             my_look = db.query(Look).filter(
                 Look.user_id == current_user.id,
-                Look.created_at >= today_start,
+                Look.created_at >= since_24h,
             ).order_by(Look.created_at.desc()).first()
 
             other_look = db.query(Look).filter(
                 Look.user_id == other_ping.user_id,
-                Look.created_at >= today_start,
+                Look.created_at >= since_24h,
             ).order_by(Look.created_at.desc()).first()
 
             # Obtenir le nom du lieu
@@ -261,26 +261,24 @@ async def get_my_crossings(
         if not other_user:
             continue
 
-        # Obtenir le look
+        # Obtenir le look (< 24h) uniquement
         other_look = None
         look_items = []
-        if other_look_id:
-            other_look = db.query(Look).filter(Look.id == other_look_id).first()
+        since_24h = datetime.utcnow() - timedelta(hours=24)
 
-        # Fallback: si pas de look_id stocke, chercher le look du jour de l'utilisateur
+        if other_look_id:
+            # Verifier que le look a moins de 24h
+            other_look = db.query(Look).filter(
+                Look.id == other_look_id,
+                Look.created_at >= since_24h,
+            ).first()
+
+        # Fallback: chercher le look le plus recent (< 24h)
         if not other_look:
-            today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
             other_look = db.query(Look).filter(
                 Look.user_id == other_user_id,
-                Look.created_at >= today_start,
+                Look.created_at >= since_24h,
             ).order_by(Look.created_at.desc()).first()
-            # Mettre a jour le croisement pour les prochaines requetes
-            if other_look:
-                if c.user1_id == current_user.id:
-                    c.user2_look_id = other_look.id
-                else:
-                    c.user1_look_id = other_look.id
-                db.commit()
 
         if other_look:
             look_items = [
@@ -355,22 +353,23 @@ async def get_crossing_detail(
         other_look_id = crossing.user1_look_id
 
     other_user = db.query(User).filter(User.id == other_user_id).first()
-    other_look = db.query(Look).filter(Look.id == other_look_id).first() if other_look_id else None
 
-    # Fallback: chercher le look du jour si pas de look lie
+    # Verifier que le look a moins de 24h
+    since_24h = datetime.utcnow() - timedelta(hours=24)
+
+    other_look = None
+    if other_look_id:
+        other_look = db.query(Look).filter(
+            Look.id == other_look_id,
+            Look.created_at >= since_24h,
+        ).first()
+
+    # Fallback: chercher le look le plus recent (< 24h)
     if not other_look:
-        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
         other_look = db.query(Look).filter(
             Look.user_id == other_user_id,
-            Look.created_at >= today_start,
+            Look.created_at >= since_24h,
         ).order_by(Look.created_at.desc()).first()
-        # Mettre a jour le croisement
-        if other_look:
-            if crossing.user1_id == current_user.id:
-                crossing.user2_look_id = other_look.id
-            else:
-                crossing.user1_look_id = other_look.id
-            db.commit()
 
     # Verifier si l'utilisateur a like/sauvegarde ce croisement
     user_liked = db.query(CrossingLike).filter(
