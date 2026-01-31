@@ -139,7 +139,9 @@ export default function AddLook() {
       }
       navigate('/profile')
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Erreur lors de l\'enregistrement')
+      console.error('Erreur publication look:', error, error.response?.status, error.response?.data)
+      const msg = error.response?.data?.detail || error.message || 'Erreur inconnue'
+      toast.error(`Erreur: ${msg}`)
     } finally {
       setLoading(false)
     }
