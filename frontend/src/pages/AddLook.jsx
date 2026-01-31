@@ -239,7 +239,6 @@ export default function AddLook() {
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           onChange={handlePhotoChange}
           className="hidden"
         />
