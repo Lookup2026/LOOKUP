@@ -484,7 +484,7 @@ export default function Profile() {
 
       {/* Look Detail Modal */}
       {showModal && selectedLook && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex flex-col" style={{ touchAction: 'none' }}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[60] flex flex-col" style={{ touchAction: 'none' }}>
           {/* Modal Header - Clean minimal design */}
           <div className="flex items-center justify-between px-4 py-3">
             <button
