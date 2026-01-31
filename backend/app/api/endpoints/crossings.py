@@ -280,16 +280,19 @@ async def get_my_crossings(
                 Look.created_at >= since_24h,
             ).order_by(Look.created_at.desc()).first()
 
-        if other_look:
-            look_items = [
-                {
-                    "category": item.category,
-                    "brand": item.brand,
-                    "product_name": item.product_name,
-                    "color": item.color
-                }
-                for item in other_look.items
-            ]
+        # Pas de look recent (< 24h) = on n'affiche pas ce croisement
+        if not other_look:
+            continue
+
+        look_items = [
+            {
+                "category": item.category,
+                "brand": item.brand,
+                "product_name": item.product_name,
+                "color": item.color
+            }
+            for item in other_look.items
+        ]
 
         # Arrondir les coordonnees pour la vie privee
         rounded_lat, rounded_lon = round_coordinates(c.latitude, c.longitude)
