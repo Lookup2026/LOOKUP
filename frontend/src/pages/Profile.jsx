@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
@@ -17,6 +17,7 @@ const CATEGORY_LABELS = {
 export default function Profile() {
   const { user, logout, setUser } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const avatarInputRef = useRef(null)
   const [looks, setLooks] = useState([])
   const [savedLooks, setSavedLooks] = useState([])
@@ -35,6 +36,17 @@ export default function Profile() {
 
   useEffect(() => {
     loadLooks()
+  }, [location.key])
+
+  // Recharger quand l'app revient au premier plan (tab switch, retour app)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadLooks()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 
   // Close menu when clicking outside

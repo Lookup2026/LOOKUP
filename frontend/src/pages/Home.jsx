@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, RefreshCw, Search, Users } from 'lucide-react'
 import { getTodayLook, getMyCrossings, getPhotoUrl, getFriendsFeed } from '../api/client'
 import { useLocationStore } from '../stores/locationStore'
@@ -9,6 +9,7 @@ import { HomeSkeleton } from '../components/Skeleton'
 
 export default function Home() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { sendPing } = useLocationStore()
 
   // Check for onboarding redirect immediately (before any render)
@@ -69,6 +70,17 @@ export default function Home() {
     }, 30000)
 
     return () => clearInterval(pingInterval)
+  }, [location.key])
+
+  // Recharger quand l'app revient au premier plan
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadData()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
   }, [])
 
   const loadData = async () => {
