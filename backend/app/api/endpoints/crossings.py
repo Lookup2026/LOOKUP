@@ -10,7 +10,7 @@ from geopy.geocoders import Nominatim
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.zones import get_zone_id, get_adjacent_zones
-from app.models import User, Look, LocationPing, Crossing, BlockedUser, CrossingLike, SavedCrossing, Follow
+from app.models import User, Look, LocationPing, Crossing, BlockedUser, CrossingLike, SavedCrossing, Follow, LookView, LookLike
 from app.schemas import LocationPingCreate, CrossingWithDetails
 from app.api.deps import get_current_user
 
@@ -345,6 +345,7 @@ async def get_crossing_detail(
     elif crossing.user2_id == current_user.id and not crossing.user2_viewed:
         crossing.user2_viewed = datetime.utcnow()
         crossing.views_count += 1
+
     db.commit()
 
     # Retourner les details complets
@@ -373,6 +374,18 @@ async def get_crossing_detail(
             Look.user_id == other_user_id,
             Look.created_at >= since_24h,
         ).order_by(Look.created_at.desc()).first()
+
+    # Propager la vue sur le look associe (apres resolution du look)
+    if other_look and other_look.user_id != current_user.id:
+        existing_look_view = db.query(LookView).filter(
+            LookView.look_id == other_look.id,
+            LookView.user_id == current_user.id
+        ).first()
+        if not existing_look_view:
+            db.add(LookView(look_id=other_look.id, user_id=current_user.id))
+            other_look.views_count += 1
+            db.commit()
+            db.refresh(other_look)
 
     # Verifier si l'utilisateur a like/sauvegarde ce croisement
     user_liked = db.query(CrossingLike).filter(
@@ -458,6 +471,12 @@ async def like_crossing(
         CrossingLike.user_id == current_user.id
     ).first()
 
+    # Determiner le look de l'autre utilisateur
+    if crossing.user1_id == current_user.id:
+        other_look_id = crossing.user2_look_id
+    else:
+        other_look_id = crossing.user1_look_id
+
     if existing_like:
         # Unlike - Opération atomique
         db.delete(existing_like)
@@ -465,6 +484,18 @@ async def like_crossing(
             {Crossing.likes_count: Crossing.likes_count - 1},
             synchronize_session=False
         )
+        # Propager unlike sur le look
+        if other_look_id:
+            existing_look_like = db.query(LookLike).filter(
+                LookLike.look_id == other_look_id,
+                LookLike.user_id == current_user.id
+            ).first()
+            if existing_look_like:
+                db.delete(existing_look_like)
+                db.query(Look).filter(Look.id == other_look_id).update(
+                    {Look.likes_count: Look.likes_count - 1},
+                    synchronize_session=False
+                )
         db.commit()
         db.refresh(crossing)
         return {"liked": False, "likes_count": max(0, crossing.likes_count)}
@@ -476,6 +507,18 @@ async def like_crossing(
             {Crossing.likes_count: Crossing.likes_count + 1},
             synchronize_session=False
         )
+        # Propager like sur le look
+        if other_look_id:
+            existing_look_like = db.query(LookLike).filter(
+                LookLike.look_id == other_look_id,
+                LookLike.user_id == current_user.id
+            ).first()
+            if not existing_look_like:
+                db.add(LookLike(look_id=other_look_id, user_id=current_user.id))
+                db.query(Look).filter(Look.id == other_look_id).update(
+                    {Look.likes_count: Look.likes_count + 1},
+                    synchronize_session=False
+                )
         db.commit()
         db.refresh(crossing)
         return {"liked": True, "likes_count": crossing.likes_count}
