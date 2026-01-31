@@ -36,7 +36,7 @@ async def create_look(
     looks_today = db.query(Look).filter(
         Look.user_id == current_user.id,
         Look.look_date == today
-    ).with_for_update().count()
+    ).count()
 
     if looks_today >= MAX_LOOKS_PER_DAY:
         raise HTTPException(
