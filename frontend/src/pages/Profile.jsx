@@ -110,12 +110,16 @@ export default function Profile() {
     setSelectedLook(look)
     setShowModal(true)
     document.body.style.overflow = 'hidden'
+    const nav = document.querySelector('nav.fixed')
+    if (nav) nav.style.display = 'none'
   }
 
   const closeLookDetail = () => {
     setShowModal(false)
     setSelectedLook(null)
     document.body.style.overflow = ''
+    const nav = document.querySelector('nav.fixed')
+    if (nav) nav.style.display = ''
   }
 
   const handleLogout = () => {
