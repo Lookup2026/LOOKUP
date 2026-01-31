@@ -10,7 +10,7 @@ export default function Layout() {
       </main>
 
       {/* Fixed bottom navigation - Glass effect */}
-      <nav className="fixed bottom-0 left-0 right-0 glass-strong rounded-t-3xl z-50 shadow-glass-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+      <nav className="fixed bottom-0 left-0 right-0 rounded-t-3xl z-50 shadow-glass-lg" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: 'rgba(255, 255, 255, 0.55)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
         <div className="flex justify-around items-center py-3 px-6">
           {/* Home */}
           <NavLink
