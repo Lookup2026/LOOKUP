@@ -131,24 +131,15 @@ async def cleanup_crossings():
     """Nettoyer les croisements qui pointent vers des looks hors-jour"""
     from sqlalchemy import text
     with engine.begin() as conn:
-        # Mettre a NULL les look_id qui ne correspondent pas au jour du croisement
+        # Mettre a NULL TOUS les look_id (reset complet)
+        # Les fallbacks reconstruiront avec le bon filtre jour
         result1 = conn.execute(text("""
             UPDATE crossings SET user1_look_id = NULL
             WHERE user1_look_id IS NOT NULL
-            AND user1_look_id IN (
-                SELECT c.user1_look_id FROM crossings c
-                JOIN looks l ON l.id = c.user1_look_id
-                WHERE DATE(l.created_at) != DATE(c.crossed_at)
-            )
         """))
         result2 = conn.execute(text("""
             UPDATE crossings SET user2_look_id = NULL
             WHERE user2_look_id IS NOT NULL
-            AND user2_look_id IN (
-                SELECT c.user2_look_id FROM crossings c
-                JOIN looks l ON l.id = c.user2_look_id
-                WHERE DATE(l.created_at) != DATE(c.crossed_at)
-            )
         """))
     return {
         "cleaned_user1_looks": result1.rowcount,
