@@ -148,7 +148,7 @@ async def cleanup_crossings():
 
 @app.get("/debug-crossings")
 async def debug_crossings():
-    """Debug: voir les croisements recents et leurs looks associes"""
+    """Debug: voir les croisements recents, pings et looks"""
     from sqlalchemy import text
     from datetime import datetime, timedelta
     since_24h = datetime.utcnow() - timedelta(hours=24)
@@ -165,7 +165,6 @@ async def debug_crossings():
             LIMIT 20
         """)).fetchall()
 
-        # Aussi verifier les looks recents
         looks = conn.execute(text("""
             SELECT id, user_id, title, created_at
             FROM looks
@@ -173,9 +172,20 @@ async def debug_crossings():
             LIMIT 10
         """)).fetchall()
 
+        pings = conn.execute(text("""
+            SELECT id, user_id, zone_id, latitude, longitude, accuracy, timestamp
+            FROM location_pings
+            ORDER BY timestamp DESC
+            LIMIT 30
+        """)).fetchall()
+
     return {
         "now_utc": datetime.utcnow().isoformat(),
         "since_24h": since_24h.isoformat(),
+        "recent_pings": [
+            {"id": r[0], "user_id": r[1], "zone_id": r[2], "lat": float(r[3]) if r[3] else None, "lon": float(r[4]) if r[4] else None, "accuracy": float(r[5]) if r[5] else None, "timestamp": str(r[6])}
+            for r in pings
+        ],
         "crossings": [
             {
                 "id": r[0], "crossed_at": str(r[1]),
