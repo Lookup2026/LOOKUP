@@ -104,11 +104,17 @@ async def send_location_ping(
     ).all()
 
     new_crossings = []
+    seen_user_ids = set()  # Eviter les doublons dans la meme boucle
 
     # Fenetre plus longue pour eviter les doublons (1 heure)
     dedup_window = datetime.utcnow() - timedelta(hours=1)
 
     for other_ping in users_in_same_zone:
+        # Dedupliquer par utilisateur dans cette boucle
+        if other_ping.user_id in seen_user_ids:
+            continue
+        seen_user_ids.add(other_ping.user_id)
+
         # Verifier que l'autre utilisateur est visible
         other_user = db.query(User).filter(User.id == other_ping.user_id).first()
         if other_user and other_user.is_visible == False:
@@ -261,24 +267,15 @@ async def get_my_crossings(
         if not other_user:
             continue
 
-        # Obtenir le look (< 24h) uniquement
+        # Toujours prendre le look le plus recent (< 24h) de l'autre utilisateur
         other_look = None
         look_items = []
         since_24h = datetime.utcnow() - timedelta(hours=24)
 
-        if other_look_id:
-            # Verifier que le look a moins de 24h
-            other_look = db.query(Look).filter(
-                Look.id == other_look_id,
-                Look.created_at >= since_24h,
-            ).first()
-
-        # Fallback: chercher le look le plus recent (< 24h)
-        if not other_look:
-            other_look = db.query(Look).filter(
-                Look.user_id == other_user_id,
-                Look.created_at >= since_24h,
-            ).order_by(Look.created_at.desc()).first()
+        other_look = db.query(Look).filter(
+            Look.user_id == other_user_id,
+            Look.created_at >= since_24h,
+        ).order_by(Look.created_at.desc()).first()
 
         # Pas de look recent (< 24h) = on n'affiche pas ce croisement
         if not other_look:
@@ -358,22 +355,13 @@ async def get_crossing_detail(
 
     other_user = db.query(User).filter(User.id == other_user_id).first()
 
-    # Verifier que le look a moins de 24h
+    # Toujours prendre le look le plus recent (< 24h)
     since_24h = datetime.utcnow() - timedelta(hours=24)
 
-    other_look = None
-    if other_look_id:
-        other_look = db.query(Look).filter(
-            Look.id == other_look_id,
-            Look.created_at >= since_24h,
-        ).first()
-
-    # Fallback: chercher le look le plus recent (< 24h)
-    if not other_look:
-        other_look = db.query(Look).filter(
-            Look.user_id == other_user_id,
-            Look.created_at >= since_24h,
-        ).order_by(Look.created_at.desc()).first()
+    other_look = db.query(Look).filter(
+        Look.user_id == other_user_id,
+        Look.created_at >= since_24h,
+    ).order_by(Look.created_at.desc()).first()
 
     # Propager la vue sur le look associe (apres resolution du look)
     if other_look and other_look.user_id != current_user.id:

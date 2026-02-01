@@ -128,11 +128,17 @@ async def run_migration():
 
 @app.get("/cleanup-crossings")
 async def cleanup_crossings():
-    """Nettoyer les croisements qui pointent vers des looks hors-jour"""
+    """Nettoyer les doublons de croisements et reset les look_ids"""
     from sqlalchemy import text
     with engine.begin() as conn:
-        # Mettre a NULL TOUS les look_id (reset complet)
-        # Les fallbacks reconstruiront avec le bon filtre jour
+        # Supprimer les doublons: garder seulement le plus recent par paire d'utilisateurs
+        result_dedup = conn.execute(text("""
+            DELETE FROM crossings WHERE id NOT IN (
+                SELECT MAX(id) FROM crossings
+                GROUP BY LEAST(user1_id, user2_id), GREATEST(user1_id, user2_id)
+            )
+        """))
+        # Reset les look_ids
         result1 = conn.execute(text("""
             UPDATE crossings SET user1_look_id = NULL
             WHERE user1_look_id IS NOT NULL
@@ -142,6 +148,7 @@ async def cleanup_crossings():
             WHERE user2_look_id IS NOT NULL
         """))
     return {
+        "duplicates_removed": result_dedup.rowcount,
         "cleaned_user1_looks": result1.rowcount,
         "cleaned_user2_looks": result2.rowcount
     }
