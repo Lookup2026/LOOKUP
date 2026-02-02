@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, useRef } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, RefreshCw, Search, Users } from 'lucide-react'
 import { getTodayLook, getMyCrossings, getPhotoUrl, getFriendsFeed, likeLook, likeCrossing } from '../api/client'
@@ -113,52 +113,35 @@ export default function Home() {
     }
   }
 
-  // Double-tap to like (avec délai pour distinguer simple/double tap)
-  const lastTapRef = useRef({})
-  const tapTimerRef = useRef({})
+  // Double-click/tap to like
+  const handleDoubleTap = async (e, type, id) => {
+    e.preventDefault()
+    e.stopPropagation()
 
-  const handleTap = (e, type, id, url) => {
     const key = `${type}-${id}`
-    const now = Date.now()
-    const lastTap = lastTapRef.current[key] || 0
 
-    if (now - lastTap < 300) {
-      // Double tap - annuler la navigation et liker
-      clearTimeout(tapTimerRef.current[key])
-      lastTapRef.current[key] = 0
+    // Animation coeur
+    setHeartAnimation(key)
+    setTimeout(() => setHeartAnimation(null), 800)
 
-      // Animation coeur
-      setHeartAnimation(key)
-      setTimeout(() => setHeartAnimation(null), 800)
-
-      // Like si pas deja liké
-      if (!likedItems[key]) {
-        setLikedItems(prev => ({ ...prev, [key]: true }))
-        const doLike = async () => {
-          try {
-            if (type === 'look') {
-              await likeLook(id)
-              setFriendsFeed(prev => prev.map(l =>
-                l.id === id ? { ...l, likes_count: (l.likes_count || 0) + 1 } : l
-              ))
-            } else {
-              await likeCrossing(id)
-              setCrossings(prev => prev.map(c =>
-                c.id === id ? { ...c, likes_count: (c.likes_count || 0) + 1 } : c
-              ))
-            }
-          } catch (err) {
-            // Silently fail
-          }
+    // Like si pas deja liké
+    if (!likedItems[key]) {
+      setLikedItems(prev => ({ ...prev, [key]: true }))
+      try {
+        if (type === 'look') {
+          await likeLook(id)
+          setFriendsFeed(prev => prev.map(l =>
+            l.id === id ? { ...l, likes_count: (l.likes_count || 0) + 1 } : l
+          ))
+        } else {
+          await likeCrossing(id)
+          setCrossings(prev => prev.map(c =>
+            c.id === id ? { ...c, likes_count: (c.likes_count || 0) + 1 } : c
+          ))
         }
-        doLike()
+      } catch (err) {
+        // Silently fail
       }
-    } else {
-      // Premier tap - attendre pour voir si double tap
-      lastTapRef.current[key] = now
-      tapTimerRef.current[key] = setTimeout(() => {
-        navigate(url)
-      }, 300)
     }
   }
 
@@ -362,12 +345,15 @@ export default function Home() {
             ) : (
               <div className="space-y-3">
                 {crossings.map((crossing) => (
-                  <div
+                  <Link
                     key={crossing.id}
-                    onClick={() => handleTap(null, 'crossing', crossing.id, `/crossings/${crossing.id}`)}
-                    className="block glass rounded-2xl overflow-hidden shadow-glass cursor-pointer"
+                    to={`/crossings/${crossing.id}`}
+                    className="block glass rounded-2xl overflow-hidden shadow-glass"
                   >
-                    <div className="relative">
+                    <div
+                      className="relative"
+                      onDoubleClick={(e) => handleDoubleTap(e, 'crossing', crossing.id)}
+                    >
                       {(crossing.other_look_photo_urls?.length > 0 || crossing.other_look_photo_url) ? (
                         <PhotoCarousel
                           photoUrls={crossing.other_look_photo_urls?.length > 0 ? crossing.other_look_photo_urls : [crossing.other_look_photo_url]}
@@ -423,7 +409,7 @@ export default function Home() {
                       </div>
                       <span className="text-lookup-mint text-sm font-medium">Voir les détails</span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
@@ -449,12 +435,15 @@ export default function Home() {
             ) : (
               <div className="space-y-3">
                 {friendsFeed.map((look) => (
-                  <div
+                  <Link
                     key={look.id}
-                    onClick={() => handleTap(null, 'look', look.id, `/look/${look.id}`)}
-                    className="block glass rounded-2xl overflow-hidden shadow-glass cursor-pointer"
+                    to={`/look/${look.id}`}
+                    className="block glass rounded-2xl overflow-hidden shadow-glass"
                   >
-                    <div className="relative">
+                    <div
+                      className="relative"
+                      onDoubleClick={(e) => handleDoubleTap(e, 'look', look.id)}
+                    >
                       {(look.photo_urls?.length > 0 || look.photo_url) ? (
                         <PhotoCarousel
                           photoUrls={look.photo_urls?.length > 0 ? look.photo_urls : [look.photo_url]}
@@ -511,7 +500,7 @@ export default function Home() {
                         </span>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}
