@@ -321,9 +321,42 @@ export default function CrossingDetail() {
         </div>
       </div>
 
+      {/* User info - au dessus de la photo */}
+      <div className="px-4 pt-4 mb-3">
+        <div className="flex items-center gap-3">
+          {other_user?.avatar_url ? (
+            <img
+              src={getPhotoUrl(other_user.avatar_url)}
+              alt=""
+              className="w-11 h-11 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white font-bold text-lg">
+              {other_user?.username?.[0]?.toUpperCase()}
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="font-semibold text-lookup-black">{other_user?.username}</p>
+          </div>
+          <button
+            onClick={handleFollow}
+            disabled={followLoading}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition active:scale-95 ${
+              following
+                ? 'bg-lookup-cream text-lookup-gray border border-gray-200'
+                : 'bg-lookup-mint text-white'
+            }`}
+          >
+            {followLoading ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+            ) : following ? 'Suivi' : 'Suivre'}
+          </button>
+        </div>
+      </div>
+
       {/* Photo(s) */}
       {(other_look?.photo_urls?.length > 0 || other_look?.photo_url) ? (
-        <div className="px-4 pt-4 mb-4">
+        <div className="px-4 mb-3">
           <div className="relative rounded-2xl overflow-hidden shadow-sm">
             <PhotoCarousel
               photoUrls={other_look.photo_urls?.length > 0 ? other_look.photo_urls : [other_look.photo_url]}
@@ -339,7 +372,7 @@ export default function CrossingDetail() {
           </div>
         </div>
       ) : (
-        <div className="px-4 pt-4 mb-4">
+        <div className="px-4 mb-3">
           <div className="relative w-full aspect-[3/4] rounded-2xl bg-white flex items-center justify-center shadow-sm">
             <div className="text-center">
               <Camera size={32} className="mx-auto text-lookup-gray mb-2" />
@@ -353,100 +386,21 @@ export default function CrossingDetail() {
         </div>
       )}
 
-      {/* Action buttons */}
-      <div className="px-4 mb-4">
-        <div className="flex items-center gap-3">
-          {/* Like - toujours actif (like le croisement) */}
-          <button
-            onClick={handleLike}
-            disabled={liking}
-            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
-              stats.user_liked
-                ? 'bg-lookup-mint text-white'
-                : 'bg-white text-lookup-black border border-gray-100'
-            }`}
-          >
-            <Heart
-              size={22}
-              fill={stats.user_liked ? 'currentColor' : 'none'}
-            />
-            <span className="font-semibold">{stats.likes_count}</span>
-          </button>
-          {/* Save - toujours actif (save le croisement) */}
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
-              stats.user_saved
-                ? 'bg-lookup-mint text-white'
-                : 'bg-white text-lookup-black border border-gray-100'
-            }`}
-          >
-            <Bookmark
-              size={22}
-              fill={stats.user_saved ? 'currentColor' : 'none'}
-            />
-            <span className="font-medium">{stats.user_saved ? 'Sauvegarde' : 'Sauvegarder'}</span>
-          </button>
-          {/* Share - always visible */}
-          <button
-            onClick={handleShare}
-            className="flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 bg-white text-lookup-black border border-gray-100 ml-auto"
-          >
-            <Share2 size={22} />
-            <span className="font-medium">Partager</span>
-          </button>
-        </div>
-      </div>
-
-      {/* User info card */}
+      {/* Crossing details - sous la photo */}
       <div className="px-4 mb-4">
         <div className="glass rounded-2xl p-4 shadow-glass">
-          <div className="flex items-center gap-3">
-            {other_user?.avatar_url ? (
-              <img
-                src={getPhotoUrl(other_user.avatar_url)}
-                alt=""
-                className="w-12 h-12 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white font-bold text-lg">
-                {other_user?.username?.[0]?.toUpperCase()}
-              </div>
-            )}
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-lookup-black">{other_user?.username}</p>
-                <button
-                  onClick={handleFollow}
-                  disabled={followLoading}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition active:scale-95 ${
-                    following
-                      ? 'bg-lookup-cream text-lookup-gray border border-gray-200'
-                      : 'bg-lookup-mint text-white'
-                  }`}
-                >
-                  {followLoading ? (
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                  ) : following ? 'Suivi' : 'Suivre'}
-                </button>
-              </div>
-              <div className="flex items-center gap-1 text-lookup-gray text-sm">
-                <Clock size={12} />
-                <span>
-                  Croisé {new Date(crossing.crossed_at).toLocaleString('fr-FR', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              </div>
-            </div>
+          <div className="flex items-center gap-1 text-lookup-gray text-sm">
+            <Clock size={14} />
+            <span>
+              Croisé {new Date(crossing.crossed_at).toLocaleString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
           </div>
-
-          {/* Location info */}
           <div className="flex items-center justify-between mt-3 pt-3 border-t border-lookup-gray-light">
             <div className="flex items-center gap-2 text-lookup-gray text-sm">
               <MapPin size={14} className="text-lookup-mint" />
@@ -462,6 +416,49 @@ export default function CrossingDetail() {
               </button>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="px-4 mb-4">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleLike}
+            disabled={liking}
+            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
+              stats.user_liked
+                ? 'bg-lookup-mint text-white'
+                : 'bg-white text-lookup-black border border-gray-100'
+            }`}
+          >
+            <Heart
+              size={22}
+              fill={stats.user_liked ? 'currentColor' : 'none'}
+            />
+            <span className="font-semibold">{stats.likes_count}</span>
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
+              stats.user_saved
+                ? 'bg-lookup-mint text-white'
+                : 'bg-white text-lookup-black border border-gray-100'
+            }`}
+          >
+            <Bookmark
+              size={22}
+              fill={stats.user_saved ? 'currentColor' : 'none'}
+            />
+            <span className="font-medium">{stats.user_saved ? 'Sauvegarde' : 'Sauvegarder'}</span>
+          </button>
+          <button
+            onClick={handleShare}
+            className="flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 bg-white text-lookup-black border border-gray-100 ml-auto"
+          >
+            <Share2 size={22} />
+            <span className="font-medium">Partager</span>
+          </button>
         </div>
       </div>
 
