@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark, Image } from 'lucide-react'
+import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark, Image, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar, getSavedCrossings, getFollowing, getFollowers } from '../api/client'
@@ -34,6 +34,11 @@ export default function Profile() {
   const [showSavedModal, setShowSavedModal] = useState(false)
   const [followersCount, setFollowersCount] = useState(0)
   const [followingCount, setFollowingCount] = useState(0)
+  const [showFollowModal, setShowFollowModal] = useState(false)
+  const [followModalTab, setFollowModalTab] = useState('followers') // 'followers' or 'following'
+  const [followersList, setFollowersList] = useState([])
+  const [followingList, setFollowingList] = useState([])
+  const [loadingFollow, setLoadingFollow] = useState(false)
 
   useEffect(() => {
     loadLooks()
@@ -58,6 +63,43 @@ export default function Profile() {
       return () => document.removeEventListener('click', handleClickOutside)
     }
   }, [menuOpenId])
+
+  const openFollowModal = async (tab) => {
+    setFollowModalTab(tab)
+    setShowFollowModal(true)
+    setLoadingFollow(true)
+    try {
+      if (tab === 'followers') {
+        const { data } = await getFollowers()
+        setFollowersList(data)
+      } else {
+        const { data } = await getFollowing()
+        setFollowingList(data)
+      }
+    } catch (err) {
+      toast.error('Erreur de chargement')
+    } finally {
+      setLoadingFollow(false)
+    }
+  }
+
+  const switchFollowTab = async (tab) => {
+    setFollowModalTab(tab)
+    setLoadingFollow(true)
+    try {
+      if (tab === 'followers') {
+        const { data } = await getFollowers()
+        setFollowersList(data)
+      } else {
+        const { data } = await getFollowing()
+        setFollowingList(data)
+      }
+    } catch (err) {
+      toast.error('Erreur de chargement')
+    } finally {
+      setLoadingFollow(false)
+    }
+  }
 
   const loadLooks = async () => {
     try {
@@ -241,11 +283,11 @@ export default function Profile() {
               <p className="text-2xl font-bold text-lookup-black">{looks.length}</p>
               <p className="text-lookup-gray text-xs">Looks</p>
             </div>
-            <div className="text-center">
+            <div className="text-center cursor-pointer active:scale-95 transition" onClick={() => openFollowModal('followers')}>
               <p className="text-2xl font-bold text-lookup-black">{followersCount}</p>
               <p className="text-lookup-gray text-xs">Abonnés</p>
             </div>
-            <div className="text-center">
+            <div className="text-center cursor-pointer active:scale-95 transition" onClick={() => openFollowModal('following')}>
               <p className="text-2xl font-bold text-lookup-black">{followingCount}</p>
               <p className="text-lookup-gray text-xs">Suivis</p>
             </div>
@@ -744,6 +786,95 @@ export default function Profile() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Followers / Following */}
+      {showFollowModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center" onClick={() => setShowFollowModal(false)}>
+          <div
+            className="bg-white w-full max-w-lg rounded-t-3xl max-h-[70vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-2">
+              <h2 className="text-lg font-bold text-lookup-black">
+                {followModalTab === 'followers' ? 'Abonnés' : 'Suivis'}
+              </h2>
+              <button
+                onClick={() => setShowFollowModal(false)}
+                className="w-8 h-8 bg-lookup-cream rounded-full flex items-center justify-center"
+              >
+                <X size={18} className="text-lookup-gray" />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-lookup-gray-light mx-4">
+              <button
+                onClick={() => switchFollowTab('followers')}
+                className={`flex-1 py-2.5 text-sm font-medium text-center transition ${
+                  followModalTab === 'followers'
+                    ? 'text-lookup-mint border-b-2 border-lookup-mint'
+                    : 'text-lookup-gray'
+                }`}
+              >
+                Abonnés ({followersCount})
+              </button>
+              <button
+                onClick={() => switchFollowTab('following')}
+                className={`flex-1 py-2.5 text-sm font-medium text-center transition ${
+                  followModalTab === 'following'
+                    ? 'text-lookup-mint border-b-2 border-lookup-mint'
+                    : 'text-lookup-gray'
+                }`}
+              >
+                Suivis ({followingCount})
+              </button>
+            </div>
+
+            {/* List */}
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {loadingFollow ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 border-3 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : (
+                <>
+                  {(followModalTab === 'followers' ? followersList : followingList).length === 0 ? (
+                    <div className="text-center py-8">
+                      <Users size={32} className="mx-auto text-lookup-gray mb-2" />
+                      <p className="text-lookup-gray text-sm">
+                        {followModalTab === 'followers' ? 'Aucun abonné pour le moment' : 'Tu ne suis personne pour le moment'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {(followModalTab === 'followers' ? followersList : followingList).map((person) => (
+                        <div
+                          key={person.id}
+                          className="flex items-center gap-3 rounded-xl p-2 -mx-2"
+                        >
+                          {person.avatar_url ? (
+                            <img
+                              src={getPhotoUrl(person.avatar_url)}
+                              alt=""
+                              className="w-11 h-11 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white font-bold">
+                              {person.username?.[0]?.toUpperCase()}
+                            </div>
+                          )}
+                          <p className="font-medium text-lookup-black flex-1">{person.username}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
