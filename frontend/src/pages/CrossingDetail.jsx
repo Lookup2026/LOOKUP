@@ -354,26 +354,23 @@ export default function CrossingDetail() {
         </div>
       </div>
 
-      {/* Photo(s) */}
-      {(other_look?.photo_urls?.length > 0 || other_look?.photo_url) ? (
-        <div className="px-4 mb-3">
-          <div className="relative rounded-2xl overflow-hidden shadow-sm">
+      {/* Photo + Crossing details (collés) */}
+      <div className="px-4 mb-4">
+        {(other_look?.photo_urls?.length > 0 || other_look?.photo_url) ? (
+          <div className="relative rounded-t-2xl overflow-hidden shadow-sm">
             <PhotoCarousel
               photoUrls={other_look.photo_urls?.length > 0 ? other_look.photo_urls : [other_look.photo_url]}
               className="w-full max-h-[55vh]"
               imgClassName="w-full max-h-[55vh] object-cover"
               alt="Look"
             />
-            {/* Views badge */}
             <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 text-white text-xs backdrop-blur-sm z-10">
               <Eye size={14} />
               <span>{stats.views_count}</span>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="px-4 mb-3">
-          <div className="relative w-full aspect-[3/4] rounded-2xl bg-white flex items-center justify-center shadow-sm">
+        ) : (
+          <div className="relative w-full aspect-[3/4] rounded-t-2xl bg-white flex items-center justify-center shadow-sm">
             <div className="text-center">
               <Camera size={32} className="mx-auto text-lookup-gray mb-2" />
               <p className="text-lookup-gray">Pas de photo</p>
@@ -383,12 +380,8 @@ export default function CrossingDetail() {
               <span>{stats.views_count}</span>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Crossing details - sous la photo */}
-      <div className="px-4 mb-4">
-        <div className="glass rounded-2xl p-4 shadow-glass">
+        )}
+        <div className="glass rounded-b-2xl p-4 shadow-glass">
           <div className="flex items-center gap-1 text-lookup-gray text-sm">
             <Clock size={14} />
             <span>
