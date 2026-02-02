@@ -1,7 +1,7 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, RefreshCw, Search, Users } from 'lucide-react'
-import { getTodayLook, getMyCrossings, getPhotoUrl, getFriendsFeed } from '../api/client'
+import { getTodayLook, getMyCrossings, getPhotoUrl, getFriendsFeed, likeLook, likeCrossing } from '../api/client'
 import PhotoCarousel from '../components/PhotoCarousel'
 import { useLocationStore } from '../stores/locationStore'
 import toast from 'react-hot-toast'
@@ -28,6 +28,8 @@ export default function Home() {
   const [crossings, setCrossings] = useState([])
   const [friendsFeed, setFriendsFeed] = useState([])
   const [feedTab, setFeedTab] = useState('crossings') // 'crossings' or 'friends'
+  const [likedItems, setLikedItems] = useState({}) // { 'look-3': true, 'crossing-5': true }
+  const [heartAnimation, setHeartAnimation] = useState(null) // 'look-3' or 'crossing-5'
   const [loading, setLoading] = useState(true)
   const [lastPing, setLastPing] = useState(null)
   const [pingStatus, setPingStatus] = useState('waiting') // waiting, success, error
@@ -109,6 +111,46 @@ export default function Home() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Double-tap to like
+  const lastTapRef = useRef({})
+  const handleDoubleTap = async (e, type, id, lookId) => {
+    // type = 'look' ou 'crossing', id = id de l'item, lookId = id du look (pour crossing)
+    const key = `${type}-${id}`
+    const now = Date.now()
+    const lastTap = lastTapRef.current[key] || 0
+
+    if (now - lastTap < 300) {
+      // Double tap detected
+      e.preventDefault()
+      e.stopPropagation()
+
+      // Animation coeur
+      setHeartAnimation(key)
+      setTimeout(() => setHeartAnimation(null), 800)
+
+      // Like si pas deja liké
+      if (!likedItems[key]) {
+        setLikedItems(prev => ({ ...prev, [key]: true }))
+        try {
+          if (type === 'look') {
+            await likeLook(id)
+            setFriendsFeed(prev => prev.map(l =>
+              l.id === id ? { ...l, likes_count: (l.likes_count || 0) + 1 } : l
+            ))
+          } else {
+            await likeCrossing(id)
+            setCrossings(prev => prev.map(c =>
+              c.id === id ? { ...c, likes_count: (c.likes_count || 0) + 1 } : c
+            ))
+          }
+        } catch (err) {
+          // Silently fail
+        }
+      }
+    }
+    lastTapRef.current[key] = now
   }
 
   const getTimeAgo = (date) => {
@@ -316,7 +358,10 @@ export default function Home() {
                     to={`/crossings/${crossing.id}`}
                     className="block glass rounded-2xl overflow-hidden shadow-glass"
                   >
-                    <div className="relative">
+                    <div
+                      className="relative"
+                      onClick={(e) => handleDoubleTap(e, 'crossing', crossing.id)}
+                    >
                       {(crossing.other_look_photo_urls?.length > 0 || crossing.other_look_photo_url) ? (
                         <PhotoCarousel
                           photoUrls={crossing.other_look_photo_urls?.length > 0 ? crossing.other_look_photo_urls : [crossing.other_look_photo_url]}
@@ -326,6 +371,12 @@ export default function Home() {
                       ) : (
                         <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
                           <MapPin size={48} className="text-lookup-mint" />
+                        </div>
+                      )}
+                      {/* Heart animation on double tap */}
+                      {heartAnimation === `crossing-${crossing.id}` && (
+                        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                          <Heart size={80} className="text-white drop-shadow-lg animate-heart-pop" fill="white" />
                         </div>
                       )}
                       {/* Username en haut à gauche */}
@@ -397,7 +448,10 @@ export default function Home() {
                     to={`/look/${look.id}`}
                     className="block glass rounded-2xl overflow-hidden shadow-glass"
                   >
-                    <div className="relative">
+                    <div
+                      className="relative"
+                      onClick={(e) => handleDoubleTap(e, 'look', look.id)}
+                    >
                       {(look.photo_urls?.length > 0 || look.photo_url) ? (
                         <PhotoCarousel
                           photoUrls={look.photo_urls?.length > 0 ? look.photo_urls : [look.photo_url]}
@@ -407,6 +461,12 @@ export default function Home() {
                       ) : (
                         <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
                           <Heart size={48} className="text-lookup-mint" />
+                        </div>
+                      )}
+                      {/* Heart animation on double tap */}
+                      {heartAnimation === `look-${look.id}` && (
+                        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+                          <Heart size={80} className="text-white drop-shadow-lg animate-heart-pop" fill="white" />
                         </div>
                       )}
                       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
