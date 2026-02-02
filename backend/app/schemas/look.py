@@ -38,6 +38,7 @@ class LookResponse(LookBase):
     id: int
     user_id: int
     photo_url: str
+    photo_urls: List[str] = []
     look_date: date
     created_at: datetime
     items: List[LookItemResponse] = []

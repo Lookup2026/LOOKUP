@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, RefreshCw, Search, Users } from 'lucide-react'
 import { getTodayLook, getMyCrossings, getPhotoUrl, getFriendsFeed } from '../api/client'
+import PhotoCarousel from '../components/PhotoCarousel'
 import { useLocationStore } from '../stores/locationStore'
 import toast from 'react-hot-toast'
 import PullToRefresh from 'react-simple-pull-to-refresh'
@@ -316,12 +317,11 @@ export default function Home() {
                     className="block glass rounded-2xl overflow-hidden shadow-glass"
                   >
                     <div className="relative">
-                      {crossing.other_look_photo_url ? (
-                        <img
-                          src={getPhotoUrl(crossing.other_look_photo_url)}
-                          alt=""
-                          className="w-full aspect-[4/5] object-cover bg-gray-100"
-                          loading="lazy"
+                      {(crossing.other_look_photo_urls?.length > 0 || crossing.other_look_photo_url) ? (
+                        <PhotoCarousel
+                          photoUrls={crossing.other_look_photo_urls?.length > 0 ? crossing.other_look_photo_urls : [crossing.other_look_photo_url]}
+                          className="w-full aspect-[4/5]"
+                          imgClassName="w-full aspect-[4/5] object-cover bg-gray-100"
                         />
                       ) : (
                         <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
@@ -398,12 +398,11 @@ export default function Home() {
                     className="block glass rounded-2xl overflow-hidden shadow-glass"
                   >
                     <div className="relative">
-                      {look.photo_url ? (
-                        <img
-                          src={getPhotoUrl(look.photo_url)}
-                          alt=""
-                          className="w-full aspect-[4/5] object-cover bg-gray-100"
-                          loading="lazy"
+                      {(look.photo_urls?.length > 0 || look.photo_url) ? (
+                        <PhotoCarousel
+                          photoUrls={look.photo_urls?.length > 0 ? look.photo_urls : [look.photo_url]}
+                          className="w-full aspect-[4/5]"
+                          imgClassName="w-full aspect-[4/5] object-cover bg-gray-100"
                         />
                       ) : (
                         <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, ExternalLink, MapPin, Clock, Timer, Tag, Heart, Eye, MoreVertical, Map, Bookmark, Camera, Share2, ShieldOff, AlertTriangle, X } from 'lucide-react'
 import { getCrossingDetail, likeCrossing, saveCrossing, getPhotoUrl, blockUser, reportContent, followUser, isFollowing } from '../api/client'
+import PhotoCarousel from '../components/PhotoCarousel'
 import toast from 'react-hot-toast'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -320,17 +321,18 @@ export default function CrossingDetail() {
         </div>
       </div>
 
-      {/* Photo */}
-      {other_look?.photo_url ? (
+      {/* Photo(s) */}
+      {(other_look?.photo_urls?.length > 0 || other_look?.photo_url) ? (
         <div className="px-4 pt-4 mb-4">
-          <div className="relative">
-            <img
-              src={getPhotoUrl(other_look.photo_url)}
+          <div className="relative rounded-2xl overflow-hidden shadow-sm">
+            <PhotoCarousel
+              photoUrls={other_look.photo_urls?.length > 0 ? other_look.photo_urls : [other_look.photo_url]}
+              className="w-full max-h-[55vh]"
+              imgClassName="w-full max-h-[55vh] object-cover"
               alt="Look"
-              className="w-full rounded-2xl object-cover max-h-[55vh] shadow-sm"
             />
             {/* Views badge */}
-            <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 text-white text-xs backdrop-blur-sm">
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 text-white text-xs backdrop-blur-sm z-10">
               <Eye size={14} />
               <span>{stats.views_count}</span>
             </div>

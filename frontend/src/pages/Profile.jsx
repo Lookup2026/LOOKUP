@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark } from 'lucide-react'
+import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark, Image } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar, getSavedCrossings, getFollowing, getFollowers } from '../api/client'
+import PhotoCarousel from '../components/PhotoCarousel'
 import toast from 'react-hot-toast'
 
 const CATEGORY_LABELS = {
@@ -317,6 +318,12 @@ export default function Profile() {
                       <div className="absolute top-2 left-2 text-xs text-white bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
                         {formatDate(look.look_date)}
                       </div>
+                      {look.photo_urls?.length > 1 && (
+                        <div className="absolute top-2 right-2 flex items-center gap-1 text-white bg-black/40 px-1.5 py-0.5 rounded-full backdrop-blur-sm">
+                          <Image size={10} />
+                          <span className="text-xs">{look.photo_urls.length}</span>
+                        </div>
+                      )}
                       <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-1 text-white text-xs">
@@ -564,13 +571,16 @@ export default function Profile() {
 
           {/* Modal Content - Scrollable */}
           <div className="flex-1 overflow-y-auto overscroll-contain" style={{ touchAction: 'pan-y', WebkitOverflowScrolling: 'touch' }}>
-            {/* Photo */}
+            {/* Photo(s) */}
             <div className="px-4 pt-4">
-              <img
-                src={getPhotoUrl(selectedLook.photo_url)}
-                alt="Mon look"
-                className="w-full max-h-[50vh] object-contain rounded-2xl"
-              />
+              <div className="rounded-2xl overflow-hidden">
+                <PhotoCarousel
+                  photoUrls={selectedLook.photo_urls?.length > 0 ? selectedLook.photo_urls : [selectedLook.photo_url]}
+                  className="w-full max-h-[50vh]"
+                  imgClassName="w-full max-h-[50vh] object-contain"
+                  alt="Mon look"
+                />
+              </div>
             </div>
 
             {/* Stats */}

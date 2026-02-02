@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Camera, Plus, X, Upload, ChevronLeft, MapPin, Save, AlertCircle } from 'lucide-react'
+import { Camera, Plus, X, Upload, ChevronLeft, MapPin, Save, AlertCircle, Image } from 'lucide-react'
 import { createLook, getLook, updateLook, getPhotoUrl, getLooksLimit } from '../api/client'
 import toast from 'react-hot-toast'
+
+const MAX_PHOTOS = 5
 
 const CATEGORIES = [
   { id: 'top', label: 'Haut' },
@@ -17,20 +19,27 @@ export default function AddLook() {
   const { id } = useParams()
   const isEditing = Boolean(id)
   const fileInputRef = useRef(null)
-  const [photo, setPhoto] = useState(null)
-  const [photoPreview, setPhotoPreview] = useState(null)
+
+  // Multi-photo state
+  // newPhotos: fichiers File a uploader
+  // existingPhotos: photos deja en DB (en edition) [{id, photo_url}]
+  const [newPhotos, setNewPhotos] = useState([]) // [{file, preview}]
+  const [existingPhotos, setExistingPhotos] = useState([]) // [{id, photo_url}]
+  const [deletedPhotoIds, setDeletedPhotoIds] = useState([])
+
   const [title, setTitle] = useState('')
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [loadingLook, setLoadingLook] = useState(isEditing)
   const [looksLimit, setLooksLimit] = useState({ remaining: 5, max_per_day: 5, looks_today: 0 })
 
-  // Charger le look existant si on est en mode édition
+  const totalPhotos = existingPhotos.length + newPhotos.length
+  const canAddMore = totalPhotos < MAX_PHOTOS
+
   useEffect(() => {
     if (isEditing) {
       loadExistingLook()
     } else {
-      // Charger la limite de looks
       loadLooksLimit()
     }
   }, [id])
@@ -48,7 +57,19 @@ export default function AddLook() {
     try {
       const { data } = await getLook(id)
       setTitle(data.title || '')
-      setPhotoPreview(getPhotoUrl(data.photo_url))
+
+      // Charger les photos existantes
+      if (data.photo_urls && data.photo_urls.length > 0) {
+        // On a besoin des IDs des LookPhoto pour pouvoir les supprimer
+        // Pour l'instant on utilise l'index comme pseudo-id, le backend gere via existing_photos_json
+        setExistingPhotos(data.photo_urls.map((url, index) => ({
+          id: index, // sera remplace par le vrai id si dispo
+          photo_url: url,
+        })))
+      } else if (data.photo_url) {
+        setExistingPhotos([{ id: 0, photo_url: data.photo_url }])
+      }
+
       if (data.items && data.items.length > 0) {
         setItems(data.items.map((item, index) => ({
           id: item.id || `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
@@ -68,15 +89,43 @@ export default function AddLook() {
   }
 
   const handlePhotoChange = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      setPhoto(file)
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result)
-      }
-      reader.readAsDataURL(file)
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+
+    const remaining = MAX_PHOTOS - totalPhotos
+    const toAdd = files.slice(0, remaining)
+
+    if (files.length > remaining) {
+      toast.error(`Maximum ${MAX_PHOTOS} photos. ${remaining} place${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}.`)
     }
+
+    const newEntries = toAdd.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }))
+
+    setNewPhotos(prev => [...prev, ...newEntries])
+    // Reset input pour pouvoir re-selectionner les memes fichiers
+    e.target.value = ''
+  }
+
+  const removeNewPhoto = (index) => {
+    setNewPhotos(prev => {
+      const updated = [...prev]
+      URL.revokeObjectURL(updated[index].preview)
+      updated.splice(index, 1)
+      return updated
+    })
+  }
+
+  const removeExistingPhoto = (index) => {
+    const photo = existingPhotos[index]
+    setDeletedPhotoIds(prev => [...prev, photo.id])
+    setExistingPhotos(prev => {
+      const updated = [...prev]
+      updated.splice(index, 1)
+      return updated
+    })
   }
 
   const addItem = () => {
@@ -104,17 +153,12 @@ export default function AddLook() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!isEditing && !photo) {
-      toast.error('Ajoutez une photo de votre look')
+    const hasPhotos = isEditing ? (existingPhotos.length + newPhotos.length) > 0 : newPhotos.length > 0
+    if (!hasPhotos) {
+      toast.error('Ajoutez au moins une photo de votre look')
       return
     }
 
-    if (!title.trim()) {
-      toast.error('Donnez un nom à votre look')
-      return
-    }
-
-    // Vérifier la limite (sauf en édition)
     if (!isEditing && looksLimit.remaining <= 0) {
       toast.error('Tu as atteint la limite de looks pour aujourd\'hui')
       return
@@ -124,9 +168,25 @@ export default function AddLook() {
 
     try {
       const formData = new FormData()
-      if (photo) {
-        formData.append('photo', photo)
+
+      if (isEditing) {
+        // Ajouter nouvelles photos
+        for (const entry of newPhotos) {
+          formData.append('photos', entry.file)
+        }
+        // Photos a supprimer
+        if (deletedPhotoIds.length > 0) {
+          formData.append('delete_photo_ids_json', JSON.stringify(deletedPhotoIds))
+        }
+        // Ordre des photos existantes
+        formData.append('existing_photos_json', JSON.stringify(existingPhotos.map(p => p.id)))
+      } else {
+        // Creation: toutes les photos sont nouvelles
+        for (const entry of newPhotos) {
+          formData.append('photos', entry.file)
+        }
       }
+
       formData.append('title', title)
       formData.append('items_json', JSON.stringify(items.map(({ id, ...rest }) => rest)))
 
@@ -214,31 +274,104 @@ export default function AddLook() {
       )}
 
       <form onSubmit={handleSubmit} className="px-4 space-y-4">
-        {/* Photo */}
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="bg-white rounded-2xl aspect-[3/4] max-h-[350px] flex items-center justify-center cursor-pointer hover:bg-lookup-cream transition overflow-hidden shadow-sm"
-        >
-          {photoPreview ? (
-            <img
-              src={photoPreview}
-              alt="Preview"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="text-center">
-              <div className="w-14 h-14 bg-lookup-mint-light rounded-full mx-auto mb-3 flex items-center justify-center">
-                <Camera size={28} className="text-lookup-mint" />
+        {/* Photos - Multi picker */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Image size={16} className="text-lookup-gray" />
+              <span className="text-sm font-semibold text-lookup-gray uppercase tracking-wide">
+                Photos ({totalPhotos}/{MAX_PHOTOS})
+              </span>
+            </div>
+          </div>
+
+          {/* Zone d'ajout grande si aucune photo */}
+          {totalPhotos === 0 && (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-white rounded-2xl aspect-[3/4] max-h-[350px] flex items-center justify-center cursor-pointer hover:bg-lookup-cream transition overflow-hidden shadow-sm border-2 border-dashed border-lookup-gray-light"
+            >
+              <div className="text-center">
+                <div className="w-14 h-14 bg-lookup-mint-light rounded-full mx-auto mb-3 flex items-center justify-center">
+                  <Camera size={28} className="text-lookup-mint" />
+                </div>
+                <p className="text-lookup-black font-medium">Prendre une photo</p>
+                <p className="text-lookup-gray text-sm mt-1">ou choisir dans la galerie (jusqu'à 5)</p>
               </div>
-              <p className="text-lookup-black font-medium">Prendre une photo</p>
-              <p className="text-lookup-gray text-sm mt-1">ou choisir dans la galerie</p>
+            </div>
+          )}
+
+          {/* Bande horizontale de miniatures quand il y a des photos */}
+          {totalPhotos > 0 && (
+            <div className="flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+              {/* Existing photos */}
+              {existingPhotos.map((photo, index) => (
+                <div key={`existing-${index}`} className="relative flex-shrink-0">
+                  <img
+                    src={getPhotoUrl(photo.photo_url)}
+                    alt={`Photo ${index + 1}`}
+                    className="w-28 h-36 object-cover rounded-xl shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeExistingPhoto(index)}
+                    className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg"
+                  >
+                    <X size={14} />
+                  </button>
+                  {index === 0 && existingPhotos.length + newPhotos.length > 1 && (
+                    <div className="absolute bottom-1.5 left-1.5 bg-lookup-mint text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
+                      Principal
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* New photos */}
+              {newPhotos.map((entry, index) => (
+                <div key={`new-${index}`} className="relative flex-shrink-0">
+                  <img
+                    src={entry.preview}
+                    alt={`Nouvelle photo ${index + 1}`}
+                    className="w-28 h-36 object-cover rounded-xl shadow-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeNewPhoto(index)}
+                    className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg"
+                  >
+                    <X size={14} />
+                  </button>
+                  {existingPhotos.length === 0 && index === 0 && newPhotos.length > 1 && (
+                    <div className="absolute bottom-1.5 left-1.5 bg-lookup-mint text-white text-[10px] px-2 py-0.5 rounded-full font-medium">
+                      Principal
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {/* Bouton + Ajouter */}
+              {canAddMore && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-shrink-0 w-28 h-36 bg-white rounded-xl border-2 border-dashed border-lookup-mint/40 flex flex-col items-center justify-center gap-2 hover:bg-lookup-mint-light transition active:scale-95"
+                >
+                  <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
+                    <Plus size={22} className="text-lookup-mint" />
+                  </div>
+                  <span className="text-xs font-medium text-lookup-mint">Ajouter</span>
+                </button>
+              )}
             </div>
           )}
         </div>
+
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           onChange={handlePhotoChange}
           className="hidden"
         />
@@ -249,7 +382,6 @@ export default function AddLook() {
           placeholder="Nom du look (ex: Casual Friday, Soirée, Sport...)"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          required
           className="w-full bg-white rounded-xl px-4 py-3 text-lookup-black border border-lookup-gray-light placeholder-lookup-gray shadow-sm"
         />
 
@@ -341,7 +473,7 @@ export default function AddLook() {
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading || (!isEditing && !photo) || !title.trim() || (!isEditing && looksLimit.remaining <= 0)}
+          disabled={loading || (!isEditing && newPhotos.length === 0) || (!isEditing && looksLimit.remaining <= 0)}
           className="w-full flex items-center justify-center gap-2 bg-lookup-mint text-white font-semibold py-4 rounded-full shadow-lg hover:bg-lookup-mint-dark transition-all disabled:opacity-50 mt-2"
         >
           {isEditing ? <Save size={20} /> : <Upload size={20} />}

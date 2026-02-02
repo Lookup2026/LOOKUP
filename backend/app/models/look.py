@@ -25,8 +25,22 @@ class Look(Base):
     # Relations
     user = relationship("User", back_populates="looks")
     items = relationship("LookItem", back_populates="look", cascade="all, delete-orphan")
+    photos = relationship("LookPhoto", back_populates="look", cascade="all, delete-orphan", order_by="LookPhoto.position")
     likes = relationship("LookLike", back_populates="look", cascade="all, delete-orphan")
     views = relationship("LookView", back_populates="look", cascade="all, delete-orphan")
+
+
+class LookPhoto(Base):
+    """Photo individuelle d'un look (jusqu'a 5 photos par look)"""
+    __tablename__ = "look_photos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    look_id = Column(Integer, ForeignKey("looks.id"), nullable=False, index=True)
+    photo_url = Column(String, nullable=False)
+    position = Column(Integer, nullable=False, default=0)  # 0-based
+
+    # Relations
+    look = relationship("Look", back_populates="photos")
 
 
 class LookItem(Base):

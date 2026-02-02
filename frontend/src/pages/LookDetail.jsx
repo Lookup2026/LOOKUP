@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Heart, Eye, Bookmark, Tag, ExternalLink, Clock, UserPlus, UserCheck } from 'lucide-react'
 import { getLook, likeLook, saveLook, getPhotoUrl, followUser, isFollowing } from '../api/client'
+import PhotoCarousel from '../components/PhotoCarousel'
 import toast from 'react-hot-toast'
 
 const CATEGORY_LABELS = {
@@ -133,15 +134,17 @@ export default function LookDetail() {
         </div>
       </div>
 
-      {/* Photo */}
-      {data.photo_url && (
+      {/* Photo(s) */}
+      {(data.photo_urls?.length > 0 || data.photo_url) && (
         <div className="px-4 pt-4 mb-4">
-          <img
-            src={getPhotoUrl(data.photo_url)}
-            alt="Look"
-            className="w-full rounded-2xl object-cover max-h-[55vh] shadow-sm"
-            loading="lazy"
-          />
+          <div className="rounded-2xl overflow-hidden shadow-sm">
+            <PhotoCarousel
+              photoUrls={data.photo_urls?.length > 0 ? data.photo_urls : [data.photo_url]}
+              className="w-full max-h-[55vh]"
+              imgClassName="w-full max-h-[55vh] object-cover rounded-2xl"
+              alt="Look"
+            />
+          </div>
         </div>
       )}
 

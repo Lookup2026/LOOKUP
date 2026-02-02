@@ -10,7 +10,7 @@ from geopy.geocoders import Nominatim
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.zones import get_zone_id, get_adjacent_zones
-from app.models import User, Look, LocationPing, Crossing, BlockedUser, CrossingLike, SavedCrossing, Follow, LookView, LookLike
+from app.models import User, Look, LookPhoto, LocationPing, Crossing, BlockedUser, CrossingLike, SavedCrossing, Follow, LookView, LookLike
 from app.schemas import LocationPingCreate, CrossingWithDetails
 from app.api.deps import get_current_user
 
@@ -61,6 +61,14 @@ def get_location_name(latitude: float, longitude: float) -> str:
         return "Zone de croisement"
     except Exception:
         return "Zone de croisement"
+
+def _get_look_photo_urls(look):
+    """Helper: retourne la liste des photo_urls d'un look"""
+    if look.photos and len(look.photos) > 0:
+        return [p.photo_url for p in look.photos]
+    elif look.photo_url:
+        return [look.photo_url]
+    return []
 
 router = APIRouter(prefix="/crossings", tags=["Crossings"])
 limiter = Limiter(key_func=get_remote_address)
@@ -272,7 +280,9 @@ async def get_my_crossings(
         look_items = []
         since_24h = datetime.utcnow() - timedelta(hours=24)
 
-        other_look = db.query(Look).filter(
+        other_look = db.query(Look).options(
+            joinedload(Look.photos)
+        ).filter(
             Look.user_id == other_user_id,
             Look.created_at >= since_24h,
         ).order_by(Look.created_at.desc()).first()
@@ -306,6 +316,7 @@ async def get_my_crossings(
             other_look_id=other_look.id if other_look else None,
             other_look_title=other_look.title if other_look else None,
             other_look_photo_url=other_look.photo_url if other_look else None,
+            other_look_photo_urls=_get_look_photo_urls(other_look) if other_look else [],
             other_look_items=look_items,
             views_count=other_look.views_count if other_look else 0,
             likes_count=other_look.likes_count if other_look else 0
@@ -358,7 +369,9 @@ async def get_crossing_detail(
     # Toujours prendre le look le plus recent (< 24h)
     since_24h = datetime.utcnow() - timedelta(hours=24)
 
-    other_look = db.query(Look).filter(
+    other_look = db.query(Look).options(
+        joinedload(Look.photos)
+    ).filter(
         Look.user_id == other_user_id,
         Look.created_at >= since_24h,
     ).order_by(Look.created_at.desc()).first()
@@ -414,6 +427,7 @@ async def get_crossing_detail(
         "other_look": {
             "id": other_look.id,
             "photo_url": other_look.photo_url,
+            "photo_urls": _get_look_photo_urls(other_look),
             "title": other_look.title,
             "items": [
                 {
@@ -579,7 +593,7 @@ async def get_saved_crossings(
             other_look_id = crossing.user1_look_id
 
         other_user = db.query(User).filter(User.id == other_user_id).first()
-        other_look = db.query(Look).filter(Look.id == other_look_id).first() if other_look_id else None
+        other_look = db.query(Look).options(joinedload(Look.photos)).filter(Look.id == other_look_id).first() if other_look_id else None
 
         result.append({
             "id": crossing.id,
@@ -593,7 +607,8 @@ async def get_saved_crossings(
                 "username": other_user.username,
                 "avatar_url": other_user.avatar_url
             } if other_user else None,
-            "other_look_photo_url": other_look.photo_url if other_look else None
+            "other_look_photo_url": other_look.photo_url if other_look else None,
+            "other_look_photo_urls": _get_look_photo_urls(other_look) if other_look else []
         })
 
     return result
