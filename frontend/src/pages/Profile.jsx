@@ -794,8 +794,8 @@ export default function Profile() {
       {showFollowModal && (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-end justify-center" onClick={() => setShowFollowModal(false)}>
           <div
-            className="bg-white w-full max-w-lg rounded-t-3xl max-h-[70vh] flex flex-col"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            className="w-full max-w-lg rounded-t-3xl max-h-[70vh] flex flex-col"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: 'rgba(255, 255, 255, 0.65)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
