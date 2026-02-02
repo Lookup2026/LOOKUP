@@ -8,7 +8,7 @@ import os
 
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api.endpoints import auth, looks, crossings, users, photos
+from app.api.endpoints import auth, looks, crossings, users, photos, notifications
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -54,6 +54,7 @@ app.include_router(looks.router, prefix="/api")
 app.include_router(crossings.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 app.include_router(photos.router, prefix="/api")
+app.include_router(notifications.router, prefix="/api")
 
 @app.get("/")
 async def root():
@@ -110,6 +111,16 @@ async def run_migration():
                 results.append(f"Added {name}")
             except Exception as e:
                 results.append(f"{name}: already exists or {e}")
+
+        # Notifications table index
+        for name, table, columns in [
+            ("ix_notifications_user_read_created", "notifications", "user_id, is_read, created_at"),
+        ]:
+            try:
+                conn.execute(text(f"CREATE INDEX IF NOT EXISTS {name} ON {table} ({columns})"))
+                results.append(f"Index {name} OK")
+            except Exception as e:
+                results.append(f"Index {name}: {e}")
 
         # Indexes
         for name, table, columns in [

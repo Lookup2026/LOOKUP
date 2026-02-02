@@ -16,6 +16,7 @@ import Settings from './pages/Settings'
 import Search from './pages/Search'
 import LookDetail from './pages/LookDetail'
 import Crossings from './pages/Crossings'
+import Notifications from './pages/Notifications'
 
 // Components
 import Layout from './components/Layout'
@@ -124,6 +125,7 @@ function App() {
           <Route path="onboarding" element={<Onboarding />} />
           <Route path="add-look" element={<AddLook />} />
           <Route path="edit-look/:id" element={<AddLook />} />
+          <Route path="notifications" element={<Notifications />} />
           <Route path="crossings" element={<Crossings />} />
           <Route path="crossings/:id" element={<CrossingDetail />} />
           <Route path="look/:id" element={<LookDetail />} />

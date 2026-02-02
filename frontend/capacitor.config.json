@@ -1,0 +1,8 @@
+{
+  "appId": "com.lookup.app",
+  "appName": "LOOKUP",
+  "webDir": "dist",
+  "server": {
+    "allowNavigation": ["lookup-htrd.onrender.com"]
+  }
+}

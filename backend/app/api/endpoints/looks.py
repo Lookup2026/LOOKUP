@@ -8,7 +8,7 @@ import uuid
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.storage import upload_photo, delete_photo
-from app.models import User, Look, LookPhoto, LookItem, LookLike, LookView, SavedLook, Follow, BlockedUser
+from app.models import User, Look, LookPhoto, LookItem, LookLike, LookView, SavedLook, Follow, BlockedUser, Notification
 from app.schemas import LookCreate, LookResponse, LookItemCreate
 from app.api.deps import get_current_user
 
@@ -594,6 +594,14 @@ async def like_look(
             {Look.likes_count: Look.likes_count + 1},
             synchronize_session=False
         )
+        # Notification like (pas si propre look)
+        if look.user_id != current_user.id:
+            db.add(Notification(
+                user_id=look.user_id,
+                actor_id=current_user.id,
+                type="like",
+                look_id=look_id,
+            ))
         db.commit()
         db.refresh(look)
         return {"liked": True, "likes_count": look.likes_count}

@@ -5,7 +5,7 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 
 from app.core.database import get_db
-from app.models import User, BlockedUser, Report, Look, Follow
+from app.models import User, BlockedUser, Report, Look, Follow, Notification
 from app.api.deps import get_current_user
 
 
@@ -131,6 +131,12 @@ async def follow_user(
         # Follow
         follow = Follow(follower_id=current_user.id, followed_id=user_id)
         db.add(follow)
+        # Notification follow
+        db.add(Notification(
+            user_id=user_id,
+            actor_id=current_user.id,
+            type="follow",
+        ))
         db.commit()
         return {"following": True, "message": "Tu suis maintenant cet utilisateur"}
 

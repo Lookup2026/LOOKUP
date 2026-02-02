@@ -10,7 +10,7 @@ from geopy.geocoders import Nominatim
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.zones import get_zone_id, get_adjacent_zones
-from app.models import User, Look, LookPhoto, LocationPing, Crossing, BlockedUser, CrossingLike, SavedCrossing, Follow, LookView, LookLike
+from app.models import User, Look, LookPhoto, LocationPing, Crossing, BlockedUser, CrossingLike, SavedCrossing, Follow, LookView, LookLike, Notification
 from app.schemas import LocationPingCreate, CrossingWithDetails
 from app.api.deps import get_current_user
 
@@ -521,6 +521,15 @@ async def like_crossing(
                     {Look.likes_count: Look.likes_count + 1},
                     synchronize_session=False
                 )
+            # Notification like pour le proprietaire du look
+            other_look = db.query(Look).filter(Look.id == other_look_id).first()
+            if other_look and other_look.user_id != current_user.id:
+                db.add(Notification(
+                    user_id=other_look.user_id,
+                    actor_id=current_user.id,
+                    type="like",
+                    look_id=other_look_id,
+                ))
         db.commit()
         db.refresh(crossing)
         return {"liked": True, "likes_count": crossing.likes_count}

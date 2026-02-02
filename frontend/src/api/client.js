@@ -103,6 +103,11 @@ export const updateVisibility = (visible) => api.put('/users/me/visibility', nul
 export const getPrivacy = () => api.get('/users/me/privacy')
 export const updatePrivacy = (is_private) => api.put('/users/me/privacy', null, { params: { is_private } })
 
+// Notifications
+export const getNotifications = (skip = 0, limit = 30) => api.get('/notifications/', { params: { skip, limit } })
+export const getUnreadCount = () => api.get('/notifications/unread-count')
+export const markAllRead = () => api.put('/notifications/read-all')
+
 // Feed
 export const getFriendsFeed = () => api.get('/looks/feed')
 
