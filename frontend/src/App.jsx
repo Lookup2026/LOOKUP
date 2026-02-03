@@ -17,6 +17,8 @@ import Search from './pages/Search'
 import LookDetail from './pages/LookDetail'
 import Crossings from './pages/Crossings'
 import Notifications from './pages/Notifications'
+import CGU from './pages/CGU'
+import Privacy from './pages/Privacy'
 
 // Components
 import Layout from './components/Layout'
@@ -111,6 +113,8 @@ function App() {
           </PublicRoute>
         } />
         <Route path="/join/:code" element={<JoinRedirect />} />
+        <Route path="/cgu" element={<CGU />} />
+        <Route path="/privacy" element={<Privacy />} />
 
         {/* Protected routes */}
         <Route
