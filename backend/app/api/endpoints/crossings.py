@@ -238,9 +238,8 @@ async def get_my_crossings(
         Crossing.crossed_at >= since_24h  # Visible 24h
     ).order_by(Crossing.crossed_at.desc()).all()
 
-    # Dedupliquer: garder seulement le croisement le plus recent par utilisateur
-    # Et filtrer les utilisateurs bloques + profils prives (si pas amis)
-    seen_users = set()
+    # Filtrer les utilisateurs bloques + profils prives (si pas amis)
+    # On garde TOUS les croisements (pas de deduplication par utilisateur)
     crossings = []
     for c in all_crossings:
         other_user_id = c.user2_id if c.user1_id == current_user.id else c.user1_id
@@ -253,9 +252,7 @@ async def get_my_crossings(
             # Profil prive: verifier si amis (se suivent mutuellement)
             if not are_friends(db, current_user.id, other_user_id):
                 continue
-        if other_user_id not in seen_users:
-            seen_users.add(other_user_id)
-            crossings.append(c)
+        crossings.append(c)
 
     # Appliquer pagination
     crossings = crossings[skip:skip + limit]

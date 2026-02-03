@@ -264,7 +264,7 @@ export default function CrossingDetail() {
   return (
     <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
+      <div className="glass-strong px-4 pb-3 rounded-b-3xl shadow-glass sticky top-0 z-20" style={{ paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-lookup-gray" />
@@ -414,18 +414,18 @@ export default function CrossingDetail() {
 
       {/* Action buttons */}
       <div className="px-4 mb-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleLike}
             disabled={liking}
-            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition shadow-sm active:scale-95 ${
               stats.user_liked
                 ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >
             <Heart
-              size={22}
+              size={20}
               fill={stats.user_liked ? 'currentColor' : 'none'}
             />
             <span className="font-semibold">{stats.likes_count}</span>
@@ -433,24 +433,23 @@ export default function CrossingDetail() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition shadow-sm active:scale-95 ${
               stats.user_saved
                 ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >
             <Bookmark
-              size={22}
+              size={20}
               fill={stats.user_saved ? 'currentColor' : 'none'}
             />
-            <span className="font-medium">{stats.user_saved ? 'Sauvegarde' : 'Sauvegarder'}</span>
+            <span className="font-medium">Sauvegarder</span>
           </button>
           <button
             onClick={handleShare}
-            className="flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 bg-white text-lookup-black border border-gray-100 ml-auto"
+            className="w-11 h-11 rounded-full flex items-center justify-center transition shadow-sm active:scale-95 bg-white text-lookup-black border border-gray-100"
           >
-            <Share2 size={22} />
-            <span className="font-medium">Partager</span>
+            <Share2 size={20} />
           </button>
         </div>
       </div>

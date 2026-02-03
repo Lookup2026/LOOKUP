@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, RefreshCw, Search, Users } from 'lucide-react'
 import { getTodayLook, getMyCrossings, getPhotoUrl, getFriendsFeed, likeLook, likeCrossing } from '../api/client'
@@ -34,6 +34,8 @@ export default function Home() {
   const [lastPing, setLastPing] = useState(null)
   const [pingStatus, setPingStatus] = useState('waiting') // waiting, success, error
   const [debugInfo, setDebugInfo] = useState(null)
+  const lastTapRef = useRef({})
+  const tapTimeoutRef = useRef({})
 
   const doPing = async () => {
     try {
@@ -113,35 +115,51 @@ export default function Home() {
     }
   }
 
-  // Double-click/tap to like
-  const handleDoubleTap = async (e, type, id) => {
-    e.preventDefault()
-    e.stopPropagation()
-
+  // Double-tap to like (mobile compatible)
+  const handleTap = (e, type, id, path) => {
     const key = `${type}-${id}`
+    const now = Date.now()
+    const lastTap = lastTapRef.current[key] || 0
 
-    // Animation coeur
-    setHeartAnimation(key)
-    setTimeout(() => setHeartAnimation(null), 800)
+    // Clear any pending navigation timeout
+    if (tapTimeoutRef.current[key]) {
+      clearTimeout(tapTimeoutRef.current[key])
+      tapTimeoutRef.current[key] = null
+    }
 
-    // Like si pas deja liké
-    if (!likedItems[key]) {
-      setLikedItems(prev => ({ ...prev, [key]: true }))
-      try {
+    if (now - lastTap < 300) {
+      // Double tap detected - like the item
+      e.preventDefault()
+      lastTapRef.current[key] = 0
+
+      // Animation coeur
+      setHeartAnimation(key)
+      setTimeout(() => setHeartAnimation(null), 800)
+
+      // Like si pas deja liké
+      if (!likedItems[key]) {
+        setLikedItems(prev => ({ ...prev, [key]: true }))
         if (type === 'look') {
-          await likeLook(id)
-          setFriendsFeed(prev => prev.map(l =>
-            l.id === id ? { ...l, likes_count: (l.likes_count || 0) + 1 } : l
-          ))
+          likeLook(id).then(() => {
+            setFriendsFeed(prev => prev.map(l =>
+              l.id === id ? { ...l, likes_count: (l.likes_count || 0) + 1 } : l
+            ))
+          }).catch(() => {})
         } else {
-          await likeCrossing(id)
-          setCrossings(prev => prev.map(c =>
-            c.id === id ? { ...c, likes_count: (c.likes_count || 0) + 1 } : c
-          ))
+          likeCrossing(id).then(() => {
+            setCrossings(prev => prev.map(c =>
+              c.id === id ? { ...c, likes_count: (c.likes_count || 0) + 1 } : c
+            ))
+          }).catch(() => {})
         }
-      } catch (err) {
-        // Silently fail
       }
+    } else {
+      // First tap - wait to see if double tap
+      lastTapRef.current[key] = now
+      tapTimeoutRef.current[key] = setTimeout(() => {
+        // Single tap - navigate
+        navigate(path)
+      }, 300)
     }
   }
 
@@ -182,22 +200,9 @@ export default function Home() {
   }
 
   return (
-    <PullToRefresh
-      onRefresh={handleRefresh}
-      pullingContent={
-        <div className="flex justify-center py-4">
-          <RefreshCw size={24} className="text-lookup-mint animate-pulse" />
-        </div>
-      }
-      refreshingContent={
-        <div className="flex justify-center py-4">
-          <RefreshCw size={24} className="text-lookup-mint animate-spin" />
-        </div>
-      }
-    >
-    <div className="min-h-full pb-4">
-      {/* Header */}
-      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
+    <>
+    {/* Header - fixed */}
+    <div className="glass-strong px-4 pb-3 rounded-b-3xl shadow-glass fixed top-0 left-0 right-0 z-20" style={{ paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
         <div className="flex items-center justify-between">
           <Link to="/search" className="w-9 h-9 glass rounded-full flex items-center justify-center">
             <Search size={18} className="text-lookup-gray" />
@@ -231,6 +236,21 @@ export default function Home() {
           </div>
         )}
       </div>
+
+    <PullToRefresh
+      onRefresh={handleRefresh}
+      pullingContent={
+        <div className="flex justify-center py-4">
+          <RefreshCw size={24} className="text-lookup-mint animate-pulse" />
+        </div>
+      }
+      refreshingContent={
+        <div className="flex justify-center py-4">
+          <RefreshCw size={24} className="text-lookup-mint animate-spin" />
+        </div>
+      }
+    >
+    <div className="min-h-full pb-4" style={{ paddingTop: 'calc(env(safe-area-inset-top, 16px) + 60px)' }}>
 
       {/* My Looks Today - Horizontal Carousel */}
       <div className="pt-4">
@@ -345,15 +365,12 @@ export default function Home() {
             ) : (
               <div className="space-y-3">
                 {crossings.map((crossing) => (
-                  <Link
+                  <div
                     key={crossing.id}
-                    to={`/crossings/${crossing.id}`}
-                    className="block glass rounded-2xl overflow-hidden shadow-glass"
+                    onClick={(e) => handleTap(e, 'crossing', crossing.id, `/crossings/${crossing.id}`)}
+                    className="block glass rounded-2xl overflow-hidden shadow-glass cursor-pointer"
                   >
-                    <div
-                      className="relative"
-                      onDoubleClick={(e) => handleDoubleTap(e, 'crossing', crossing.id)}
-                    >
+                    <div className="relative">
                       {(crossing.other_look_photo_urls?.length > 0 || crossing.other_look_photo_url) ? (
                         <PhotoCarousel
                           photoUrls={crossing.other_look_photo_urls?.length > 0 ? crossing.other_look_photo_urls : [crossing.other_look_photo_url]}
@@ -372,7 +389,7 @@ export default function Home() {
                         </div>
                       )}
                       {/* Username en haut à gauche */}
-                      <div className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm">
+                      <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm">
                         {crossing.other_avatar_url ? (
                           <img src={getPhotoUrl(crossing.other_avatar_url)} alt="" className="w-5 h-5 rounded-full object-cover" />
                         ) : (
@@ -382,7 +399,7 @@ export default function Home() {
                         )}
                         <span className="text-white text-sm font-medium">{crossing.other_username}</span>
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4">
                         <p className="text-white font-semibold text-lg">{crossing.other_look_title || 'Look du jour'}</p>
                         <div className="flex items-center gap-4 mt-1">
                           <div className="flex items-center gap-1 text-white/90 text-sm">
@@ -409,7 +426,7 @@ export default function Home() {
                       </div>
                       <span className="text-lookup-mint text-sm font-medium">Voir les détails</span>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -435,15 +452,12 @@ export default function Home() {
             ) : (
               <div className="space-y-3">
                 {friendsFeed.map((look) => (
-                  <Link
+                  <div
                     key={look.id}
-                    to={`/look/${look.id}`}
-                    className="block glass rounded-2xl overflow-hidden shadow-glass"
+                    onClick={(e) => handleTap(e, 'look', look.id, `/look/${look.id}`)}
+                    className="block glass rounded-2xl overflow-hidden shadow-glass cursor-pointer"
                   >
-                    <div
-                      className="relative"
-                      onDoubleClick={(e) => handleDoubleTap(e, 'look', look.id)}
-                    >
+                    <div className="relative">
                       {(look.photo_urls?.length > 0 || look.photo_url) ? (
                         <PhotoCarousel
                           photoUrls={look.photo_urls?.length > 0 ? look.photo_urls : [look.photo_url]}
@@ -461,7 +475,7 @@ export default function Home() {
                           <Heart size={80} className="text-white drop-shadow-lg animate-heart-pop" fill="white" />
                         </div>
                       )}
-                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
+                      <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4">
                         <div className="flex items-center gap-2">
                           {look.user?.avatar_url && (
                             <img
@@ -500,7 +514,7 @@ export default function Home() {
                         </span>
                       )}
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -509,5 +523,6 @@ export default function Home() {
       </div>
     </div>
     </PullToRefresh>
+    </>
   )
 }

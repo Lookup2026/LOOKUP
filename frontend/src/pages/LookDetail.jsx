@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Heart, Eye, Bookmark, Tag, ExternalLink, Clock, UserPlus, UserCheck, MoreVertical, Flag, Ban, X } from 'lucide-react'
+import { ChevronLeft, Heart, Eye, Bookmark, Tag, ExternalLink, Clock, MoreVertical, Share2, Flag, Ban, X, Camera } from 'lucide-react'
 import { getLook, likeLook, saveLook, getPhotoUrl, followUser, isFollowing, reportContent, blockUser } from '../api/client'
 import PhotoCarousel from '../components/PhotoCarousel'
 import toast from 'react-hot-toast'
@@ -42,6 +42,15 @@ export default function LookDetail() {
     loadLook()
   }, [id])
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => setShowMenu(false)
+    if (showMenu) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showMenu])
+
   const loadLook = async () => {
     try {
       const { data: lookData } = await getLook(id)
@@ -76,7 +85,7 @@ export default function LookDetail() {
         user_liked: likeData.liked
       }))
       if (likeData.liked) {
-        toast.success('Look liké !')
+        toast.success('Look like !')
       }
     } catch (error) {
       toast.error('Erreur')
@@ -94,7 +103,7 @@ export default function LookDetail() {
         ...prev,
         user_saved: saveData.saved
       }))
-      toast.success(saveData.saved ? 'Look sauvegardé !' : 'Look retiré des sauvegardes')
+      toast.success(saveData.saved ? 'Look sauvegarde !' : 'Look retire des sauvegardes')
     } catch (error) {
       toast.error('Erreur')
     } finally {
@@ -113,6 +122,32 @@ export default function LookDetail() {
       toast.error('Erreur')
     } finally {
       setFollowLoading(false)
+    }
+  }
+
+  const handleShare = async () => {
+    const shareData = {
+      title: `Look de ${data.user?.username}`,
+      text: `Decouvre ce look sur LOOKUP !`,
+      url: window.location.href,
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData)
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          toast.error('Erreur de partage')
+        }
+      }
+    } else {
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(window.location.href)
+        toast.success('Lien copie !')
+      } catch (err) {
+        toast.error('Impossible de copier le lien')
+      }
     }
   }
 
@@ -169,7 +204,7 @@ export default function LookDetail() {
   if (!data) {
     return (
       <div className="min-h-screen bg-lookup-cream flex flex-col items-center justify-center px-4">
-        <p className="text-lookup-gray text-center">Look non trouvé</p>
+        <p className="text-lookup-gray text-center">Look non trouve</p>
         <button onClick={() => navigate(-1)} className="mt-4 text-lookup-mint font-medium">
           Retour
         </button>
@@ -185,29 +220,45 @@ export default function LookDetail() {
           <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-lookup-gray" />
           </button>
-          <h1 className="text-lg font-bold text-lookup-black">{data.title || 'Look'}</h1>
+          <div className="text-center">
+            <h1 className="text-lg font-bold text-lookup-black">{data.user?.username}</h1>
+          </div>
           <div className="relative">
             <button
-              onClick={() => setShowMenu(!showMenu)}
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowMenu(!showMenu)
+              }}
               className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center"
             >
-              <MoreVertical size={20} className="text-lookup-gray" />
+              <MoreVertical size={18} className="text-lookup-gray" />
             </button>
+
+            {/* Dropdown menu */}
             {showMenu && (
-              <div className="absolute right-0 top-11 bg-white rounded-xl shadow-lg border border-gray-100 py-2 min-w-[180px] z-30">
+              <div
+                className="absolute top-10 right-0 bg-white rounded-xl shadow-lg overflow-hidden z-10 min-w-[160px]"
+                onClick={(e) => e.stopPropagation()}
+              >
                 <button
-                  onClick={() => { setShowMenu(false); setShowReportModal(true) }}
-                  className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50"
+                  onClick={() => {
+                    setShowMenu(false)
+                    setShowReportModal(true)
+                  }}
+                  className="flex items-center gap-2 px-4 py-3 text-sm text-lookup-black hover:bg-gray-50 w-full"
                 >
-                  <Flag size={18} className="text-orange-500" />
-                  <span className="text-sm font-medium text-lookup-black">Signaler</span>
+                  <Flag size={16} className="text-orange-500" />
+                  <span>Signaler</span>
                 </button>
                 <button
-                  onClick={() => { setShowMenu(false); setShowBlockModal(true) }}
-                  className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50"
+                  onClick={() => {
+                    setShowMenu(false)
+                    setShowBlockModal(true)
+                  }}
+                  className="flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50 w-full border-t border-gray-100"
                 >
-                  <Ban size={18} className="text-red-500" />
-                  <span className="text-sm font-medium text-lookup-black">Bloquer</span>
+                  <Ban size={16} />
+                  <span>Bloquer</span>
                 </button>
               </div>
             )}
@@ -215,107 +266,123 @@ export default function LookDetail() {
         </div>
       </div>
 
-      {/* Photo(s) */}
-      {(data.photo_urls?.length > 0 || data.photo_url) && (
-        <div className="px-4 pt-4 mb-4">
-          <div className="rounded-2xl overflow-hidden shadow-sm">
+      {/* User info - au dessus de la photo */}
+      <div className="px-4 pt-4 mb-3">
+        <div className="flex items-center gap-3">
+          {data.user?.avatar_url ? (
+            <img
+              src={getPhotoUrl(data.user.avatar_url)}
+              alt=""
+              className="w-11 h-11 rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white font-bold text-lg">
+              {data.user?.username?.[0]?.toUpperCase()}
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="font-semibold text-lookup-black">{data.user?.username}</p>
+          </div>
+          <button
+            onClick={handleFollow}
+            disabled={followLoading}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition active:scale-95 ${
+              following
+                ? 'bg-lookup-cream text-lookup-gray border border-gray-200'
+                : 'bg-lookup-mint text-white'
+            }`}
+          >
+            {followLoading ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+            ) : following ? 'Suivi' : 'Suivre'}
+          </button>
+        </div>
+      </div>
+
+      {/* Photo + Info card (colles) */}
+      <div className="px-4 mb-4">
+        {(data.photo_urls?.length > 0 || data.photo_url) ? (
+          <div className="relative rounded-t-2xl overflow-hidden shadow-sm">
             <PhotoCarousel
               photoUrls={data.photo_urls?.length > 0 ? data.photo_urls : [data.photo_url]}
               className="w-full max-h-[55vh]"
-              imgClassName="w-full max-h-[55vh] object-cover rounded-2xl"
+              imgClassName="w-full max-h-[55vh] object-cover"
               alt="Look"
             />
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 text-white text-xs backdrop-blur-sm z-10">
+              <Eye size={14} />
+              <span>{stats.views_count}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="relative w-full aspect-[3/4] rounded-t-2xl bg-white flex items-center justify-center shadow-sm">
+            <div className="text-center">
+              <Camera size={32} className="mx-auto text-lookup-gray mb-2" />
+              <p className="text-lookup-gray">Pas de photo</p>
+            </div>
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-lookup-gray-light text-lookup-gray text-xs">
+              <Eye size={14} />
+              <span>{stats.views_count}</span>
+            </div>
+          </div>
+        )}
+        <div className="glass rounded-b-2xl p-4 shadow-glass">
+          <div className="flex items-center gap-1 text-lookup-gray text-sm">
+            <Clock size={14} />
+            <span>
+              Publie {new Date(data.created_at).toLocaleString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </span>
           </div>
         </div>
-      )}
+      </div>
 
       {/* Action buttons */}
       <div className="px-4 mb-4">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleLike}
             disabled={liking}
-            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition shadow-sm active:scale-95 ${
               stats.user_liked
                 ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >
-            <Heart size={22} fill={stats.user_liked ? 'currentColor' : 'none'} />
+            <Heart size={20} fill={stats.user_liked ? 'currentColor' : 'none'} />
             <span className="font-semibold">{stats.likes_count}</span>
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className={`flex items-center gap-2 px-5 py-3 rounded-full transition shadow-sm active:scale-95 ${
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-full transition shadow-sm active:scale-95 ${
               stats.user_saved
                 ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
             }`}
           >
-            <Bookmark size={22} fill={stats.user_saved ? 'currentColor' : 'none'} />
-            <span className="font-medium">{stats.user_saved ? 'Sauvegardé' : 'Sauvegarder'}</span>
+            <Bookmark size={20} fill={stats.user_saved ? 'currentColor' : 'none'} />
+            <span className="font-medium">Sauvegarder</span>
           </button>
-          <div className="ml-auto flex items-center gap-1.5 text-lookup-gray">
-            <Eye size={18} />
-            <span className="text-sm font-medium">{stats.views_count}</span>
-          </div>
+          <button
+            onClick={handleShare}
+            className="w-11 h-11 rounded-full flex items-center justify-center transition shadow-sm active:scale-95 bg-white text-lookup-black border border-gray-100"
+          >
+            <Share2 size={20} />
+          </button>
         </div>
       </div>
 
-      {/* User info card */}
-      <div className="px-4 mb-4">
-        <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            {data.user?.avatar_url ? (
-              <img
-                src={getPhotoUrl(data.user.avatar_url)}
-                alt=""
-                className="w-12 h-12 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-lookup-mint to-lookup-mint-dark flex items-center justify-center text-white font-bold text-lg">
-                {data.user?.username?.[0]?.toUpperCase()}
-              </div>
-            )}
-            <div className="flex-1">
-              <div className="flex items-center justify-between">
-                <p className="font-semibold text-lookup-black">{data.user?.username}</p>
-                <button
-                  onClick={handleFollow}
-                  disabled={followLoading}
-                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition active:scale-95 ${
-                    following
-                      ? 'bg-lookup-cream text-lookup-gray border border-gray-200'
-                      : 'bg-lookup-mint text-white'
-                  }`}
-                >
-                  {followLoading ? (
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-                  ) : following ? 'Suivi' : 'Suivre'}
-                </button>
-              </div>
-              <div className="flex items-center gap-1 text-lookup-gray text-sm mt-1">
-                <Clock size={12} />
-                <span>
-                  {new Date(data.created_at).toLocaleString('fr-FR', {
-                    day: 'numeric',
-                    month: 'long',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Items */}
+      {/* Pieces */}
       <div className="px-4">
         <h2 className="text-sm font-semibold text-lookup-gray uppercase tracking-wide mb-3 flex items-center gap-2">
           <Tag size={14} />
-          Pièces du look ({data.items?.length || 0})
+          Pieces du look ({data.items?.length || 0})
         </h2>
 
         {data.items?.length > 0 ? (
@@ -363,46 +430,55 @@ export default function LookDetail() {
           </div>
         ) : (
           <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
-            <p className="text-lookup-gray text-sm">Aucune pièce renseignée pour ce look</p>
+            <p className="text-lookup-gray text-sm">Aucune piece renseignee pour ce look</p>
           </div>
         )}
       </div>
 
       {/* Report Modal */}
       {showReportModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-6">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-lookup-black">Signaler ce look</h3>
-              <button onClick={() => setShowReportModal(false)} className="text-lookup-gray">
-                <X size={24} />
-              </button>
+            <div className="w-12 h-12 bg-orange-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <Flag size={24} className="text-orange-500" />
             </div>
-            <p className="text-sm text-lookup-gray mb-4">Pourquoi signales-tu ce contenu ?</p>
-            <div className="space-y-2 mb-4">
-              {REPORT_REASONS.map((reason) => (
+            <h3 className="text-lg font-bold text-lookup-black text-center">
+              Signaler ce contenu
+            </h3>
+            <p className="text-lookup-gray text-sm text-center mt-2">
+              Pourquoi signales-tu ce contenu ?
+            </p>
+
+            <div className="mt-4 space-y-2">
+              {REPORT_REASONS.map((option) => (
                 <button
-                  key={reason.value}
-                  onClick={() => setReportReason(reason.value)}
-                  className={`w-full p-3 rounded-xl text-left text-sm font-medium transition ${
-                    reportReason === reason.value
-                      ? 'bg-lookup-mint text-white'
-                      : 'bg-gray-100 text-lookup-black'
+                  key={option.value}
+                  onClick={() => setReportReason(option.value)}
+                  className={`w-full py-3 px-4 rounded-xl text-left transition ${
+                    reportReason === option.value
+                      ? 'bg-orange-100 text-orange-700 border-2 border-orange-300'
+                      : 'bg-gray-50 text-lookup-black hover:bg-gray-100'
                   }`}
                 >
-                  {reason.label}
+                  {option.label}
                 </button>
               ))}
             </div>
+
             <textarea
               value={reportDetails}
               onChange={(e) => setReportDetails(e.target.value)}
               placeholder="Details supplementaires (optionnel)"
-              className="w-full p-3 border border-gray-200 rounded-xl text-sm resize-none h-20 mb-4"
+              className="w-full p-3 border border-gray-200 rounded-xl text-sm resize-none h-20 mt-4"
             />
-            <div className="flex gap-3">
+
+            <div className="flex gap-3 mt-4">
               <button
-                onClick={() => setShowReportModal(false)}
+                onClick={() => {
+                  setShowReportModal(false)
+                  setReportReason('')
+                  setReportDetails('')
+                }}
                 className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
               >
                 Annuler
@@ -410,9 +486,13 @@ export default function LookDetail() {
               <button
                 onClick={handleReport}
                 disabled={!reportReason || submitting}
-                className="flex-1 py-3 rounded-full bg-orange-500 font-medium text-white disabled:opacity-50"
+                className="flex-1 py-3 rounded-full bg-orange-500 font-medium text-white flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {submitting ? 'Envoi...' : 'Signaler'}
+                {submitting ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  'Envoyer'
+                )}
               </button>
             </div>
           </div>
@@ -421,19 +501,20 @@ export default function LookDetail() {
 
       {/* Block Modal */}
       {showBlockModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-6">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-            <div className="w-14 h-14 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <Ban size={28} className="text-red-500" />
+            <div className="w-12 h-12 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <Ban size={24} className="text-red-500" />
             </div>
-            <h3 className="text-lg font-bold text-lookup-black text-center">Bloquer {data.user?.username} ?</h3>
+            <h3 className="text-lg font-bold text-lookup-black text-center">
+              Bloquer {data.user?.username} ?
+            </h3>
             <p className="text-lookup-gray text-sm text-center mt-2">
-              Cette personne ne pourra plus voir ton profil ni tes looks. Tu ne verras plus son contenu.
+              Cette personne ne pourra plus voir tes looks et tu ne verras plus les siens.
             </p>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowBlockModal(false)}
-                disabled={submitting}
                 className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
               >
                 Annuler
@@ -441,9 +522,13 @@ export default function LookDetail() {
               <button
                 onClick={handleBlock}
                 disabled={submitting}
-                className="flex-1 py-3 rounded-full bg-red-500 font-medium text-white"
+                className="flex-1 py-3 rounded-full bg-red-500 font-medium text-white flex items-center justify-center gap-2"
               >
-                {submitting ? 'Blocage...' : 'Bloquer'}
+                {submitting ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  'Bloquer'
+                )}
               </button>
             </div>
           </div>
