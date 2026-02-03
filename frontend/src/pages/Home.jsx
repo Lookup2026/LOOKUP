@@ -30,7 +30,7 @@ export default function Home() {
   const [feedTab, setFeedTab] = useState('crossings') // 'crossings' or 'friends'
   const [likedItems, setLikedItems] = useState({}) // { 'look-3': true, 'crossing-5': true }
   const [heartAnimation, setHeartAnimation] = useState(null) // 'look-3' or 'crossing-5'
-  const [swipingItems, setSwipingItems] = useState({}) // { 'crossing-5': true } - overlay hidden during swipe
+  const [activeSlide, setActiveSlide] = useState({}) // { 'crossing-5': 0 } - current slide index per item
   const [loading, setLoading] = useState(true)
   const [lastPing, setLastPing] = useState(null)
   const [pingStatus, setPingStatus] = useState('waiting') // waiting, success, error
@@ -377,8 +377,7 @@ export default function Home() {
                           photoUrls={crossing.other_look_photo_urls?.length > 0 ? crossing.other_look_photo_urls : [crossing.other_look_photo_url]}
                           className="w-full aspect-[4/5]"
                           imgClassName="w-full aspect-[4/5] object-cover bg-gray-100"
-                          onSlideChangeStart={() => setSwipingItems(prev => ({ ...prev, [`crossing-${crossing.id}`]: true }))}
-                          onSlideChange={() => setSwipingItems(prev => ({ ...prev, [`crossing-${crossing.id}`]: false }))}
+                          onSlideChange={(index) => setActiveSlide(prev => ({ ...prev, [`crossing-${crossing.id}`]: index }))}
                         />
                       ) : (
                         <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
@@ -391,8 +390,8 @@ export default function Home() {
                           <Heart size={80} className="text-white drop-shadow-lg animate-heart-pop" fill="white" />
                         </div>
                       )}
-                      {/* Username en haut à gauche */}
-                      <div className={`absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${swipingItems[`crossing-${crossing.id}`] ? 'opacity-0' : 'opacity-100'}`}>
+                      {/* Username en haut à gauche - visible seulement sur la première photo */}
+                      <div className={`absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${(activeSlide[`crossing-${crossing.id}`] || 0) === 0 ? 'opacity-100' : 'opacity-0'}`}>
                         {crossing.other_avatar_url ? (
                           <img src={getPhotoUrl(crossing.other_avatar_url)} alt="" className="w-5 h-5 rounded-full object-cover" />
                         ) : (
@@ -402,7 +401,8 @@ export default function Home() {
                         )}
                         <span className="text-white text-sm font-medium">{crossing.other_username}</span>
                       </div>
-                      <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 transition-opacity duration-300 ${swipingItems[`crossing-${crossing.id}`] ? 'opacity-0' : 'opacity-100'}`}>
+                      {/* Gradient infos - visible seulement sur la première photo */}
+                      <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 transition-opacity duration-300 ${(activeSlide[`crossing-${crossing.id}`] || 0) === 0 ? 'opacity-100' : 'opacity-0'}`}>
                         <p className="text-white font-semibold text-lg">{crossing.other_look_title || 'Look du jour'}</p>
                         <div className="flex items-center gap-4 mt-1">
                           <div className="flex items-center gap-1 text-white/90 text-sm">
@@ -466,8 +466,7 @@ export default function Home() {
                           photoUrls={look.photo_urls?.length > 0 ? look.photo_urls : [look.photo_url]}
                           className="w-full aspect-[4/5]"
                           imgClassName="w-full aspect-[4/5] object-cover bg-gray-100"
-                          onSlideChangeStart={() => setSwipingItems(prev => ({ ...prev, [`look-${look.id}`]: true }))}
-                          onSlideChange={() => setSwipingItems(prev => ({ ...prev, [`look-${look.id}`]: false }))}
+                          onSlideChange={(index) => setActiveSlide(prev => ({ ...prev, [`look-${look.id}`]: index }))}
                         />
                       ) : (
                         <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
@@ -480,7 +479,8 @@ export default function Home() {
                           <Heart size={80} className="text-white drop-shadow-lg animate-heart-pop" fill="white" />
                         </div>
                       )}
-                      <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 transition-opacity duration-300 ${swipingItems[`look-${look.id}`] ? 'opacity-0' : 'opacity-100'}`}>
+                      {/* Overlay visible seulement sur la première photo */}
+                      <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 transition-opacity duration-300 ${(activeSlide[`look-${look.id}`] || 0) === 0 ? 'opacity-100' : 'opacity-0'}`}>
                         <div className="flex items-center gap-2">
                           {look.user?.avatar_url && (
                             <img

@@ -10,8 +10,7 @@ export default function PhotoCarousel({
   className = '',
   imgClassName = '',
   alt = '',
-  onSlideChange = null,
-  onSlideChangeStart = null
+  onSlideChange = null
 }) {
   // Si une seule photo ou pas de photos, afficher une simple image
   if (!photoUrls || photoUrls.length === 0) return null
@@ -38,10 +37,7 @@ export default function PhotoCarousel({
       spaceBetween={0}
       slidesPerView={1}
       className={`photo-carousel ${className}`}
-      onSlideChangeTransitionStart={(swiper) => {
-        if (onSlideChangeStart) onSlideChangeStart(swiper.activeIndex)
-      }}
-      onSlideChangeTransitionEnd={(swiper) => {
+      onSlideChange={(swiper) => {
         if (onSlideChange) onSlideChange(swiper.activeIndex)
       }}
     >
