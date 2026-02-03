@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Heart, Eye, Bookmark, Tag, ExternalLink, Clock, UserPlus, UserCheck } from 'lucide-react'
-import { getLook, likeLook, saveLook, getPhotoUrl, followUser, isFollowing } from '../api/client'
+import { ChevronLeft, Heart, Eye, Bookmark, Tag, ExternalLink, Clock, UserPlus, UserCheck, MoreVertical, Flag, Ban, X } from 'lucide-react'
+import { getLook, likeLook, saveLook, getPhotoUrl, followUser, isFollowing, reportContent, blockUser } from '../api/client'
 import PhotoCarousel from '../components/PhotoCarousel'
 import toast from 'react-hot-toast'
 
@@ -23,6 +23,20 @@ export default function LookDetail() {
   const [saving, setSaving] = useState(false)
   const [following, setFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [showBlockModal, setShowBlockModal] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportDetails, setReportDetails] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const REPORT_REASONS = [
+    { value: 'inappropriate', label: 'Contenu inapproprie' },
+    { value: 'spam', label: 'Spam' },
+    { value: 'harassment', label: 'Harcelement' },
+    { value: 'fake', label: 'Faux compte' },
+    { value: 'other', label: 'Autre' },
+  ]
 
   useEffect(() => {
     loadLook()
@@ -102,6 +116,48 @@ export default function LookDetail() {
     }
   }
 
+  const handleReport = async () => {
+    if (!reportReason || submitting) return
+    setSubmitting(true)
+    try {
+      await reportContent({
+        reported_user_id: data.user?.id,
+        look_id: parseInt(id),
+        reason: reportReason,
+        details: reportDetails,
+      })
+      toast.success('Signalement envoye')
+      setShowReportModal(false)
+      setReportReason('')
+      setReportDetails('')
+    } catch (error) {
+      if (error.response?.status === 400) {
+        toast.error('Tu as deja signale ce contenu')
+      } else {
+        toast.error('Erreur lors du signalement')
+      }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleBlock = async () => {
+    if (!data?.user?.id || submitting) return
+    setSubmitting(true)
+    try {
+      const { data: blockData } = await blockUser(data.user.id)
+      toast.success(blockData.blocked ? `${data.user.username} a ete bloque` : `${data.user.username} a ete debloque`)
+      setShowBlockModal(false)
+      if (blockData.blocked) {
+        navigate(-1)
+      }
+    } catch (error) {
+      toast.error('Erreur')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-lookup-cream flex items-center justify-center">
@@ -124,13 +180,38 @@ export default function LookDetail() {
   return (
     <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
+      <div className="glass-strong px-4 pb-3 rounded-b-3xl shadow-glass sticky top-0 z-20" style={{ paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-lookup-gray" />
           </button>
           <h1 className="text-lg font-bold text-lookup-black">{data.title || 'Look'}</h1>
-          <div className="w-9"></div>
+          <div className="relative">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center"
+            >
+              <MoreVertical size={20} className="text-lookup-gray" />
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 top-11 bg-white rounded-xl shadow-lg border border-gray-100 py-2 min-w-[180px] z-30">
+                <button
+                  onClick={() => { setShowMenu(false); setShowReportModal(true) }}
+                  className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50"
+                >
+                  <Flag size={18} className="text-orange-500" />
+                  <span className="text-sm font-medium text-lookup-black">Signaler</span>
+                </button>
+                <button
+                  onClick={() => { setShowMenu(false); setShowBlockModal(true) }}
+                  className="w-full px-4 py-3 flex items-center gap-3 text-left hover:bg-gray-50"
+                >
+                  <Ban size={18} className="text-red-500" />
+                  <span className="text-sm font-medium text-lookup-black">Bloquer</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -286,6 +367,88 @@ export default function LookDetail() {
           </div>
         )}
       </div>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-lookup-black">Signaler ce look</h3>
+              <button onClick={() => setShowReportModal(false)} className="text-lookup-gray">
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-sm text-lookup-gray mb-4">Pourquoi signales-tu ce contenu ?</p>
+            <div className="space-y-2 mb-4">
+              {REPORT_REASONS.map((reason) => (
+                <button
+                  key={reason.value}
+                  onClick={() => setReportReason(reason.value)}
+                  className={`w-full p-3 rounded-xl text-left text-sm font-medium transition ${
+                    reportReason === reason.value
+                      ? 'bg-lookup-mint text-white'
+                      : 'bg-gray-100 text-lookup-black'
+                  }`}
+                >
+                  {reason.label}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              placeholder="Details supplementaires (optionnel)"
+              className="w-full p-3 border border-gray-200 rounded-xl text-sm resize-none h-20 mb-4"
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleReport}
+                disabled={!reportReason || submitting}
+                className="flex-1 py-3 rounded-full bg-orange-500 font-medium text-white disabled:opacity-50"
+              >
+                {submitting ? 'Envoi...' : 'Signaler'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Block Modal */}
+      {showBlockModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+            <div className="w-14 h-14 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <Ban size={28} className="text-red-500" />
+            </div>
+            <h3 className="text-lg font-bold text-lookup-black text-center">Bloquer {data.user?.username} ?</h3>
+            <p className="text-lookup-gray text-sm text-center mt-2">
+              Cette personne ne pourra plus voir ton profil ni tes looks. Tu ne verras plus son contenu.
+            </p>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowBlockModal(false)}
+                disabled={submitting}
+                className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleBlock}
+                disabled={submitting}
+                className="flex-1 py-3 rounded-full bg-red-500 font-medium text-white"
+              >
+                {submitting ? 'Blocage...' : 'Bloquer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

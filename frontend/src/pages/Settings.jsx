@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, MapPin, Globe, ChevronRight, Shield, HelpCircle, LogOut, User, Trash2, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, MapPin, Globe, ChevronRight, Shield, HelpCircle, LogOut, User, Trash2, AlertTriangle, Ban } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
-import { deleteAccount, getVisibility, updateVisibility, getPrivacy, updatePrivacy } from '../api/client'
+import { deleteAccount, getVisibility, updateVisibility, getPrivacy, updatePrivacy, getBlockedUsers, blockUser, getPhotoUrl } from '../api/client'
 import toast from 'react-hot-toast'
 
 const LANGUAGES = [
@@ -26,6 +26,9 @@ export default function Settings() {
   // Privacy settings
   const [profileVisible, setProfileVisible] = useState(true)
   const [profilePrivate, setProfilePrivate] = useState(false)
+  const [showBlocked, setShowBlocked] = useState(false)
+  const [blockedUsers, setBlockedUsers] = useState([])
+  const [loadingBlocked, setLoadingBlocked] = useState(false)
 
   useEffect(() => {
     loadPrivacySettings()
@@ -37,6 +40,25 @@ export default function Settings() {
       setProfileVisible(visRes.data.is_visible)
       setProfilePrivate(privRes.data.is_private)
     } catch (e) {}
+  }
+
+  const loadBlockedUsers = async () => {
+    setLoadingBlocked(true)
+    try {
+      const { data } = await getBlockedUsers()
+      setBlockedUsers(data)
+    } catch (e) {}
+    setLoadingBlocked(false)
+  }
+
+  const handleUnblock = async (userId, username) => {
+    try {
+      await blockUser(userId)
+      setBlockedUsers(prev => prev.filter(u => u.id !== userId))
+      toast.success(`${username} a ete debloque`)
+    } catch (e) {
+      toast.error('Erreur')
+    }
   }
 
   const handleLanguageChange = (code) => {
@@ -94,7 +116,7 @@ export default function Settings() {
   return (
     <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
+      <div className="glass-strong px-4 pb-3 rounded-b-3xl shadow-glass sticky top-0 z-20" style={{ paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-lookup-gray" />
@@ -241,6 +263,59 @@ export default function Settings() {
                 </div>
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Blocked Users */}
+        <button
+          onClick={() => { setShowBlocked(!showBlocked); if (!showBlocked) loadBlockedUsers() }}
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
+              <Ban size={18} className="text-red-500" />
+            </div>
+            <div className="text-left">
+              <p className="font-medium text-lookup-black">Utilisateurs bloques</p>
+              <p className="text-sm text-lookup-gray">Gerer les comptes bloques</p>
+            </div>
+          </div>
+          <ChevronRight size={18} className={`text-lookup-gray transition ${showBlocked ? 'rotate-90' : ''}`} />
+        </button>
+
+        {/* Blocked Users content */}
+        {showBlocked && (
+          <div className="glass rounded-2xl overflow-hidden shadow-glass p-4">
+            {loadingBlocked ? (
+              <div className="flex justify-center py-4">
+                <div className="w-6 h-6 border-2 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : blockedUsers.length === 0 ? (
+              <p className="text-sm text-lookup-gray text-center py-2">Aucun utilisateur bloque</p>
+            ) : (
+              <div className="space-y-3">
+                {blockedUsers.map((user) => (
+                  <div key={user.id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {user.avatar_url ? (
+                        <img src={getPhotoUrl(user.avatar_url)} alt="" className="w-10 h-10 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-lookup-gray font-medium">
+                          {user.username?.[0]?.toUpperCase()}
+                        </div>
+                      )}
+                      <span className="font-medium text-lookup-black text-sm">{user.username}</span>
+                    </div>
+                    <button
+                      onClick={() => handleUnblock(user.id, user.username)}
+                      className="px-3 py-1.5 bg-red-100 text-red-600 rounded-full text-xs font-medium"
+                    >
+                      Debloquer
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
