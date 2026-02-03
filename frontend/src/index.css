@@ -133,3 +133,13 @@ html, body {
 .animate-heart-pop {
   animation: heart-pop 0.8s ease-out forwards;
 }
+
+/* Isoler les carousels de photos pour éviter les interférences entre les swipers */
+.photo-carousel {
+  touch-action: pan-x;
+  isolation: isolate;
+}
+
+.photo-carousel .swiper-wrapper {
+  touch-action: pan-x;
+}

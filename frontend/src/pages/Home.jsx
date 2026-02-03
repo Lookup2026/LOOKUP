@@ -374,6 +374,7 @@ export default function Home() {
                     <div className="relative">
                       {(crossing.other_look_photo_urls?.length > 0 || crossing.other_look_photo_url) ? (
                         <PhotoCarousel
+                          itemId={`crossing-${crossing.id}`}
                           photoUrls={crossing.other_look_photo_urls?.length > 0 ? crossing.other_look_photo_urls : [crossing.other_look_photo_url]}
                           className="w-full aspect-[4/5]"
                           imgClassName="w-full aspect-[4/5] object-cover bg-gray-100"
@@ -463,6 +464,7 @@ export default function Home() {
                     <div className="relative">
                       {(look.photo_urls?.length > 0 || look.photo_url) ? (
                         <PhotoCarousel
+                          itemId={`look-${look.id}`}
                           photoUrls={look.photo_urls?.length > 0 ? look.photo_urls : [look.photo_url]}
                           className="w-full aspect-[4/5]"
                           imgClassName="w-full aspect-[4/5] object-cover bg-gray-100"
