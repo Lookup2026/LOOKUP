@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useState, useRef } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { MapPin, Clock, Eye, Heart, Settings, Plus, ChevronRight, RefreshCw, Search, Users } from 'lucide-react'
+import { MapPin, Eye, Heart, Settings, Plus, RefreshCw, Search, Users } from 'lucide-react'
 import { getTodayLook, getMyCrossings, getPhotoUrl, getFriendsFeed, likeLook, likeCrossing } from '../api/client'
-import PhotoCarousel from '../components/PhotoCarousel'
+import FeedCard from '../components/FeedCard'
 import { useLocationStore } from '../stores/locationStore'
 import toast from 'react-hot-toast'
 import PullToRefresh from 'react-simple-pull-to-refresh'
@@ -30,7 +30,6 @@ export default function Home() {
   const [feedTab, setFeedTab] = useState('crossings') // 'crossings' or 'friends'
   const [likedItems, setLikedItems] = useState({}) // { 'look-3': true, 'crossing-5': true }
   const [heartAnimation, setHeartAnimation] = useState(null) // 'look-3' or 'crossing-5'
-  const [activeSlide, setActiveSlide] = useState({}) // { 'crossing-5': 0 } - current slide index per item
   const [loading, setLoading] = useState(true)
   const [lastPing, setLastPing] = useState(null)
   const [pingStatus, setPingStatus] = useState('waiting') // waiting, success, error
@@ -366,71 +365,15 @@ export default function Home() {
             ) : (
               <div className="space-y-3">
                 {crossings.map((crossing) => (
-                  <div
+                  <FeedCard
                     key={crossing.id}
-                    onClick={(e) => handleTap(e, 'crossing', crossing.id, `/crossings/${crossing.id}`)}
-                    className="block glass rounded-2xl overflow-hidden shadow-glass cursor-pointer"
-                  >
-                    <div className="relative">
-                      {(crossing.other_look_photo_urls?.length > 0 || crossing.other_look_photo_url) ? (
-                        <PhotoCarousel
-                          itemId={`crossing-${crossing.id}`}
-                          photoUrls={crossing.other_look_photo_urls?.length > 0 ? crossing.other_look_photo_urls : [crossing.other_look_photo_url]}
-                          className="w-full aspect-[4/5]"
-                          imgClassName="w-full aspect-[4/5] object-cover bg-gray-100"
-                          onSlideChange={(index) => setActiveSlide(prev => ({ ...prev, [`crossing-${crossing.id}`]: index }))}
-                        />
-                      ) : (
-                        <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
-                          <MapPin size={48} className="text-lookup-mint" />
-                        </div>
-                      )}
-                      {/* Heart animation on double tap */}
-                      {heartAnimation === `crossing-${crossing.id}` && (
-                        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                          <Heart size={80} className="text-white drop-shadow-lg animate-heart-pop" fill="white" />
-                        </div>
-                      )}
-                      {/* Username en haut à gauche - visible seulement sur la première photo */}
-                      <div className={`absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${(activeSlide[`crossing-${crossing.id}`] || 0) === 0 ? 'opacity-100' : 'opacity-0'}`}>
-                        {crossing.other_avatar_url ? (
-                          <img src={getPhotoUrl(crossing.other_avatar_url)} alt="" className="w-5 h-5 rounded-full object-cover" />
-                        ) : (
-                          <div className="w-5 h-5 rounded-full bg-lookup-mint flex items-center justify-center text-white text-xs font-bold">
-                            {crossing.other_username?.[0]?.toUpperCase()}
-                          </div>
-                        )}
-                        <span className="text-white text-sm font-medium">{crossing.other_username}</span>
-                      </div>
-                      {/* Gradient infos - visible seulement sur la première photo */}
-                      <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 transition-opacity duration-300 ${(activeSlide[`crossing-${crossing.id}`] || 0) === 0 ? 'opacity-100' : 'opacity-0'}`}>
-                        <p className="text-white font-semibold text-lg">{crossing.other_look_title || 'Look du jour'}</p>
-                        <div className="flex items-center gap-4 mt-1">
-                          <div className="flex items-center gap-1 text-white/90 text-sm">
-                            <Clock size={14} />
-                            <span>{getTimeAgo(crossing.crossed_at)}</span>
-                          </div>
-                          <div className="flex items-center gap-1 text-white/90 text-sm">
-                            <MapPin size={14} />
-                            <span>{getApproxLocation(crossing)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5 text-lookup-gray">
-                          <Eye size={18} />
-                          <span className="text-sm font-medium">{crossing.views_count || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-lookup-gray">
-                          <Heart size={18} />
-                          <span className="text-sm font-medium">{crossing.likes_count || 0}</span>
-                        </div>
-                      </div>
-                      <span className="text-lookup-mint text-sm font-medium">Voir les détails</span>
-                    </div>
-                  </div>
+                    type="crossing"
+                    item={crossing}
+                    onTap={handleTap}
+                    heartAnimation={heartAnimation}
+                    getTimeAgo={getTimeAgo}
+                    getApproxLocation={getApproxLocation}
+                  />
                 ))}
               </div>
             )}
@@ -456,72 +399,15 @@ export default function Home() {
             ) : (
               <div className="space-y-3">
                 {friendsFeed.map((look) => (
-                  <div
+                  <FeedCard
                     key={look.id}
-                    onClick={(e) => handleTap(e, 'look', look.id, `/look/${look.id}`)}
-                    className="block glass rounded-2xl overflow-hidden shadow-glass cursor-pointer"
-                  >
-                    <div className="relative">
-                      {(look.photo_urls?.length > 0 || look.photo_url) ? (
-                        <PhotoCarousel
-                          itemId={`look-${look.id}`}
-                          photoUrls={look.photo_urls?.length > 0 ? look.photo_urls : [look.photo_url]}
-                          className="w-full aspect-[4/5]"
-                          imgClassName="w-full aspect-[4/5] object-cover bg-gray-100"
-                          onSlideChange={(index) => setActiveSlide(prev => ({ ...prev, [`look-${look.id}`]: index }))}
-                        />
-                      ) : (
-                        <div className="w-full aspect-[4/5] bg-lookup-mint-light flex items-center justify-center">
-                          <Heart size={48} className="text-lookup-mint" />
-                        </div>
-                      )}
-                      {/* Heart animation on double tap */}
-                      {heartAnimation === `look-${look.id}` && (
-                        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
-                          <Heart size={80} className="text-white drop-shadow-lg animate-heart-pop" fill="white" />
-                        </div>
-                      )}
-                      {/* Overlay visible seulement sur la première photo */}
-                      <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 transition-opacity duration-300 ${(activeSlide[`look-${look.id}`] || 0) === 0 ? 'opacity-100' : 'opacity-0'}`}>
-                        <div className="flex items-center gap-2">
-                          {look.user?.avatar_url && (
-                            <img
-                              src={getPhotoUrl(look.user.avatar_url)}
-                              alt=""
-                              className="w-8 h-8 rounded-full object-cover border-2 border-white"
-                            />
-                          )}
-                          <p className="text-white font-semibold text-lg">{look.user?.username}</p>
-                        </div>
-                        {look.title && (
-                          <p className="text-white/90 text-sm">{look.title}</p>
-                        )}
-                        <div className="flex items-center gap-4 mt-1">
-                          <div className="flex items-center gap-1 text-white/90 text-sm">
-                            <Clock size={14} />
-                            <span>{getTimeAgo(look.created_at)}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between px-4 py-3">
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1.5 text-lookup-gray">
-                          <Eye size={18} />
-                          <span className="text-sm font-medium">{look.views_count || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-lookup-gray">
-                          <Heart size={18} />
-                          <span className="text-sm font-medium">{look.likes_count || 0}</span>
-                        </div>
-                      </div>
-                      {look.items?.length > 0 && (
-                        <span className="text-lookup-gray text-xs">
-                          {look.items.map(i => i.brand).filter(Boolean).join(', ')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                    type="look"
+                    item={look}
+                    onTap={handleTap}
+                    heartAnimation={heartAnimation}
+                    getTimeAgo={getTimeAgo}
+                    getApproxLocation={getApproxLocation}
+                  />
                 ))}
               </div>
             )}
