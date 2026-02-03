@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, memo } from 'react'
 import { MapPin, Clock, Eye, Heart } from 'lucide-react'
 import PhotoCarousel from './PhotoCarousel'
 import { getPhotoUrl } from '../api/client'
 
-export default function FeedCard({
+export default memo(function FeedCard({
   type, // 'crossing' or 'look'
   item,
   onTap,
@@ -134,4 +134,4 @@ export default function FeedCard({
       </div>
     </div>
   )
-}
+})

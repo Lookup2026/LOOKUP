@@ -14,10 +14,27 @@ html, body {
   min-height: 100%;
   color: #1A1A1A;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 #root {
   min-height: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Optimisation du scroll pour iOS/mobile */
+.scroll-smooth {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* GPU acceleration pour les éléments qui bougent */
+.gpu-accelerated {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 /* Glassmorphism background gradient */
@@ -26,12 +43,15 @@ html, body {
   min-height: 100%;
 }
 
-/* Glass card effect */
+/* Glass card effect - optimisé pour performance */
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.8);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform;
 }
 
 .glass-strong {
@@ -39,6 +59,8 @@ html, body {
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.9);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .glass-dark {
@@ -46,6 +68,8 @@ html, body {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.6);
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 /* PWA safe areas */
@@ -142,4 +166,26 @@ html, body {
 
 .photo-carousel .swiper-wrapper {
   touch-action: pan-x;
+}
+
+/* Optimisation des images pour scroll fluide */
+img {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
+}
+
+/* Conteneur de scroll optimisé */
+.scroll-container {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+/* Réduire le coût des backdrop-filter pendant le scroll */
+@media (prefers-reduced-motion: no-preference) {
+  .glass,
+  .glass-strong,
+  .glass-dark {
+    transition: none;
+  }
 }
