@@ -5,7 +5,14 @@ import { getPhotoUrl } from '../api/client'
 import 'swiper/css'
 import 'swiper/css/pagination'
 
-export default function PhotoCarousel({ photoUrls, className = '', imgClassName = '', alt = '' }) {
+export default function PhotoCarousel({
+  photoUrls,
+  className = '',
+  imgClassName = '',
+  alt = '',
+  onSlideChange = null,
+  onSlideChangeStart = null
+}) {
   // Si une seule photo ou pas de photos, afficher une simple image
   if (!photoUrls || photoUrls.length === 0) return null
 
@@ -31,6 +38,12 @@ export default function PhotoCarousel({ photoUrls, className = '', imgClassName 
       spaceBetween={0}
       slidesPerView={1}
       className={`photo-carousel ${className}`}
+      onSlideChangeTransitionStart={(swiper) => {
+        if (onSlideChangeStart) onSlideChangeStart(swiper.activeIndex)
+      }}
+      onSlideChangeTransitionEnd={(swiper) => {
+        if (onSlideChange) onSlideChange(swiper.activeIndex)
+      }}
     >
       {photoUrls.map((url, index) => (
         <SwiperSlide key={index}>

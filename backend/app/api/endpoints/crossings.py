@@ -238,9 +238,10 @@ async def get_my_crossings(
         Crossing.crossed_at >= since_24h  # Visible 24h
     ).order_by(Crossing.crossed_at.desc()).all()
 
-    # Filtrer les utilisateurs bloques + profils prives (si pas amis)
-    # On garde TOUS les croisements (pas de deduplication par utilisateur)
-    crossings = []
+    # Collecter les utilisateurs croises uniques (filtrer bloques + prives)
+    crossed_user_ids = set()
+    crossing_info = {}  # user_id -> premier croisement (pour location/time)
+
     for c in all_crossings:
         other_user_id = c.user2_id if c.user1_id == current_user.id else c.user1_id
         # Ignorer si utilisateur bloque
@@ -252,74 +253,70 @@ async def get_my_crossings(
             # Profil prive: verifier si amis (se suivent mutuellement)
             if not are_friends(db, current_user.id, other_user_id):
                 continue
-        crossings.append(c)
+        crossed_user_ids.add(other_user_id)
+        # Garder le croisement le plus recent pour cet utilisateur
+        if other_user_id not in crossing_info:
+            crossing_info[other_user_id] = c
 
-    # Appliquer pagination
-    crossings = crossings[skip:skip + limit]
-
+    # Pour chaque utilisateur croise, obtenir TOUS ses looks < 24h
     result = []
-    for c in crossings:
-        # Determiner qui est l'autre utilisateur
-        if c.user1_id == current_user.id:
-            other_user_id = c.user2_id
-            other_look_id = c.user2_look_id
-        else:
-            other_user_id = c.user1_id
-            other_look_id = c.user1_look_id
+    since_24h = datetime.utcnow() - timedelta(hours=24)
 
-        # Obtenir les infos de l'autre utilisateur
+    for other_user_id in crossed_user_ids:
         other_user = db.query(User).filter(User.id == other_user_id).first()
         if not other_user:
             continue
 
-        # Toujours prendre le look le plus recent (< 24h) de l'autre utilisateur
-        other_look = None
-        look_items = []
-        since_24h = datetime.utcnow() - timedelta(hours=24)
-
-        other_look = db.query(Look).options(
+        # Obtenir TOUS les looks de cet utilisateur (< 24h)
+        other_looks = db.query(Look).options(
             joinedload(Look.photos)
         ).filter(
             Look.user_id == other_user_id,
             Look.created_at >= since_24h,
-        ).order_by(Look.created_at.desc()).first()
+        ).order_by(Look.created_at.desc()).all()
 
-        # Pas de look recent (< 24h) = on n'affiche pas ce croisement
-        if not other_look:
+        if not other_looks:
             continue
 
-        look_items = [
-            {
-                "category": item.category,
-                "brand": item.brand,
-                "product_name": item.product_name,
-                "color": item.color
-            }
-            for item in other_look.items
-        ]
+        # Utiliser les infos du croisement
+        crossing = crossing_info[other_user_id]
+        rounded_lat, rounded_lon = round_coordinates(crossing.latitude, crossing.longitude)
 
-        # Arrondir les coordonnees pour la vie privee
-        rounded_lat, rounded_lon = round_coordinates(c.latitude, c.longitude)
+        # Creer une entree pour CHAQUE look
+        for look in other_looks:
+            look_items = [
+                {
+                    "category": item.category,
+                    "brand": item.brand,
+                    "product_name": item.product_name,
+                    "color": item.color
+                }
+                for item in look.items
+            ]
 
-        result.append(CrossingWithDetails(
-            id=c.id,
-            crossed_at=c.crossed_at,
-            latitude=rounded_lat,
-            longitude=rounded_lon,
-            location_name=c.location_name,
-            other_user_id=other_user.id,
-            other_username=other_user.username,
-            other_avatar_url=other_user.avatar_url,
-            other_look_id=other_look.id if other_look else None,
-            other_look_title=other_look.title if other_look else None,
-            other_look_photo_url=other_look.photo_url if other_look else None,
-            other_look_photo_urls=_get_look_photo_urls(other_look) if other_look else [],
-            other_look_items=look_items,
-            views_count=other_look.views_count if other_look else 0,
-            likes_count=other_look.likes_count if other_look else 0
-        ))
+            result.append(CrossingWithDetails(
+                id=crossing.id,  # ID du croisement
+                crossed_at=crossing.crossed_at,
+                latitude=rounded_lat,
+                longitude=rounded_lon,
+                location_name=crossing.location_name,
+                other_user_id=other_user.id,
+                other_username=other_user.username,
+                other_avatar_url=other_user.avatar_url,
+                other_look_id=look.id,
+                other_look_title=look.title,
+                other_look_photo_url=look.photo_url,
+                other_look_photo_urls=_get_look_photo_urls(look),
+                other_look_items=look_items,
+                views_count=look.views_count,
+                likes_count=look.likes_count
+            ))
 
-    return result
+    # Trier par date de creation du look (plus recent en premier)
+    result.sort(key=lambda x: x.crossed_at, reverse=True)
+
+    # Appliquer pagination
+    return result[skip:skip + limit]
 
 @router.get("/{crossing_id}")
 async def get_crossing_detail(
