@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { login as apiLogin, register as apiRegister, getMe, logout as apiLogout } from '../api/client'
+import { useLocationStore } from './locationStore'
 
 export const useAuthStore = create((set) => ({
   user: null,
@@ -66,8 +67,10 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  // Logout — supprime le cookie httpOnly + localStorage
+  // Logout — supprime le cookie httpOnly + localStorage + arrete le tracking
   logout: async () => {
+    // Arreter le tracking en arriere-plan
+    await useLocationStore.getState().stopBackgroundTracking()
     try {
       await apiLogout()
     } catch {

@@ -18,6 +18,7 @@ class User(Base):
     full_name = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
     bio = Column(String, nullable=True)
+    username_changed_at = Column(DateTime, nullable=True)  # Pour limiter le changement de username a 1x/15 jours
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     is_visible = Column(Boolean, default=True)
@@ -46,6 +47,7 @@ class Follow(Base):
     id = Column(Integer, primary_key=True, index=True)
     follower_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     followed_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    status = Column(String, default="accepted")  # "pending" ou "accepted"
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relations

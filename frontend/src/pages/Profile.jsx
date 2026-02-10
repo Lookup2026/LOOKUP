@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark, Image, ChevronRight } from 'lucide-react'
+import { LogOut, Camera, Eye, Heart, Calendar, Settings, MapPin, Grid3X3, Trash2, X, Tag, MoreVertical, Pencil, Users, Share2, Copy, Check, Bookmark, Image, ChevronRight, ChevronLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar, getSavedCrossings, getFollowing, getFollowers } from '../api/client'
@@ -197,7 +197,7 @@ export default function Profile() {
   return (
     <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
+      <div className="glass-strong px-4 pb-3 rounded-b-3xl shadow-glass sticky top-0 z-20" style={{ paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
         <div className="flex items-center justify-between">
           <Link to="/settings" className="w-9 h-9 glass rounded-full flex items-center justify-center">
             <Settings size={18} className="text-lookup-gray" />
@@ -206,11 +206,11 @@ export default function Profile() {
             <div className="w-7 h-7 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center">
               <MapPin size={14} className="text-white" />
             </div>
-            <span className="text-xl font-bold text-lookup-black">LOOKUP</span>
+            <span className="text-xl font-bold text-lookup-black dark:text-white">LOOKUP</span>
           </div>
           <button
             onClick={handleLogout}
-            className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center"
+            className="w-9 h-9 bg-lookup-cream dark:bg-neutral-800 rounded-full flex items-center justify-center"
           >
             <LogOut size={18} className="text-lookup-gray" />
           </button>
@@ -260,7 +260,7 @@ export default function Profile() {
               </div>
             </div>
             <div className="flex-1">
-              <h1 className="text-xl font-bold text-lookup-black">{user?.username}</h1>
+              <h1 className="text-xl font-bold text-lookup-black dark:text-white">{user?.username}</h1>
               {user?.full_name && (
                 <p className="text-lookup-gray text-sm">{user.full_name}</p>
               )}
@@ -280,21 +280,21 @@ export default function Profile() {
           {/* Stats */}
           <div className="grid grid-cols-4 gap-2 pt-4 border-t border-lookup-gray-light">
             <div className="text-center">
-              <p className="text-2xl font-bold text-lookup-black">{looks.length}</p>
+              <p className="text-2xl font-bold text-lookup-black dark:text-white">{looks.length}</p>
               <p className="text-lookup-gray text-xs">Looks</p>
             </div>
             <div className="text-center cursor-pointer active:scale-95 transition" onClick={() => openFollowModal('followers')}>
-              <p className="text-2xl font-bold text-lookup-black">{followersCount}</p>
+              <p className="text-2xl font-bold text-lookup-black dark:text-white">{followersCount}</p>
               <p className="text-lookup-gray text-xs">Abonnés</p>
             </div>
             <div className="text-center cursor-pointer active:scale-95 transition" onClick={() => openFollowModal('following')}>
-              <p className="text-2xl font-bold text-lookup-black">{followingCount}</p>
+              <p className="text-2xl font-bold text-lookup-black dark:text-white">{followingCount}</p>
               <p className="text-lookup-gray text-xs">Suivis</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-1">
                 <Heart size={14} className="text-lookup-mint" />
-                <p className="text-2xl font-bold text-lookup-black">{totalLikes}</p>
+                <p className="text-2xl font-bold text-lookup-black dark:text-white">{totalLikes}</p>
               </div>
               <p className="text-lookup-gray text-xs">Likes</p>
             </div>
@@ -305,12 +305,12 @@ export default function Profile() {
       {/* Library Section with Tabs */}
       <div className="px-4 pt-6">
         {/* Tabs */}
-        <div className="flex bg-lookup-cream rounded-xl p-1 mb-4">
+        <div className="flex bg-lookup-cream dark:bg-neutral-800 rounded-xl p-1 mb-4">
           <button
             onClick={() => setActiveTab('mine')}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition ${
               activeTab === 'mine'
-                ? 'bg-white text-lookup-black shadow-sm'
+                ? 'bg-white dark:bg-neutral-700 text-lookup-black dark:text-white shadow-sm'
                 : 'text-lookup-gray'
             }`}
           >
@@ -324,7 +324,7 @@ export default function Profile() {
             onClick={() => setActiveTab('saved')}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition ${
               activeTab === 'saved'
-                ? 'bg-white text-lookup-black shadow-sm'
+                ? 'bg-white dark:bg-neutral-700 text-lookup-black dark:text-white shadow-sm'
                 : 'text-lookup-gray'
             }`}
           >
@@ -380,7 +380,7 @@ export default function Profile() {
                       </div>
                     </div>
                   </div>
-                  <p className="mt-1.5 text-sm text-lookup-black font-medium truncate px-0.5">
+                  <p className="mt-1.5 text-sm text-lookup-black dark:text-white font-medium truncate px-0.5">
                     {look.title || 'Sans titre'}
                   </p>
                 </div>
@@ -391,7 +391,7 @@ export default function Profile() {
               <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
                 <Camera size={28} className="text-lookup-mint" />
               </div>
-              <p className="text-lookup-black font-medium">Aucun look enregistre</p>
+              <p className="text-lookup-black dark:text-white font-medium">Aucun look enregistre</p>
               <p className="text-lookup-gray text-sm mt-1">
                 Publie ton premier look du jour !
               </p>
@@ -442,7 +442,7 @@ export default function Profile() {
                       </div>
                     </div>
                   </div>
-                  <p className="mt-1.5 text-sm text-lookup-black font-medium truncate px-0.5">
+                  <p className="mt-1.5 text-sm text-lookup-black dark:text-white font-medium truncate px-0.5">
                     {crossing.other_user?.username || 'Croisement'}
                   </p>
                 </div>
@@ -453,7 +453,7 @@ export default function Profile() {
               <div className="w-16 h-16 bg-lookup-mint-light rounded-full mx-auto mb-4 flex items-center justify-center">
                 <Bookmark size={28} className="text-lookup-mint" />
               </div>
-              <p className="text-lookup-black font-medium">Aucun croisement sauvegarde</p>
+              <p className="text-lookup-black dark:text-white font-medium">Aucun croisement sauvegarde</p>
               <p className="text-lookup-gray text-sm mt-1">
                 Sauvegarde les croisements pour les retrouver ici
               </p>
@@ -464,23 +464,23 @@ export default function Profile() {
 
       {/* Invite Friends Section */}
       <div className="px-4 pt-6">
-        <div className="bg-white rounded-2xl p-5 shadow-sm">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
               <Users size={20} className="text-lookup-mint" />
             </div>
             <div>
-              <h3 className="font-semibold text-lookup-black">Invite tes amis</h3>
+              <h3 className="font-semibold text-lookup-black dark:text-white">Invite tes amis</h3>
               <p className="text-lookup-gray text-xs">LOOKUP est plus fun à plusieurs !</p>
             </div>
           </div>
 
           {/* Referral Link */}
           {user?.referral_code && (
-            <div className="bg-lookup-cream rounded-xl p-3 mb-4">
+            <div className="bg-lookup-cream dark:bg-neutral-800 rounded-xl p-3 mb-4">
               <p className="text-xs text-lookup-gray mb-1">Ton lien personnel</p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 text-sm text-lookup-black font-medium truncate">
+                <code className="flex-1 text-sm text-lookup-black dark:text-white font-medium truncate">
                   lookup-puce.vercel.app/join/{user.referral_code}
                 </code>
                 <button
@@ -549,14 +549,22 @@ export default function Profile() {
 
       {/* Look Detail Modal */}
       {showModal && selectedLook && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[60] flex flex-col" style={{ touchAction: 'none' }}>
+        <div
+          className="fixed inset-0 z-[60] flex flex-col"
+          style={{
+            touchAction: 'none',
+            background: 'rgba(0,0,0,0.4)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+          }}
+        >
           {/* Modal Header - Clean minimal design */}
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-4 pb-3 pt-16">
             <button
               onClick={closeLookDetail}
-              className="p-2 -ml-2 text-white/80 hover:text-white"
+              className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center"
             >
-              <X size={24} />
+              <ChevronLeft size={20} className="text-white" />
             </button>
             <div className="text-white text-center flex-1 px-4">
               <p className="font-semibold text-lg">{selectedLook.title || 'Mon look'}</p>
@@ -574,15 +582,15 @@ export default function Profile() {
                   e.stopPropagation()
                   setMenuOpenId(menuOpenId === selectedLook.id ? null : selectedLook.id)
                 }}
-                className="p-2 -mr-2 text-white/80 hover:text-white"
+                className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center"
               >
-                <MoreVertical size={24} />
+                <MoreVertical size={18} className="text-white" />
               </button>
 
               {/* Dropdown menu */}
               {menuOpenId === selectedLook.id && (
                 <div
-                  className="absolute top-10 right-0 bg-white rounded-xl shadow-lg overflow-hidden z-10 min-w-[150px]"
+                  className="absolute top-10 right-0 bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden z-10 min-w-[150px]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
@@ -591,7 +599,7 @@ export default function Profile() {
                       setShowModal(false)
                       navigate(`/edit-look/${selectedLook.id}`)
                     }}
-                    className="flex items-center gap-2 px-4 py-3 text-sm text-lookup-black hover:bg-lookup-cream w-full"
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-lookup-black dark:text-white hover:bg-lookup-cream dark:hover:bg-neutral-700 w-full"
                   >
                     <Pencil size={16} className="text-lookup-mint" />
                     <span>Modifier</span>
@@ -601,7 +609,7 @@ export default function Profile() {
                       setMenuOpenId(null)
                       setDeleteConfirmId(selectedLook.id)
                     }}
-                    className="flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50 w-full border-t border-gray-100"
+                    className="flex items-center gap-2 px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 w-full border-t border-gray-100 dark:border-neutral-700"
                   >
                     <Trash2 size={16} />
                     <span>Supprimer</span>
@@ -636,6 +644,25 @@ export default function Profile() {
                 <span className="font-semibold">{selectedLook.likes_count || 0} likes</span>
               </div>
             </div>
+
+            {/* Location - Original design */}
+            {(selectedLook.city || selectedLook.country) && (
+              <div className="px-4 pb-4">
+                <div className="bg-gradient-to-r from-lookup-mint/20 to-purple-500/20 backdrop-blur rounded-2xl p-4 border border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                      <MapPin size={20} className="text-white" />
+                    </div>
+                    <div>
+                      <p className="text-white/60 text-xs uppercase tracking-wider">Capturé à</p>
+                      <p className="text-white font-semibold">
+                        {selectedLook.city}{selectedLook.country && selectedLook.city ? ', ' : ''}{selectedLook.country}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Items/Pieces */}
             {selectedLook.items && selectedLook.items.length > 0 && (
@@ -681,15 +708,15 @@ export default function Profile() {
       {/* Delete Confirmation Modal */}
       {deleteConfirmId && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-6">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-lg font-bold text-lookup-black text-center">Supprimer ce look ?</h3>
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold text-lookup-black dark:text-white text-center">Supprimer ce look ?</h3>
             <p className="text-lookup-gray text-sm text-center mt-2">
               Cette action est irreversible.
             </p>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
+                className="flex-1 py-3 rounded-full border border-gray-200 dark:border-neutral-700 font-medium text-lookup-black dark:text-white"
               >
                 Annuler
               </button>
@@ -706,17 +733,24 @@ export default function Profile() {
 
       {/* Saved Look Detail Modal */}
       {showSavedModal && selectedSavedLook && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl z-50 flex flex-col">
+        <div
+          className="fixed inset-0 z-50 flex flex-col"
+          style={{
+            background: 'rgba(0,0,0,0.4)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+          }}
+        >
           {/* Modal Header */}
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-4 pb-3 pt-16">
             <button
               onClick={() => {
                 setShowSavedModal(false)
                 setSelectedSavedLook(null)
               }}
-              className="p-2 -ml-2 text-white/80 hover:text-white"
+              className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center"
             >
-              <X size={24} />
+              <ChevronLeft size={20} className="text-white" />
             </button>
             <div className="text-white text-center flex-1 px-4">
               <p className="font-semibold text-lg flex items-center justify-center gap-2">
@@ -724,7 +758,7 @@ export default function Profile() {
                 {selectedSavedLook.title || 'Look sauvegarde'}
               </p>
             </div>
-            <div className="w-10"></div>
+            <div className="w-9"></div>
           </div>
 
           {/* Modal Content - Scrollable */}
@@ -794,25 +828,25 @@ export default function Profile() {
       {showFollowModal && (
         <div className="fixed inset-0 bg-black/60 z-[60] flex items-end justify-center" onClick={() => setShowFollowModal(false)}>
           <div
-            className="w-full max-w-lg rounded-t-3xl max-h-[70vh] flex flex-col"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', background: '#ffffff' }}
+            className="w-full max-w-lg rounded-t-3xl max-h-[70vh] flex flex-col bg-white dark:bg-neutral-900"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 pt-4 pb-2">
-              <h2 className="text-lg font-bold text-lookup-black">
+              <h2 className="text-lg font-bold text-lookup-black dark:text-white">
                 {followModalTab === 'followers' ? 'Abonnés' : 'Suivis'}
               </h2>
               <button
                 onClick={() => setShowFollowModal(false)}
-                className="w-8 h-8 bg-lookup-cream rounded-full flex items-center justify-center"
+                className="w-8 h-8 bg-lookup-cream dark:bg-neutral-800 rounded-full flex items-center justify-center"
               >
                 <X size={18} className="text-lookup-gray" />
               </button>
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-lookup-gray-light mx-4">
+            <div className="flex border-b border-lookup-gray-light dark:border-neutral-700 mx-4">
               <button
                 onClick={() => switchFollowTab('followers')}
                 className={`flex-1 py-2.5 text-sm font-medium text-center transition ${
@@ -868,7 +902,7 @@ export default function Profile() {
                               {person.username?.[0]?.toUpperCase()}
                             </div>
                           )}
-                          <p className="font-medium text-lookup-black flex-1">{person.username}</p>
+                          <p className="font-medium text-lookup-black dark:text-white flex-1">{person.username}</p>
                         </div>
                       ))}
                     </div>

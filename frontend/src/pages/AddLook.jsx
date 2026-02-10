@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Camera, Plus, X, Upload, ChevronLeft, MapPin, Save, AlertCircle, Image } from 'lucide-react'
+import { Camera, Plus, X, Upload, ChevronLeft, MapPin, Save, AlertCircle, Image, Navigation, Trash2 } from 'lucide-react'
 import { createLook, getLook, updateLook, getPhotoUrl, getLooksLimit } from '../api/client'
+import { useLocationStore } from '../stores/locationStore'
+import { compressImage } from '../utils/imageCompression'
 import toast from 'react-hot-toast'
 
 const MAX_PHOTOS = 5
@@ -13,6 +15,45 @@ const CATEGORIES = [
   { id: 'outerwear', label: 'Veste/Manteau' },
   { id: 'accessory', label: 'Accessoire' },
 ]
+
+// Marques populaires
+const POPULAR_BRANDS = [
+  'Nike', 'Adidas', 'Zara', 'H&M', 'Uniqlo', 'Levi\'s', 'The North Face',
+  'Gucci', 'Louis Vuitton', 'Prada', 'Balenciaga', 'Off-White', 'Supreme',
+  'Carhartt', 'Stussy', 'Patagonia', 'New Balance', 'Converse', 'Vans',
+  'Ralph Lauren', 'Tommy Hilfiger', 'Calvin Klein', 'Lacoste', 'Hugo Boss',
+  'Diesel', 'G-Star', 'Acne Studios', 'A.P.C.', 'Ami Paris', 'Sandro',
+  'Maje', 'The Kooples', 'Zadig & Voltaire', 'Isabel Marant', 'Ba&sh',
+  'Cos', '& Other Stories', 'Arket', 'Massimo Dutti', 'Mango',
+  'Pull & Bear', 'Bershka', 'Stradivarius', 'Asos', 'Boohoo',
+  'Jordan', 'Yeezy', 'Fear of God', 'Essentials', 'Stone Island',
+  'Moncler', 'Canada Goose', 'Arc\'teryx', 'Salomon', 'Hoka',
+  'Asics', 'Puma', 'Reebok', 'Fila', 'Champion', 'Dickies',
+  'Wrangler', 'Lee', 'Edwin', 'Nudie Jeans', 'Naked & Famous',
+  'Dr. Martens', 'Timberland', 'Clarks', 'Birkenstock', 'Crocs',
+  'Hermès', 'Chanel', 'Dior', 'Saint Laurent', 'Bottega Veneta',
+  'Celine', 'Loewe', 'Valentino', 'Versace', 'Fendi', 'Burberry',
+  'Jacquemus', 'Lemaire', 'Maison Margiela', 'Rick Owens', 'Vetements'
+].sort()
+
+// Récupérer les marques utilisées depuis localStorage
+const getUserBrands = () => {
+  try {
+    return JSON.parse(localStorage.getItem('lookup_user_brands') || '[]')
+  } catch {
+    return []
+  }
+}
+
+// Sauvegarder une marque utilisée
+const saveUserBrand = (brand) => {
+  if (!brand || brand.length < 2) return
+  const brands = getUserBrands()
+  if (!brands.includes(brand)) {
+    const updated = [brand, ...brands].slice(0, 20) // Garder max 20 marques
+    localStorage.setItem('lookup_user_brands', JSON.stringify(updated))
+  }
+}
 
 export default function AddLook() {
   const navigate = useNavigate()
@@ -33,6 +74,21 @@ export default function AddLook() {
   const [loadingLook, setLoadingLook] = useState(isEditing)
   const [looksLimit, setLooksLimit] = useState({ remaining: 5, max_per_day: 5, looks_today: 0 })
 
+  // Location state
+  const [location, setLocation] = useState({ latitude: null, longitude: null, city: null, country: null })
+  const [loadingLocation, setLoadingLocation] = useState(false)
+  const { lastPosition } = useLocationStore()
+
+  // Brand autocomplete state
+  const [activeBrandInput, setActiveBrandInput] = useState(null) // item.id du champ actif
+  const [brandSuggestions, setBrandSuggestions] = useState([])
+  const [userBrands, setUserBrands] = useState(getUserBrands())
+
+  // Swipe state
+  const [swipingItemId, setSwipingItemId] = useState(null)
+  const [swipeOffset, setSwipeOffset] = useState(0)
+  const touchStartX = useRef(0)
+
   const totalPhotos = existingPhotos.length + newPhotos.length
   const canAddMore = totalPhotos < MAX_PHOTOS
 
@@ -41,8 +97,51 @@ export default function AddLook() {
       loadExistingLook()
     } else {
       loadLooksLimit()
+      fetchLocation()
     }
   }, [id])
+
+  // Récupérer la localisation et faire le reverse geocoding
+  const fetchLocation = async () => {
+    setLoadingLocation(true)
+    try {
+      // Utiliser la position du store ou demander une nouvelle
+      let lat, lng
+      if (lastPosition?.latitude && lastPosition?.longitude) {
+        lat = lastPosition.latitude
+        lng = lastPosition.longitude
+      } else if (navigator.geolocation) {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 10000 })
+        })
+        lat = pos.coords.latitude
+        lng = pos.coords.longitude
+      }
+
+      if (lat && lng) {
+        setLocation(prev => ({ ...prev, latitude: lat, longitude: lng }))
+
+        // Reverse geocoding avec Nominatim (OpenStreetMap)
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=fr`
+          )
+          const data = await response.json()
+          if (data.address) {
+            const city = data.address.city || data.address.town || data.address.village || data.address.municipality
+            const country = data.address.country
+            setLocation(prev => ({ ...prev, city, country }))
+          }
+        } catch (e) {
+          console.log('Reverse geocoding failed:', e)
+        }
+      }
+    } catch (e) {
+      console.log('Location error:', e)
+    } finally {
+      setLoadingLocation(false)
+    }
+  }
 
   const loadLooksLimit = async () => {
     try {
@@ -78,6 +177,9 @@ export default function AddLook() {
           product_name: item.product_name || '',
           product_reference: item.product_reference || '',
           color: item.color || '',
+          photo: null,
+          photoPreview: null,
+          existingPhotoUrl: item.photo_url || null,
         })))
       }
     } catch (error) {
@@ -88,7 +190,7 @@ export default function AddLook() {
     }
   }
 
-  const handlePhotoChange = (e) => {
+  const handlePhotoChange = async (e) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
 
@@ -99,12 +201,18 @@ export default function AddLook() {
       toast.error(`Maximum ${MAX_PHOTOS} photos. ${remaining} place${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''}.`)
     }
 
-    const newEntries = toAdd.map(file => ({
-      file,
-      preview: URL.createObjectURL(file),
-    }))
+    // Compresser les images avant de les ajouter
+    const compressedEntries = await Promise.all(
+      toAdd.map(async (file) => {
+        const compressedFile = await compressImage(file)
+        return {
+          file: compressedFile,
+          preview: URL.createObjectURL(compressedFile),
+        }
+      })
+    )
 
-    setNewPhotos(prev => [...prev, ...newEntries])
+    setNewPhotos(prev => [...prev, ...compressedEntries])
     // Reset input pour pouvoir re-selectionner les memes fichiers
     e.target.value = ''
   }
@@ -138,6 +246,9 @@ export default function AddLook() {
         product_name: '',
         product_reference: '',
         color: '',
+        photo: null,
+        photoPreview: null,
+        existingPhotoUrl: null,
       },
     ])
   }
@@ -147,7 +258,86 @@ export default function AddLook() {
   }
 
   const removeItem = (id) => {
+    const item = items.find(i => i.id === id)
+    if (item?.photoPreview) URL.revokeObjectURL(item.photoPreview)
     setItems(items.filter((item) => item.id !== id))
+    setSwipingItemId(null)
+    setSwipeOffset(0)
+  }
+
+  const handleItemPhoto = async (itemId, e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const compressed = await compressImage(file)
+    const preview = URL.createObjectURL(compressed)
+    setItems(items.map(item => item.id === itemId ? {
+      ...item,
+      photo: compressed,
+      photoPreview: preview,
+      existingPhotoUrl: null,
+    } : item))
+  }
+
+  const removeItemPhoto = (itemId) => {
+    setItems(items.map(item => {
+      if (item.id !== itemId) return item
+      if (item.photoPreview) URL.revokeObjectURL(item.photoPreview)
+      return { ...item, photo: null, photoPreview: null, existingPhotoUrl: null }
+    }))
+  }
+
+  // Recherche de marques
+  const searchBrands = (query, itemId) => {
+    if (!query || query.length < 1) {
+      setBrandSuggestions([])
+      setActiveBrandInput(null)
+      return
+    }
+
+    setActiveBrandInput(itemId)
+    const q = query.toLowerCase()
+
+    // Marques de l'utilisateur en premier
+    const userMatches = userBrands.filter(b => b.toLowerCase().includes(q))
+    // Puis marques populaires
+    const popularMatches = POPULAR_BRANDS.filter(b =>
+      b.toLowerCase().includes(q) && !userMatches.includes(b)
+    )
+
+    setBrandSuggestions([...userMatches.slice(0, 3), ...popularMatches.slice(0, 5)])
+  }
+
+  const selectBrand = (itemId, brand) => {
+    updateItem(itemId, 'brand', brand)
+    setBrandSuggestions([])
+    setActiveBrandInput(null)
+    saveUserBrand(brand)
+    setUserBrands(getUserBrands())
+  }
+
+  // Swipe handlers
+  const handleTouchStart = (e, itemId) => {
+    touchStartX.current = e.touches[0].clientX
+    setSwipingItemId(itemId)
+  }
+
+  const handleTouchMove = (e, itemId) => {
+    if (swipingItemId !== itemId) return
+    const diff = touchStartX.current - e.touches[0].clientX
+    // Seulement vers la gauche, max 100px
+    const offset = Math.min(Math.max(diff, 0), 100)
+    setSwipeOffset(offset)
+  }
+
+  const handleTouchEnd = (itemId) => {
+    if (swipeOffset > 60) {
+      // Swipe assez long → supprimer
+      removeItem(itemId)
+    } else {
+      // Reset
+      setSwipeOffset(0)
+      setSwipingItemId(null)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -188,7 +378,29 @@ export default function AddLook() {
       }
 
       formData.append('title', title)
-      formData.append('items_json', JSON.stringify(items.map(({ id, ...rest }) => rest)))
+
+      // Collecter les photos d'items et construire items_json avec _photo_index
+      let itemPhotoIndex = 0
+      const itemsForJson = items.map(({ id, photo, photoPreview, existingPhotoUrl, ...rest }) => {
+        const itemData = { ...rest }
+        if (photo) {
+          formData.append('item_photos', photo)
+          itemData._photo_index = itemPhotoIndex
+          itemPhotoIndex++
+        } else if (existingPhotoUrl) {
+          itemData.photo_url = existingPhotoUrl
+        }
+        return itemData
+      })
+      formData.append('items_json', JSON.stringify(itemsForJson))
+
+      // Ajouter la localisation si disponible (uniquement à la création)
+      if (!isEditing && location.latitude && location.longitude) {
+        formData.append('latitude', location.latitude)
+        formData.append('longitude', location.longitude)
+        if (location.city) formData.append('city', location.city)
+        if (location.country) formData.append('country', location.country)
+      }
 
       if (isEditing) {
         await updateLook(id, formData)
@@ -197,6 +409,12 @@ export default function AddLook() {
         await createLook(formData)
         toast.success('Look ajouté !')
       }
+
+      // Sauvegarder les marques utilisées
+      items.forEach(item => {
+        if (item.brand) saveUserBrand(item.brand)
+      })
+
       navigate('/profile')
     } catch (error) {
       console.error('Erreur publication look:', error, error.response?.status, error.response?.data)
@@ -218,7 +436,7 @@ export default function AddLook() {
   return (
     <div className="min-h-full bg-lookup-cream pb-4">
       {/* Header */}
-      <div className="bg-white px-4 pt-4 pb-3">
+      <div className="bg-white px-4 pb-3 sticky top-0 z-20" style={{ paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-lookup-gray" />
@@ -385,6 +603,24 @@ export default function AddLook() {
           className="w-full bg-white rounded-xl px-4 py-3 text-lookup-black border border-lookup-gray-light placeholder-lookup-gray shadow-sm"
         />
 
+        {/* Location indicator */}
+        {!isEditing && (
+          <div className="flex items-center gap-2 px-1">
+            <Navigation size={14} className={loadingLocation ? 'text-lookup-gray animate-pulse' : 'text-lookup-mint'} />
+            {loadingLocation ? (
+              <span className="text-xs text-lookup-gray">Détection de la position...</span>
+            ) : location.city ? (
+              <span className="text-xs text-lookup-gray">
+                📍 {location.city}{location.country ? `, ${location.country}` : ''}
+              </span>
+            ) : location.latitude ? (
+              <span className="text-xs text-lookup-gray">📍 Position détectée</span>
+            ) : (
+              <span className="text-xs text-lookup-gray">Position non disponible</span>
+            )}
+          </div>
+        )}
+
         {/* Items */}
         <div>
           <div className="flex justify-between items-center mb-3">
@@ -400,65 +636,147 @@ export default function AddLook() {
           </div>
 
           <div className="space-y-3">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-2xl p-4 relative shadow-sm"
-              >
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.id)}
-                  className="absolute top-3 right-3 text-lookup-gray hover:text-red-500"
-                >
-                  <X size={18} />
-                </button>
+            {items.map((item) => {
+              const category = CATEGORIES.find(c => c.id === item.category)
+              const isSwipingThis = swipingItemId === item.id
 
-                <select
-                  value={item.category}
-                  onChange={(e) => updateItem(item.id, 'category', e.target.value)}
-                  className="w-full bg-lookup-cream rounded-xl px-4 py-3 text-lookup-black mb-3 border border-lookup-gray-light text-sm"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.label}
-                    </option>
-                  ))}
-                </select>
+              return (
+                <div key={item.id} className="relative overflow-hidden rounded-2xl">
+                  {/* Delete background (revealed on swipe) */}
+                  <div className="absolute inset-y-0 right-0 w-24 bg-red-500 flex items-center justify-center rounded-r-2xl">
+                    <Trash2 size={24} className="text-white" />
+                  </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Marque"
-                    value={item.brand}
-                    onChange={(e) => updateItem(item.id, 'brand', e.target.value)}
-                    className="bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Couleur"
-                    value={item.color}
-                    onChange={(e) => updateItem(item.id, 'color', e.target.value)}
-                    className="bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
-                  />
+                  {/* Swipeable card */}
+                  <div
+                    className="bg-white rounded-2xl p-4 relative shadow-sm transition-transform"
+                    style={{
+                      transform: isSwipingThis ? `translateX(-${swipeOffset}px)` : 'translateX(0)',
+                      transition: isSwipingThis ? 'none' : 'transform 0.2s ease-out'
+                    }}
+                    onTouchStart={(e) => handleTouchStart(e, item.id)}
+                    onTouchMove={(e) => handleTouchMove(e, item.id)}
+                    onTouchEnd={() => handleTouchEnd(item.id)}
+                  >
+                    {/* Photo de la piece */}
+                    <div className="mb-3">
+                      {(item.photoPreview || item.existingPhotoUrl) ? (
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <img
+                              src={item.photoPreview || getPhotoUrl(item.existingPhotoUrl)}
+                              alt="Photo piece"
+                              className="w-16 h-16 rounded-xl object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeItemPhoto(item.id)}
+                              className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                          <span className="text-xs text-lookup-gray">Photo de la piece</span>
+                        </div>
+                      ) : (
+                        <label className="flex items-center gap-2 cursor-pointer text-lookup-mint text-sm font-medium">
+                          <div className="w-10 h-10 bg-lookup-mint-light rounded-xl flex items-center justify-center">
+                            <Camera size={18} className="text-lookup-mint" />
+                          </div>
+                          <span>Ajouter une photo</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleItemPhoto(item.id, e)}
+                          />
+                        </label>
+                      )}
+                    </div>
+
+                    {/* Category selector with icon */}
+                    <select
+                      value={item.category}
+                      onChange={(e) => updateItem(item.id, 'category', e.target.value)}
+                      className="w-full bg-lookup-cream rounded-xl px-4 py-3 text-lookup-black mb-3 border border-lookup-gray-light text-sm"
+                    >
+                      {CATEGORIES.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.label}
+                        </option>
+                      ))}
+                    </select>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Brand input with autocomplete */}
+                      <div className="relative">
+                        <input
+                          type="text"
+                          placeholder="Marque"
+                          value={item.brand}
+                          onChange={(e) => {
+                            updateItem(item.id, 'brand', e.target.value)
+                            searchBrands(e.target.value, item.id)
+                          }}
+                          onFocus={() => searchBrands(item.brand, item.id)}
+                          onBlur={() => setTimeout(() => {
+                            if (activeBrandInput === item.id) {
+                              setBrandSuggestions([])
+                              setActiveBrandInput(null)
+                            }
+                          }, 200)}
+                          className="w-full bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
+                        />
+                        {/* Suggestions dropdown */}
+                        {activeBrandInput === item.id && brandSuggestions.length > 0 && (
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-100 z-20 max-h-40 overflow-y-auto">
+                            {brandSuggestions.map((brand, idx) => (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => selectBrand(item.id, brand)}
+                                className="w-full text-left px-3 py-2 text-sm text-lookup-black hover:bg-lookup-cream transition flex items-center gap-2"
+                              >
+                                {userBrands.includes(brand) && (
+                                  <span className="text-xs text-lookup-mint">★</span>
+                                )}
+                                {brand}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Couleur"
+                        value={item.color}
+                        onChange={(e) => updateItem(item.id, 'color', e.target.value)}
+                        className="bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Nom du produit"
+                      value={item.product_name}
+                      onChange={(e) => updateItem(item.id, 'product_name', e.target.value)}
+                      className="w-full bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Référence produit (optionnel)"
+                      value={item.product_reference}
+                      onChange={(e) =>
+                        updateItem(item.id, 'product_reference', e.target.value)
+                      }
+                      className="w-full bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
+                    />
+
+                    {/* Swipe hint */}
+                    <p className="text-xs text-lookup-gray/50 text-center mt-2">← Glisser pour supprimer</p>
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  placeholder="Nom du produit"
-                  value={item.product_name}
-                  onChange={(e) => updateItem(item.id, 'product_name', e.target.value)}
-                  className="w-full bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
-                />
-                <input
-                  type="text"
-                  placeholder="Référence produit (optionnel)"
-                  value={item.product_reference}
-                  onChange={(e) =>
-                    updateItem(item.id, 'product_reference', e.target.value)
-                  }
-                  className="w-full bg-lookup-cream rounded-xl px-3 py-2.5 text-lookup-black text-sm border border-lookup-gray-light placeholder-lookup-gray mt-2"
-                />
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {items.length === 0 && (

@@ -4,5 +4,11 @@
   "webDir": "dist",
   "server": {
     "allowNavigation": ["lookup-htrd.onrender.com"]
+  },
+  "ios": {
+    "contentInset": "always",
+    "allowsLinkPreview": false,
+    "scrollEnabled": true,
+    "preferredContentMode": "mobile"
   }
 }

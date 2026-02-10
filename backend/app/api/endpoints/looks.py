@@ -41,6 +41,10 @@ def _look_to_response(look):
         "items": look.items,
         "likes_count": look.likes_count,
         "views_count": look.views_count,
+        "latitude": look.latitude,
+        "longitude": look.longitude,
+        "city": look.city,
+        "country": look.country,
     }
     return data
 
@@ -52,6 +56,11 @@ async def create_look(
     description: Optional[str] = Form(None),
     look_date: Optional[str] = Form(None),
     items_json: Optional[str] = Form(None),  # JSON string des items
+    item_photos: Optional[List[UploadFile]] = File(None),
+    latitude: Optional[float] = Form(None),
+    longitude: Optional[float] = Form(None),
+    city: Optional[str] = Form(None),
+    country: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -119,7 +128,11 @@ async def create_look(
         title=title,
         description=description,
         photo_url=uploaded_urls[0],
-        look_date=parsed_date
+        look_date=parsed_date,
+        latitude=latitude,
+        longitude=longitude,
+        city=city[:100] if city else None,
+        country=country[:100] if country else None
     )
     db.add(look)
     db.commit()
@@ -129,6 +142,23 @@ async def create_look(
     for position, url in enumerate(uploaded_urls):
         db.add(LookPhoto(look_id=look.id, photo_url=url, position=position))
     db.commit()
+
+    # Uploader les photos d'items si fournies
+    item_photo_urls = {}
+    if item_photos:
+        for idx, ip in enumerate(item_photos):
+            if not ip.filename:
+                continue
+            if ip.content_type not in ALLOWED_IMAGE_TYPES:
+                continue
+            ip_content = await ip.read(settings.MAX_FILE_SIZE + 1)
+            if len(ip_content) > settings.MAX_FILE_SIZE:
+                continue
+            try:
+                ip_url = await upload_photo(ip_content, ip.filename)
+                item_photo_urls[idx] = ip_url
+            except Exception:
+                pass
 
     # Ajouter les items si fournis
     VALID_CATEGORIES = {"top", "bottom", "shoes", "accessory", "outerwear", "other"}
@@ -146,6 +176,11 @@ async def create_look(
                 category = item_data.get("category", "other")
                 if category not in VALID_CATEGORIES:
                     category = "other"
+                # Photo de l'item via _photo_index
+                item_photo_url = None
+                photo_index = item_data.get("_photo_index")
+                if photo_index is not None and photo_index in item_photo_urls:
+                    item_photo_url = item_photo_urls[photo_index]
                 item = LookItem(
                     look_id=look.id,
                     category=category,
@@ -153,7 +188,8 @@ async def create_look(
                     product_name=item_data.get("product_name", "")[:200] if item_data.get("product_name") else None,
                     product_reference=item_data.get("product_reference", "")[:100] if item_data.get("product_reference") else None,
                     product_url=item_data.get("product_url", "")[:500] if item_data.get("product_url") else None,
-                    color=item_data.get("color", "")[:50] if item_data.get("color") else None
+                    color=item_data.get("color", "")[:50] if item_data.get("color") else None,
+                    photo_url=item_photo_url
                 )
                 db.add(item)
             db.commit()
@@ -199,6 +235,86 @@ async def get_looks_limit(
         "max_per_day": MAX_LOOKS_PER_DAY,
         "remaining": max(0, MAX_LOOKS_PER_DAY - looks_today)
     }
+
+
+@router.get("/discover")
+async def discover_looks(
+    q: Optional[str] = None,  # Search query
+    period: str = "week",  # today, week, month, all
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Découvrir des looks - recherche par titre, triés par likes"""
+    from datetime import datetime, timedelta
+
+    # Calculer la date de début selon la période
+    now = datetime.utcnow()
+    if period == "today":
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif period == "week":
+        start_date = now - timedelta(days=7)
+    elif period == "month":
+        start_date = now - timedelta(days=30)
+    else:  # all
+        start_date = None
+
+    # Construire la requête
+    query = db.query(Look).options(
+        joinedload(Look.user),
+        joinedload(Look.items),
+        joinedload(Look.photos)
+    )
+
+    # Filtre par période
+    if start_date:
+        query = query.filter(Look.created_at >= start_date)
+
+    # Filtre par recherche (titre)
+    if q and len(q) >= 2:
+        search_term = f"%{q.lower()}%"
+        query = query.filter(Look.title.ilike(search_term))
+
+    # Trier par likes (les plus populaires en premier)
+    query = query.order_by(Look.likes_count.desc(), Look.created_at.desc())
+
+    # Pagination
+    looks = query.offset(skip).limit(limit).all()
+
+    result = []
+    for look in looks:
+        user = look.user
+        if not user:
+            continue
+        result.append({
+            "id": look.id,
+            "title": look.title,
+            "photo_url": look.photo_url,
+            "photo_urls": _get_photo_urls(look),
+            "look_date": look.look_date.isoformat(),
+            "created_at": look.created_at.isoformat(),
+            "likes_count": look.likes_count,
+            "views_count": look.views_count,
+            # Pas de localisation pour la sécurité
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "avatar_url": user.avatar_url
+            },
+            "items": [
+                {
+                    "category": item.category,
+                    "brand": item.brand,
+                    "product_name": item.product_name,
+                    "color": item.color,
+                    "photo_url": item.photo_url
+                }
+                for item in look.items
+            ]
+        })
+
+    return result
 
 
 @router.get("/feed")
@@ -253,7 +369,8 @@ async def get_friends_feed(
                     "category": item.category,
                     "brand": item.brand,
                     "product_name": item.product_name,
-                    "color": item.color
+                    "color": item.color,
+                    "photo_url": item.photo_url
                 }
                 for item in look.items
             ]
@@ -362,7 +479,8 @@ async def get_look(
                 "product_name": item.product_name,
                 "product_reference": item.product_reference,
                 "product_url": item.product_url,
-                "color": item.color
+                "color": item.color,
+                "photo_url": item.photo_url
             }
             for item in look.items
         ],
@@ -381,6 +499,7 @@ async def update_look(
     description: Optional[str] = Form(None),
     items_json: Optional[str] = Form(None),
     photos: Optional[List[UploadFile]] = File(None),
+    item_photos: Optional[List[UploadFile]] = File(None),
     delete_photo_ids_json: Optional[str] = Form(None),  # JSON array d'IDs de LookPhoto a supprimer
     existing_photos_json: Optional[str] = Form(None),  # JSON array d'IDs ordonnés pour réordonnancement
     db: Session = Depends(get_db),
@@ -484,6 +603,23 @@ async def update_look(
     if first_photo:
         look.photo_url = first_photo.photo_url
 
+    # Uploader les photos d'items si fournies
+    item_photo_urls = {}
+    if item_photos:
+        for idx, ip in enumerate(item_photos):
+            if not ip.filename:
+                continue
+            if ip.content_type not in ALLOWED_IMAGE_TYPES:
+                continue
+            ip_content = await ip.read(settings.MAX_FILE_SIZE + 1)
+            if len(ip_content) > settings.MAX_FILE_SIZE:
+                continue
+            try:
+                ip_url = await upload_photo(ip_content, ip.filename)
+                item_photo_urls[idx] = ip_url
+            except Exception:
+                pass
+
     # Mettre a jour les items si fournis
     ALLOWED_CATEGORIES = {"top", "bottom", "shoes", "accessory", "outerwear", "other"}
     if items_json is not None:
@@ -494,6 +630,11 @@ async def update_look(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Les items doivent etre une liste"
                 )
+            # Supprimer les anciennes photos d'items
+            old_items = db.query(LookItem).filter(LookItem.look_id == look_id).all()
+            for old_item in old_items:
+                if old_item.photo_url:
+                    await delete_photo(old_item.photo_url)
             db.query(LookItem).filter(LookItem.look_id == look_id).delete()
             for item_data in items:
                 if not isinstance(item_data, dict):
@@ -501,6 +642,14 @@ async def update_look(
                 category = item_data.get("category", "other")
                 if category not in ALLOWED_CATEGORIES:
                     category = "other"
+                # Determiner la photo de l'item
+                item_photo_url = None
+                photo_index = item_data.get("_photo_index")
+                if photo_index is not None and photo_index in item_photo_urls:
+                    item_photo_url = item_photo_urls[photo_index]
+                elif item_data.get("photo_url") and not item_data.get("_remove_photo"):
+                    # Garder la photo existante
+                    item_photo_url = item_data["photo_url"]
                 item = LookItem(
                     look_id=look.id,
                     category=category,
@@ -508,7 +657,8 @@ async def update_look(
                     product_name=item_data.get("product_name", "")[:200] if item_data.get("product_name") else None,
                     product_reference=item_data.get("product_reference", "")[:100] if item_data.get("product_reference") else None,
                     product_url=item_data.get("product_url", "")[:500] if item_data.get("product_url") else None,
-                    color=item_data.get("color", "")[:50] if item_data.get("color") else None
+                    color=item_data.get("color", "")[:50] if item_data.get("color") else None,
+                    photo_url=item_photo_url
                 )
                 db.add(item)
         except json.JSONDecodeError:
@@ -547,6 +697,10 @@ async def delete_look(
     # Fallback: supprimer aussi photo_url principale si pas dans look_photos
     if look.photo_url and not look_photos:
         await delete_photo(look.photo_url)
+    # Supprimer les photos d'items
+    for item in look.items:
+        if item.photo_url:
+            await delete_photo(item.photo_url)
 
     db.delete(look)
     db.commit()

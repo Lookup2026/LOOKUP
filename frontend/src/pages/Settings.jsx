@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, MapPin, Globe, ChevronRight, Shield, HelpCircle, LogOut, User, Trash2, AlertTriangle, Ban } from 'lucide-react'
+import { ChevronLeft, MapPin, Globe, ChevronRight, Shield, HelpCircle, LogOut, User, Trash2, AlertTriangle, Ban, FileText, Moon, Sun, Pencil } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { deleteAccount, getVisibility, updateVisibility, getPrivacy, updatePrivacy, getBlockedUsers, blockUser, getPhotoUrl } from '../api/client'
 import toast from 'react-hot-toast'
@@ -23,12 +23,26 @@ export default function Settings() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  // Theme
+  const [darkMode, setDarkMode] = useState(localStorage.getItem('theme') === 'dark')
+
   // Privacy settings
   const [profileVisible, setProfileVisible] = useState(true)
   const [profilePrivate, setProfilePrivate] = useState(false)
   const [showBlocked, setShowBlocked] = useState(false)
   const [blockedUsers, setBlockedUsers] = useState([])
   const [loadingBlocked, setLoadingBlocked] = useState(false)
+
+  // Apply theme on mount and change
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+      localStorage.setItem('theme', 'dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+      localStorage.setItem('theme', 'light')
+    }
+  }, [darkMode])
 
   useEffect(() => {
     loadPrivacySettings()
@@ -114,18 +128,18 @@ export default function Settings() {
   const currentLang = LANGUAGES.find(l => l.code === language)
 
   return (
-    <div className="min-h-full pb-4">
+    <div className="min-h-full pb-4 bg-lookup-cream dark:bg-[#0a0a0a] transition-colors">
       {/* Header */}
       <div className="glass-strong px-4 pb-3 rounded-b-3xl shadow-glass sticky top-0 z-20" style={{ paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
         <div className="flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
+          <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream dark:bg-neutral-800 rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-lookup-gray" />
           </button>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center">
               <MapPin size={14} className="text-white" />
             </div>
-            <span className="text-xl font-bold text-lookup-black">LOOKUP</span>
+            <span className="text-xl font-bold text-lookup-black dark:text-white">LOOKUP</span>
           </div>
           <div className="w-9"></div>
         </div>
@@ -147,8 +161,24 @@ export default function Settings() {
               <User size={18} className="text-lookup-mint" />
             </div>
             <div className="text-left">
-              <p className="font-medium text-lookup-black">Mon profil</p>
+              <p className="font-medium text-lookup-black dark:text-white">Mon profil</p>
               <p className="text-sm text-lookup-gray">{user?.username || 'Utilisateur'}</p>
+            </div>
+          </div>
+          <ChevronRight size={18} className="text-lookup-gray" />
+        </button>
+
+        <button
+          onClick={() => navigate('/edit-profile')}
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
+              <Pencil size={18} className="text-lookup-mint" />
+            </div>
+            <div className="text-left">
+              <p className="font-medium text-lookup-black dark:text-white">Modifier le profil</p>
+              <p className="text-sm text-lookup-gray">Photo, bio, nom d'utilisateur</p>
             </div>
           </div>
           <ChevronRight size={18} className="text-lookup-gray" />
@@ -167,7 +197,7 @@ export default function Settings() {
               <Globe size={18} className="text-lookup-mint" />
             </div>
             <div className="text-left">
-              <p className="font-medium text-lookup-black">Langue</p>
+              <p className="font-medium text-lookup-black dark:text-white">Langue</p>
               <p className="text-sm text-lookup-gray">{currentLang?.label}</p>
             </div>
           </div>
@@ -190,7 +220,7 @@ export default function Settings() {
               >
                 <div className="flex items-center gap-3">
                   <span className="text-lg">{lang.flag}</span>
-                  <span className={`text-sm ${language === lang.code ? 'font-semibold text-lookup-mint-dark' : 'text-lookup-black'}`}>
+                  <span className={`text-sm ${language === lang.code ? 'font-semibold text-lookup-mint-dark' : 'text-lookup-black dark:text-white'}`}>
                     {lang.label}
                   </span>
                 </div>
@@ -204,6 +234,25 @@ export default function Settings() {
           </div>
         )}
 
+        {/* Theme - Dark/Light mode */}
+        <div className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
+              {darkMode ? <Moon size={18} className="text-lookup-mint" /> : <Sun size={18} className="text-lookup-mint" />}
+            </div>
+            <div className="text-left">
+              <p className="font-medium text-lookup-black dark:text-white">Apparence</p>
+              <p className="text-sm text-lookup-gray">{darkMode ? 'Mode sombre' : 'Mode clair'}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`w-12 h-7 rounded-full transition-colors ${darkMode ? 'bg-lookup-mint' : 'bg-gray-300'}`}
+          >
+            <div className={`w-5 h-5 bg-white rounded-full shadow transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`}></div>
+          </button>
+        </div>
+
         {/* Privacy */}
         <button
           onClick={() => setShowPrivacy(!showPrivacy)}
@@ -214,7 +263,7 @@ export default function Settings() {
               <Shield size={18} className="text-lookup-mint" />
             </div>
             <div className="text-left">
-              <p className="font-medium text-lookup-black">Confidentialite</p>
+              <p className="font-medium text-lookup-black dark:text-white">Confidentialite</p>
               <p className="text-sm text-lookup-gray">Vie privee et donnees</p>
             </div>
           </div>
@@ -226,7 +275,7 @@ export default function Settings() {
           <div className="glass rounded-2xl overflow-hidden shadow-glass p-4 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-lookup-black text-sm">Profil visible</p>
+                <p className="font-medium text-lookup-black dark:text-white text-sm">Profil visible</p>
                 <p className="text-xs text-lookup-gray">Les autres peuvent voir votre look</p>
               </div>
               <button
@@ -237,10 +286,10 @@ export default function Settings() {
               </button>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-lookup-gray-light">
+            <div className="flex items-center justify-between pt-3 border-t border-lookup-gray-light dark:border-neutral-700">
               <div>
-                <p className="font-medium text-lookup-black text-sm">Profil prive</p>
-                <p className="text-xs text-lookup-gray">Seuls vos amis voient votre contenu</p>
+                <p className="font-medium text-lookup-black dark:text-white text-sm">Profil prive</p>
+                <p className="text-xs text-lookup-gray">Les autres doivent demander a vous suivre</p>
               </div>
               <button
                 onClick={() => handlePrivateChange(!profilePrivate)}
@@ -251,7 +300,7 @@ export default function Settings() {
             </div>
 
             {/* Supprimer mon compte */}
-            <div className="pt-4 border-t border-lookup-gray-light">
+            <div className="pt-4 border-t border-lookup-gray-light dark:border-neutral-700">
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="flex items-center gap-3 text-red-500"
@@ -276,7 +325,7 @@ export default function Settings() {
               <Ban size={18} className="text-red-500" />
             </div>
             <div className="text-left">
-              <p className="font-medium text-lookup-black">Utilisateurs bloques</p>
+              <p className="font-medium text-lookup-black dark:text-white">Utilisateurs bloques</p>
               <p className="text-sm text-lookup-gray">Gerer les comptes bloques</p>
             </div>
           </div>
@@ -304,7 +353,7 @@ export default function Settings() {
                           {user.username?.[0]?.toUpperCase()}
                         </div>
                       )}
-                      <span className="font-medium text-lookup-black text-sm">{user.username}</span>
+                      <span className="font-medium text-lookup-black dark:text-white text-sm">{user.username}</span>
                     </div>
                     <button
                       onClick={() => handleUnblock(user.id, user.username)}
@@ -329,7 +378,7 @@ export default function Settings() {
               <HelpCircle size={18} className="text-lookup-mint" />
             </div>
             <div className="text-left">
-              <p className="font-medium text-lookup-black">Aide</p>
+              <p className="font-medium text-lookup-black dark:text-white">Aide</p>
               <p className="text-sm text-lookup-gray">FAQ et support</p>
             </div>
           </div>
@@ -340,25 +389,53 @@ export default function Settings() {
         {showHelp && (
           <div className="glass rounded-2xl overflow-hidden shadow-glass p-4 space-y-3">
             <div>
-              <p className="font-medium text-lookup-black text-sm">Comment ca marche ?</p>
+              <p className="font-medium text-lookup-black dark:text-white text-sm">Comment ca marche ?</p>
               <p className="text-xs text-lookup-gray mt-1">
                 Publiez votre look du jour, puis deplacez-vous ! Quand vous croisez quelqu'un qui utilise aussi LOOKUP, vous pourrez voir son look pendant 24h.
               </p>
             </div>
             <div>
-              <p className="font-medium text-lookup-black text-sm">Je ne vois pas de croisements</p>
+              <p className="font-medium text-lookup-black dark:text-white text-sm">Je ne vois pas de croisements</p>
               <p className="text-xs text-lookup-gray mt-1">
                 Assurez-vous que la localisation est activee et que vous avez publie un look aujourd'hui. Les croisements sont detectes dans un rayon de 100m.
               </p>
             </div>
             <div>
-              <p className="font-medium text-lookup-black text-sm">Contact</p>
+              <p className="font-medium text-lookup-black dark:text-white text-sm">Contact</p>
               <p className="text-xs text-lookup-gray mt-1">
-                support@lookup-app.com
+                contact@lookup-app.fr
               </p>
             </div>
           </div>
         )}
+      </div>
+
+      {/* Legal */}
+      <div className="px-4 mt-4 space-y-2">
+        <button
+          onClick={() => navigate('/cgu')}
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
+              <FileText size={18} className="text-lookup-mint" />
+            </div>
+            <p className="font-medium text-lookup-black dark:text-white">Conditions d'utilisation</p>
+          </div>
+          <ChevronRight size={18} className="text-lookup-gray" />
+        </button>
+        <button
+          onClick={() => navigate('/privacy')}
+          className="w-full glass rounded-2xl p-4 flex items-center justify-between shadow-glass"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-lookup-mint-light rounded-full flex items-center justify-center">
+              <Shield size={18} className="text-lookup-mint" />
+            </div>
+            <p className="font-medium text-lookup-black dark:text-white">Politique de confidentialite</p>
+          </div>
+          <ChevronRight size={18} className="text-lookup-gray" />
+        </button>
       </div>
 
       {/* Logout section */}
@@ -385,15 +462,15 @@ export default function Settings() {
       {/* Logout confirmation modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-            <h3 className="text-lg font-bold text-lookup-black text-center">Se deconnecter ?</h3>
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="text-lg font-bold text-lookup-black dark:text-white text-center">Se deconnecter ?</h3>
             <p className="text-lookup-gray text-sm text-center mt-2">
               Vous devrez vous reconnecter pour acceder a votre compte.
             </p>
             <div className="flex gap-3 mt-6">
               <button
                 onClick={() => setShowLogoutConfirm(false)}
-                className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
+                className="flex-1 py-3 rounded-full border border-gray-200 dark:border-neutral-700 font-medium text-lookup-black dark:text-white"
               >
                 Annuler
               </button>
@@ -411,11 +488,11 @@ export default function Settings() {
       {/* Delete account confirmation modal */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-6">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-            <div className="w-14 h-14 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl p-6 w-full max-w-sm">
+            <div className="w-14 h-14 bg-red-100 dark:bg-red-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
               <AlertTriangle size={28} className="text-red-500" />
             </div>
-            <h3 className="text-lg font-bold text-lookup-black text-center">Supprimer ton compte ?</h3>
+            <h3 className="text-lg font-bold text-lookup-black dark:text-white text-center">Supprimer ton compte ?</h3>
             <p className="text-lookup-gray text-sm text-center mt-2">
               Cette action est <span className="font-semibold text-red-500">irreversible</span>. Toutes tes donnees seront supprimees :
             </p>
@@ -429,7 +506,7 @@ export default function Settings() {
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleting}
-                className="flex-1 py-3 rounded-full border border-gray-200 font-medium text-lookup-black"
+                className="flex-1 py-3 rounded-full border border-gray-200 dark:border-neutral-700 font-medium text-lookup-black dark:text-white"
               >
                 Annuler
               </button>

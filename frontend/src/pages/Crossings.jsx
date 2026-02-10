@@ -38,7 +38,7 @@ export default function Crossings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-lookup-mint border-t-transparent rounded-full animate-spin"></div>
       </div>
     )
@@ -48,30 +48,30 @@ export default function Crossings() {
     <div className="min-h-full pb-24">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <Link to="/settings" className="w-8 h-8 bg-lookup-cream rounded-full flex items-center justify-center">
+        <Link to="/settings" className="w-8 h-8 bg-lookup-cream dark:bg-neutral-800 rounded-full flex items-center justify-center">
           <Settings size={18} className="text-lookup-gray" />
         </Link>
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 bg-gradient-to-br from-lookup-mint to-lookup-mint-dark rounded-full flex items-center justify-center">
             <MapPin size={12} className="text-white" />
           </div>
-          <span className="text-lg font-bold text-lookup-black">LOOKUP</span>
+          <span className="text-lg font-bold text-lookup-black dark:text-white">LOOKUP</span>
         </div>
         <div className="w-8"></div>
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl font-bold text-lookup-black px-4 mt-4 mb-6">
+      <h1 className="text-2xl font-bold text-lookup-black dark:text-white px-4 mt-4 mb-6">
         Looks croises aujourd'hui
       </h1>
 
       {crossings.length === 0 ? (
         <div className="px-4">
-          <div className="bg-lookup-mint-light rounded-3xl p-8 text-center">
-            <div className="w-20 h-20 bg-lookup-mint/20 rounded-full mx-auto mb-4 flex items-center justify-center">
+          <div className="bg-lookup-mint-light dark:bg-neutral-800 rounded-3xl p-8 text-center">
+            <div className="w-20 h-20 bg-lookup-mint/20 dark:bg-lookup-mint/10 rounded-full mx-auto mb-4 flex items-center justify-center">
               <MapPin size={32} className="text-lookup-mint" />
             </div>
-            <h3 className="text-lg font-semibold text-lookup-black mb-2">
+            <h3 className="text-lg font-semibold text-lookup-black dark:text-white mb-2">
               Aucun croisement
             </h3>
             <p className="text-lookup-gray text-sm mb-6">
@@ -103,7 +103,7 @@ export default function Crossings() {
                   </div>
                 )}
                 <div className="p-3">
-                  <p className="font-semibold text-lookup-black">
+                  <p className="font-semibold text-lookup-black dark:text-white">
                     {crossing.other_username}
                   </p>
                   <div className="flex items-center gap-1 text-lookup-gray text-xs mt-1">
@@ -118,22 +118,22 @@ export default function Crossings() {
           {/* Stats section */}
           {crossings.length > 0 && (
             <div className="px-4 mt-6">
-              <div className="bg-lookup-cream rounded-2xl p-4">
+              <div className="bg-lookup-cream dark:bg-neutral-800 rounded-2xl p-4">
                 <div className="flex justify-around">
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Eye size={18} className="text-lookup-mint" />
-                      <span className="text-xl font-bold text-lookup-black">
+                      <span className="text-xl font-bold text-lookup-black dark:text-white">
                         {crossings.length}
                       </span>
                     </div>
                     <p className="text-xs text-lookup-gray">looks croises</p>
                   </div>
-                  <div className="w-px bg-lookup-gray-light"></div>
+                  <div className="w-px bg-lookup-gray-light dark:bg-neutral-700"></div>
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-1">
                       <Heart size={18} className="text-lookup-mint" />
-                      <span className="text-xl font-bold text-lookup-black">
+                      <span className="text-xl font-bold text-lookup-black dark:text-white">
                         {crossings.reduce((sum, c) => sum + (c.likes_count || 0), 0)}
                       </span>
                     </div>
@@ -147,7 +147,7 @@ export default function Crossings() {
           {/* More crossings list */}
           {crossings.length > 4 && (
             <div className="px-4 mt-6">
-              <h2 className="font-semibold text-lookup-black mb-3">
+              <h2 className="font-semibold text-lookup-black dark:text-white mb-3">
                 Autres croisements
               </h2>
               <div className="space-y-2">
@@ -155,7 +155,7 @@ export default function Crossings() {
                   <Link
                     key={crossing.id}
                     to={`/crossings/${crossing.id}`}
-                    className="flex items-center justify-between bg-lookup-cream rounded-xl p-3"
+                    className="flex items-center justify-between bg-lookup-cream dark:bg-neutral-800 rounded-xl p-3"
                   >
                     <div className="flex items-center gap-3">
                       {crossing.other_look_photo_url ? (
@@ -165,12 +165,12 @@ export default function Crossings() {
                           className="w-12 h-12 rounded-lg object-cover"
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-lg bg-lookup-mint-light flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-lg bg-lookup-mint-light dark:bg-neutral-700 flex items-center justify-center">
                           <MapPin size={20} className="text-lookup-mint" />
                         </div>
                       )}
                       <div>
-                        <p className="font-medium text-lookup-black">
+                        <p className="font-medium text-lookup-black dark:text-white">
                           {crossing.other_username}
                         </p>
                         <p className="text-xs text-lookup-gray">

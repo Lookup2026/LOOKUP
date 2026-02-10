@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Date, UniqueConstraint, Index
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text, Date, UniqueConstraint, Index, Float
 from sqlalchemy.orm import relationship
 from datetime import datetime, date
 from app.core.database import Base
@@ -17,6 +17,12 @@ class Look(Base):
     photo_url = Column(String, nullable=False)
     look_date = Column(Date, default=date.today, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Localisation du look
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    city = Column(String, nullable=True)
+    country = Column(String, nullable=True)
 
     # Compteurs (anonymes)
     likes_count = Column(Integer, default=0)
@@ -59,6 +65,7 @@ class LookItem(Base):
     product_reference = Column(String, nullable=True)  # Reference produit
     product_url = Column(String, nullable=True)  # Lien vers le produit
     color = Column(String, nullable=True)
+    photo_url = Column(String, nullable=True)  # Photo individuelle de la piece
 
     # Relations
     look = relationship("Look", back_populates="items")

@@ -2,6 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
+from datetime import datetime, timedelta
+from pydantic import BaseModel
+from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
@@ -236,3 +239,83 @@ async def delete_account(
     db.commit()
 
     return {"success": True, "message": "Ton compte et toutes tes donnees ont ete supprimes definitivement."}
+
+
+class ProfileUpdate(BaseModel):
+    username: Optional[str] = None
+    bio: Optional[str] = None
+
+
+@router.put("/profile", response_model=UserResponse)
+async def update_profile(
+    data: ProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Mettre a jour le profil utilisateur.
+    Le username ne peut etre change qu'une fois tous les 15 jours.
+    """
+
+    # Mise a jour du username
+    if data.username and data.username != current_user.username:
+        # Verifier la restriction de 15 jours
+        if current_user.username_changed_at:
+            days_since_change = (datetime.utcnow() - current_user.username_changed_at).days
+            if days_since_change < 15:
+                days_remaining = 15 - days_since_change
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Tu pourras changer ton nom d'utilisateur dans {days_remaining} jour{'s' if days_remaining > 1 else ''}"
+                )
+
+        # Verifier si le nouveau username est disponible
+        existing = db.query(User).filter(User.username == data.username).first()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ce nom d'utilisateur est deja pris"
+            )
+
+        # Valider le format du username (3-20 caracteres, alphanumerique + underscore)
+        import re
+        if not re.match(r'^[a-zA-Z0-9_]{3,20}$', data.username):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Le nom doit contenir 3-20 caracteres (lettres, chiffres, underscore)"
+            )
+
+        current_user.username = data.username
+        current_user.username_changed_at = datetime.utcnow()
+
+    # Mise a jour de la bio
+    if data.bio is not None:
+        # Limiter la bio a 150 caracteres
+        if len(data.bio) > 150:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La bio ne peut pas depasser 150 caracteres"
+            )
+        current_user.bio = data.bio
+
+    db.commit()
+    db.refresh(current_user)
+
+    return current_user
+
+
+@router.get("/profile/can-change-username")
+async def can_change_username(current_user: User = Depends(get_current_user)):
+    """Verifie si l'utilisateur peut changer son username"""
+    if not current_user.username_changed_at:
+        return {"can_change": True, "days_remaining": 0}
+
+    days_since_change = (datetime.utcnow() - current_user.username_changed_at).days
+    can_change = days_since_change >= 15
+    days_remaining = max(0, 15 - days_since_change)
+
+    return {
+        "can_change": can_change,
+        "days_remaining": days_remaining,
+        "last_changed": current_user.username_changed_at.isoformat() if current_user.username_changed_at else None
+    }

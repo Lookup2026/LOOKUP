@@ -27,20 +27,19 @@ export default function Privacy() {
         <h1 className="text-2xl font-bold text-lookup-black mb-6">Politique de Confidentialite</h1>
 
         <div className="space-y-6 text-sm text-lookup-gray">
-          <p className="text-xs text-lookup-gray">Derniere mise a jour : Fevrier 2025</p>
+          <p className="text-xs text-lookup-gray">Derniere mise a jour : Fevrier 2026</p>
 
           <section>
             <h2 className="text-base font-semibold text-lookup-black mb-2">1. Introduction</h2>
             <p>
-              La presente politique de confidentialite explique comment LOOKUP, editee par Gabriel Azoulay,
-              collecte, utilise et protege vos donnees personnelles conformement au Reglement General sur
-              la Protection des Donnees (RGPD).
+              La presente politique de confidentialite explique comment LOOKUP collecte, utilise et protege
+              vos donnees personnelles conformement au Reglement General sur la Protection des Donnees (RGPD).
             </p>
             <p className="mt-2">
-              Responsable du traitement : Gabriel Azoulay
+              Responsable du traitement : LOOKUP
             </p>
             <p>
-              Contact : look79987@gmail.com
+              Contact : contact@lookup-app.fr
             </p>
           </section>
 
@@ -141,7 +140,7 @@ export default function Privacy() {
               <li><strong>Retrait du consentement</strong> : a tout moment pour la localisation</li>
             </ul>
             <p className="mt-2">
-              Pour exercer ces droits, contactez-nous a : look79987@gmail.com
+              Pour exercer ces droits, contactez-nous a : contact@lookup-app.fr
             </p>
           </section>
 
@@ -191,7 +190,7 @@ export default function Privacy() {
 
           <section className="pt-4 border-t border-lookup-gray-light">
             <p className="text-xs">
-              Pour toute question concernant cette politique, contactez-nous a : look79987@gmail.com
+              Pour toute question concernant cette politique, contactez-nous a : contact@lookup-app.fr
             </p>
           </section>
         </div>

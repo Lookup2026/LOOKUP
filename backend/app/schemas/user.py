@@ -45,6 +45,7 @@ class UserResponse(UserBase):
     created_at: datetime
     referral_code: Optional[str] = None
     referral_count: int = 0
+    username_changed_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

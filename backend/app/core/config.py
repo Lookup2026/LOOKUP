@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # JWT - OBLIGATOIRE en production
     SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 jours
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 heures
 
     @property
     def is_production(self) -> bool:
@@ -48,8 +48,8 @@ class Settings(BaseSettings):
     SUPABASE_BUCKET: str = "looks"
 
     # Geolocation
-    CROSSING_RADIUS_METERS: float = 50.0  # Rayon pour detecter un croisement
-    CROSSING_TIME_WINDOW_MINUTES: int = 10  # Fenetre de temps pour un croisement
+    CROSSING_RADIUS_METERS: float = 200.0  # Rayon pour detecter un croisement
+    CROSSING_TIME_WINDOW_MINUTES: int = 5  # Fenetre de temps pour un croisement
 
     # CORS - Frontend URLs autorisees
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,https://lookup-gamma.vercel.app,capacitor://localhost,http://localhost"

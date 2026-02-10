@@ -1,6 +1,7 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -9,6 +10,23 @@ import os
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.endpoints import auth, looks, crossings, users, photos, notifications
+
+
+# Security Headers Middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        if settings.is_production:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
+
+
+# Admin key for debug endpoints
+ADMIN_KEY = os.getenv("ADMIN_KEY", "dev-admin-key-change-in-production")
 
 # Rate limiter
 limiter = Limiter(key_func=get_remote_address)
@@ -20,6 +38,18 @@ except Exception as e:
     import logging
     logging.getLogger(__name__).warning(f"create_all warning (tables may already exist): {e}")
 
+# Migration: ajouter photo_url aux look_items si manquante
+try:
+    from sqlalchemy import text, inspect
+    _inspector = inspect(engine)
+    if "look_items" in _inspector.get_table_names():
+        _cols = [c["name"] for c in _inspector.get_columns("look_items")]
+        if "photo_url" not in _cols:
+            with engine.begin() as _conn:
+                _conn.execute(text("ALTER TABLE look_items ADD COLUMN photo_url VARCHAR"))
+except Exception:
+    pass
+
 # Creer l'app
 app = FastAPI(
     title=settings.APP_NAME,
@@ -30,6 +60,9 @@ app = FastAPI(
 # Rate limiting
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Security headers middleware
+app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS pour le frontend
 if not settings.CORS_ORIGINS:
@@ -68,8 +101,19 @@ async def root():
 async def health():
     return {"status": "ok"}
 
+def verify_admin_key(request: Request):
+    """Vérifie la clé admin dans le header X-Admin-Key"""
+    admin_key = request.headers.get("X-Admin-Key")
+    if admin_key != ADMIN_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return True
+
+
 @app.get("/migrate")
-async def run_migration():
+async def run_migration(request: Request, _: bool = Depends(verify_admin_key)):
     """Lancer la migration de la base de donnees (colonnes/tables/contraintes manquantes)"""
     from sqlalchemy import text, inspect
     results = []
@@ -77,6 +121,15 @@ async def run_migration():
     existing_tables = inspector.get_table_names()
 
     with engine.begin() as conn:
+        # Colonnes manquantes sur look_items
+        look_item_cols = [c["name"] for c in inspector.get_columns("look_items")] if "look_items" in existing_tables else []
+        if "photo_url" not in look_item_cols and "look_items" in existing_tables:
+            try:
+                conn.execute(text("ALTER TABLE look_items ADD COLUMN photo_url VARCHAR"))
+                results.append("Added column photo_url to look_items")
+            except Exception as e:
+                results.append(f"Column photo_url on look_items: {e}")
+
         # Colonnes manquantes sur users
         user_cols = [c["name"] for c in inspector.get_columns("users")] if "users" in existing_tables else []
         for col, sql in [
@@ -138,7 +191,7 @@ async def run_migration():
     return {"migration": results}
 
 @app.get("/cleanup-crossings")
-async def cleanup_crossings():
+async def cleanup_crossings(request: Request, _: bool = Depends(verify_admin_key)):
     """Nettoyer les doublons de croisements et reset les look_ids"""
     from sqlalchemy import text
     with engine.begin() as conn:
@@ -165,7 +218,7 @@ async def cleanup_crossings():
     }
 
 @app.get("/debug-crossings")
-async def debug_crossings():
+async def debug_crossings(request: Request, _: bool = Depends(verify_admin_key)):
     """Debug: voir les croisements recents, pings et looks"""
     from sqlalchemy import text
     from datetime import datetime, timedelta

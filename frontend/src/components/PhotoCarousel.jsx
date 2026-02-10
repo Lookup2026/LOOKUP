@@ -27,16 +27,16 @@ export default function PhotoCarousel({
         alt={alt}
         className={imgClassName || className}
         loading="lazy"
+        onError={(e) => {
+          e.target.style.display = 'none'
+          e.target.parentElement?.classList.add('bg-lookup-mint-light')
+        }}
       />
     )
   }
 
   return (
-    <div
-      className="swiper-container-isolated"
-      onTouchStart={(e) => e.stopPropagation()}
-      onTouchMove={(e) => e.stopPropagation()}
-    >
+    <div>
       <Swiper
         modules={[Pagination]}
         pagination={{
@@ -47,11 +47,9 @@ export default function PhotoCarousel({
         spaceBetween={0}
         slidesPerView={1}
         className={`photo-carousel photo-carousel-${carouselId} ${className}`}
-        nested={true}
-        touchEventsTarget="container"
-        preventInteractionOnTransition={true}
-        simulateTouch={true}
-        allowTouchMove={true}
+        threshold={20}
+        touchAngle={30}
+        speed={300}
         onSlideChange={(swiper) => {
           if (onSlideChange) onSlideChange(swiper.activeIndex)
         }}
@@ -63,6 +61,10 @@ export default function PhotoCarousel({
               alt={`${alt} ${index + 1}`}
               className={imgClassName || 'w-full h-full object-cover'}
               loading={index === 0 ? 'eager' : 'lazy'}
+              onError={(e) => {
+                e.target.style.opacity = '0'
+                e.target.parentElement?.classList.add('bg-lookup-mint-light')
+              }}
             />
           </SwiperSlide>
         ))}
@@ -80,10 +82,6 @@ export default function PhotoCarousel({
             opacity: 1;
             width: 20px;
             border-radius: 4px;
-          }
-          .swiper-container-isolated {
-            touch-action: pan-x;
-            isolation: isolate;
           }
         `}</style>
       </Swiper>

@@ -7,6 +7,8 @@ const API_URL = import.meta.env.VITE_API_URL || ''
 // Helper pour construire l'URL complete des photos
 export const getPhotoUrl = (path) => {
   if (!path) return null
+  // URLs externes (http/https) : retourner directement
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
   // Extraire le nom du fichier (gere les URLs Supabase completes et les simples noms de fichiers)
   let filename = path.split('/').pop()
   filename = filename.split('?')[0]
@@ -31,14 +33,24 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Intercepteur pour gerer les erreurs
+// Intercepteur pour gerer les erreurs (notamment token expire)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Token expire ou invalide
       localStorage.removeItem('token')
+
       const path = window.location.pathname
-      if (path !== '/login' && path !== '/register' && path !== '/') {
+      const publicPaths = ['/login', '/register', '/welcome', '/cgu', '/privacy']
+
+      if (!publicPaths.includes(path)) {
+        // Afficher un message avant de rediriger
+        console.log('Session expiree, redirection vers login...')
+
+        // Stocker un flag pour afficher un toast apres redirection
+        sessionStorage.setItem('session_expired', 'true')
+
         window.location.href = '/login'
       }
     }
@@ -56,6 +68,8 @@ export const uploadAvatar = (formData) =>
   })
 export const deleteAccount = () => api.delete('/auth/account')
 export const logout = () => api.post('/auth/logout')
+export const updateProfile = (data) => api.put('/auth/profile', data)
+export const canChangeUsername = () => api.get('/auth/profile/can-change-username')
 
 // Looks
 export const createLook = (formData) =>
@@ -103,6 +117,12 @@ export const updateVisibility = (visible) => api.put('/users/me/visibility', nul
 export const getPrivacy = () => api.get('/users/me/privacy')
 export const updatePrivacy = (is_private) => api.put('/users/me/privacy', null, { params: { is_private } })
 
+// Follow requests
+export const getFollowRequests = () => api.get('/users/follow-requests')
+export const getFollowRequestsCount = () => api.get('/users/follow-requests/count')
+export const acceptFollowRequest = (id) => api.post(`/users/follow-requests/${id}/accept`)
+export const rejectFollowRequest = (id) => api.post(`/users/follow-requests/${id}/reject`)
+
 // Notifications
 export const getNotifications = (skip = 0, limit = 30) => api.get('/notifications/', { params: { skip, limit } })
 export const getUnreadCount = () => api.get('/notifications/unread-count')
@@ -110,5 +130,16 @@ export const markAllRead = () => api.put('/notifications/read-all')
 
 // Feed
 export const getFriendsFeed = () => api.get('/looks/feed')
+
+// Discover
+export const discoverLooks = (params = {}) => {
+  const { q, period = 'week', skip = 0, limit = 20 } = params
+  const searchParams = new URLSearchParams()
+  if (q) searchParams.append('q', q)
+  searchParams.append('period', period)
+  searchParams.append('skip', skip)
+  searchParams.append('limit', limit)
+  return api.get(`/looks/discover?${searchParams.toString()}`)
+}
 
 export default api

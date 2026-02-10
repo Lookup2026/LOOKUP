@@ -59,7 +59,7 @@ export default memo(function FeedCard({
         {isCrossing ? (
           <>
             {/* Username en haut à gauche */}
-            <div className={`absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${showOverlay ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/50 ${showOverlay ? 'opacity-100' : 'opacity-0'}`}>
               {item.other_avatar_url ? (
                 <img src={getPhotoUrl(item.other_avatar_url)} alt="" className="w-5 h-5 rounded-full object-cover" />
               ) : (
@@ -70,7 +70,7 @@ export default memo(function FeedCard({
               <span className="text-white text-sm font-medium">{item.other_username}</span>
             </div>
             {/* Gradient infos */}
-            <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 transition-opacity duration-300 ${showOverlay ? 'opacity-100' : 'opacity-0'}`}>
+            <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 ${showOverlay ? 'opacity-100' : 'opacity-0'}`}>
               <p className="text-white font-semibold text-lg">{item.other_look_title || 'Look du jour'}</p>
               <div className="flex items-center gap-4 mt-1">
                 <div className="flex items-center gap-1 text-white/90 text-sm">
@@ -86,7 +86,7 @@ export default memo(function FeedCard({
           </>
         ) : (
           /* Look overlay */
-          <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 transition-opacity duration-300 ${showOverlay ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/60 to-transparent p-4 ${showOverlay ? 'opacity-100' : 'opacity-0'}`}>
             <div className="flex items-center gap-2">
               {item.user?.avatar_url && (
                 <img

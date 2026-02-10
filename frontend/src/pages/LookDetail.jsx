@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Heart, Eye, Bookmark, Tag, ExternalLink, Clock, MoreVertical, Share2, Flag, Ban, X, Camera } from 'lucide-react'
+import { ChevronLeft, Heart, Eye, Bookmark, Tag, ExternalLink, Clock, MoreVertical, Share2, Flag, Ban, X, Camera, MapPin } from 'lucide-react'
 import { getLook, likeLook, saveLook, getPhotoUrl, followUser, isFollowing, reportContent, blockUser } from '../api/client'
 import PhotoCarousel from '../components/PhotoCarousel'
 import toast from 'react-hot-toast'
@@ -21,6 +21,8 @@ export default function LookDetail() {
   const [stats, setStats] = useState({ likes_count: 0, views_count: 0, user_liked: false, user_saved: false })
   const [liking, setLiking] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [likeAnimating, setLikeAnimating] = useState(false)
+  const [saveAnimating, setSaveAnimating] = useState(false)
   const [following, setFollowing] = useState(false)
   const [followLoading, setFollowLoading] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -77,6 +79,8 @@ export default function LookDetail() {
   const handleLike = async () => {
     if (liking) return
     setLiking(true)
+    setLikeAnimating(true)
+    setTimeout(() => setLikeAnimating(false), 400)
     try {
       const { data: likeData } = await likeLook(id)
       setStats(prev => ({
@@ -97,6 +101,8 @@ export default function LookDetail() {
   const handleSave = async () => {
     if (saving) return
     setSaving(true)
+    setSaveAnimating(true)
+    setTimeout(() => setSaveAnimating(false), 300)
     try {
       const { data: saveData } = await saveLook(id)
       setStats(prev => ({
@@ -215,7 +221,7 @@ export default function LookDetail() {
   return (
     <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="glass-strong px-4 pb-3 rounded-b-3xl shadow-glass sticky top-0 z-20" style={{ paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
+      <div className="glass-strong px-4 pb-3 rounded-b-3xl shadow-glass sticky top-0 z-20" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
         <div className="flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="w-9 h-9 bg-lookup-cream rounded-full flex items-center justify-center">
             <ChevronLeft size={20} className="text-lookup-gray" />
@@ -339,6 +345,15 @@ export default function LookDetail() {
               })}
             </span>
           </div>
+          {/* Location */}
+          {(data.city || data.country) && (
+            <div className="flex items-center gap-1 text-lookup-mint text-sm mt-2">
+              <MapPin size={14} />
+              <span>
+                {data.city}{data.country && data.city ? ', ' : ''}{data.country}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -352,7 +367,7 @@ export default function LookDetail() {
               stats.user_liked
                 ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
-            }`}
+            } ${likeAnimating ? 'animate-like-bounce' : ''}`}
           >
             <Heart size={20} fill={stats.user_liked ? 'currentColor' : 'none'} />
             <span className="font-semibold">{stats.likes_count}</span>
@@ -364,7 +379,7 @@ export default function LookDetail() {
               stats.user_saved
                 ? 'bg-lookup-mint text-white'
                 : 'bg-white text-lookup-black border border-gray-100'
-            }`}
+            } ${saveAnimating ? 'animate-save-pop' : ''}`}
           >
             <Bookmark size={20} fill={stats.user_saved ? 'currentColor' : 'none'} />
             <span className="font-medium">Sauvegarder</span>
@@ -388,29 +403,38 @@ export default function LookDetail() {
         {data.items?.length > 0 ? (
           <div className="space-y-2">
             {data.items.map((item, index) => (
-              <div key={index} className="bg-white rounded-2xl p-4 shadow-sm">
+              <div key={index} className="bg-white rounded-2xl p-4 shadow-sm animate-card-enter" style={{ animationDelay: `${index * 80}ms` }}>
                 <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <span className="inline-block text-xs text-white bg-lookup-mint px-3 py-1 rounded-full font-medium">
-                      {CATEGORY_LABELS[item.category] || item.category}
-                    </span>
-                    {item.brand && (
-                      <p className="text-lookup-black font-semibold text-lg mt-2">{item.brand}</p>
+                  <div className="flex items-start gap-3 flex-1">
+                    {item.photo_url && (
+                      <img
+                        src={getPhotoUrl(item.photo_url)}
+                        alt={item.brand || item.category}
+                        className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
+                      />
                     )}
-                    {item.product_name && (
-                      <p className="text-lookup-gray">{item.product_name}</p>
-                    )}
-                    <div className="mt-2 space-y-1">
-                      {item.color && (
-                        <p className="text-lookup-gray text-sm">
-                          <span className="text-lookup-black">Couleur:</span> {item.color}
-                        </p>
+                    <div className="flex-1">
+                      <span className="inline-block text-xs text-white bg-lookup-mint px-3 py-1 rounded-full font-medium">
+                        {CATEGORY_LABELS[item.category] || item.category}
+                      </span>
+                      {item.brand && (
+                        <p className="text-lookup-black font-semibold text-lg mt-2">{item.brand}</p>
                       )}
-                      {item.product_reference && (
-                        <p className="text-lookup-gray text-sm">
-                          <span className="text-lookup-black">Ref:</span> {item.product_reference}
-                        </p>
+                      {item.product_name && (
+                        <p className="text-lookup-gray">{item.product_name}</p>
                       )}
+                      <div className="mt-2 space-y-1">
+                        {item.color && (
+                          <p className="text-lookup-gray text-sm">
+                            <span className="text-lookup-black">Couleur:</span> {item.color}
+                          </p>
+                        )}
+                        {item.product_reference && (
+                          <p className="text-lookup-gray text-sm">
+                            <span className="text-lookup-black">Ref:</span> {item.product_reference}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {item.product_url && (

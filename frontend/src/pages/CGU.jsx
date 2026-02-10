@@ -27,19 +27,16 @@ export default function CGU() {
         <h1 className="text-2xl font-bold text-lookup-black mb-6">Conditions Generales d'Utilisation</h1>
 
         <div className="space-y-6 text-sm text-lookup-gray">
-          <p className="text-xs text-lookup-gray">Derniere mise a jour : Fevrier 2025</p>
+          <p className="text-xs text-lookup-gray">Derniere mise a jour : Fevrier 2026</p>
 
           <section>
             <h2 className="text-base font-semibold text-lookup-black mb-2">1. Presentation</h2>
             <p>
-              LOOKUP est une application mobile permettant de partager ses looks vestimentaires et de decouvrir
-              ceux des personnes croisees dans la rue grace a la geolocalisation.
+              LOOKUP est une application mobile editee par la societe LOOKUP, permettant de partager ses looks
+              vestimentaires et de decouvrir ceux des personnes croisees dans la rue grace a la geolocalisation.
             </p>
             <p className="mt-2">
-              L'application est editee par Gabriel Azoulay, ci-apres "l'Editeur".
-            </p>
-            <p className="mt-2">
-              Contact : look79987@gmail.com
+              Contact : contact@lookup-app.fr
             </p>
           </section>
 
@@ -139,7 +136,7 @@ export default function CGU() {
 
           <section className="pt-4 border-t border-lookup-gray-light">
             <p className="text-xs">
-              Pour toute question concernant ces conditions, contactez-nous a : look79987@gmail.com
+              Pour toute question concernant ces conditions, contactez-nous a : contact@lookup-app.fr
             </p>
           </section>
         </div>

@@ -1,9 +1,9 @@
 // Composants Skeleton pour les etats de chargement
 
-// Skeleton de base avec animation pulse
+// Skeleton de base avec shimmer effect
 export function Skeleton({ className = '' }) {
   return (
-    <div className={`bg-gray-200 animate-pulse rounded ${className}`} />
+    <div className={`animate-shimmer rounded ${className}`} />
   )
 }
 

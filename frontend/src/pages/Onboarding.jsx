@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Camera, Users, Sparkles, ChevronRight, ArrowRight } from 'lucide-react'
+import { MapPin, Camera, Users, Sparkles, ChevronRight, ArrowRight, Navigation } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
+import { useLocationStore } from '../stores/locationStore'
 
 const STEPS = [
   {
@@ -17,6 +18,13 @@ const STEPS = [
     color: 'bg-purple-400',
   },
   {
+    icon: Navigation,
+    title: 'Active ta localisation',
+    description: 'Pour detecter les croisements, LOOKUP a besoin de ta position. Tes donnees restent privees et ne sont jamais partagees.',
+    color: 'bg-blue-500',
+    isLocationStep: true,
+  },
+  {
     icon: Sparkles,
     title: 'Retrouve ce style',
     description: 'Tu as croise une veste qui t\'a plu ? Ouvre l\'app plus tard et decouvre le look complet de cette personne !',
@@ -27,15 +35,19 @@ const STEPS = [
 export default function Onboarding() {
   const navigate = useNavigate()
   const { user } = useAuthStore()
+  const { startBackgroundTracking } = useLocationStore()
   const [currentStep, setCurrentStep] = useState(0)
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // Si on est sur l'etape localisation, declencher la permission GPS
+    if (STEPS[currentStep].isLocationStep) {
+      await startBackgroundTracking()
+    }
+
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1)
     } else {
-      // Marquer l'onboarding comme termine
       localStorage.setItem('onboarding_done', 'true')
-      // Aller publier le premier look
       navigate('/add-look')
     }
   }
@@ -122,6 +134,11 @@ export default function Onboarding() {
             <>
               <Camera size={20} />
               <span>Publier mon premier look</span>
+            </>
+          ) : STEPS[currentStep].isLocationStep ? (
+            <>
+              <Navigation size={20} />
+              <span>Activer la localisation</span>
             </>
           ) : (
             <>

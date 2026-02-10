@@ -19,10 +19,13 @@ import Crossings from './pages/Crossings'
 import Notifications from './pages/Notifications'
 import CGU from './pages/CGU'
 import Privacy from './pages/Privacy'
+import EditProfile from './pages/EditProfile'
+import Discover from './pages/Discover'
 
 // Components
 import Layout from './components/Layout'
 import LoadingScreen from './components/LoadingScreen'
+import OfflineBanner from './components/OfflineBanner'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuthStore()
@@ -78,6 +81,7 @@ function App() {
 
   return (
     <BrowserRouter>
+      <OfflineBanner />
       <Toaster
         position="top-center"
         toastOptions={{
@@ -86,13 +90,18 @@ function App() {
             color: '#fff',
             borderRadius: '100px',
             padding: '12px 24px',
+            animation: 'toast-enter 0.3s ease-out',
           },
+          duration: 2500,
           success: {
             iconTheme: {
               primary: '#2D2D2D',
               secondary: '#fff',
             },
           },
+        }}
+        containerStyle={{
+          top: 'calc(env(safe-area-inset-top, 0px) + 12px)',
         }}
       />
       <Routes>
@@ -130,10 +139,12 @@ function App() {
           <Route path="add-look" element={<AddLook />} />
           <Route path="edit-look/:id" element={<AddLook />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path="discover" element={<Discover />} />
           <Route path="crossings" element={<Crossings />} />
           <Route path="crossings/:id" element={<CrossingDetail />} />
           <Route path="look/:id" element={<LookDetail />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="edit-profile" element={<EditProfile />} />
           <Route path="search" element={<Search />} />
           <Route path="settings" element={<Settings />} />
         </Route>

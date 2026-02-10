@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { MapPin } from 'lucide-react'
@@ -10,6 +10,14 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Afficher un message si session expiree
+  useEffect(() => {
+    if (sessionStorage.getItem('session_expired')) {
+      sessionStorage.removeItem('session_expired')
+      toast.error('Ta session a expire, reconnecte-toi')
+    }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

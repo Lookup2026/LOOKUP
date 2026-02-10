@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, Search as SearchIcon, UserPlus, UserCheck } from 'lucide-react'
+import { ChevronLeft, Search as SearchIcon, UserPlus, UserCheck, Clock, Lock } from 'lucide-react'
 import { searchUsers, followUser, getPhotoUrl } from '../api/client'
 import toast from 'react-hot-toast'
 
@@ -10,7 +10,7 @@ export default function Search() {
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
-  const [followingMap, setFollowingMap] = useState({})
+  const [followStatusMap, setFollowStatusMap] = useState({}) // null, "pending", "accepted"
 
   const handleSearch = async (q) => {
     setQuery(q)
@@ -24,12 +24,12 @@ export default function Search() {
     try {
       const { data } = await searchUsers(q)
       setResults(data || [])
-      // Initialiser le map de suivi
+      // Initialiser le map de statut
       const map = {}
       data?.forEach(user => {
-        map[user.id] = user.is_following
+        map[user.id] = user.follow_status // null, "pending", ou "accepted"
       })
-      setFollowingMap(map)
+      setFollowStatusMap(map)
       setSearched(true)
     } catch (error) {
       console.error('Erreur recherche:', error)
@@ -39,20 +39,66 @@ export default function Search() {
     }
   }
 
-  const handleFollow = async (userId, username) => {
+  const handleFollow = async (userId, username, isPrivate) => {
     try {
       const { data } = await followUser(userId)
-      setFollowingMap(prev => ({ ...prev, [userId]: data.following }))
-      toast.success(data.following ? `Tu suis ${username}` : `Tu ne suis plus ${username}`)
+      setFollowStatusMap(prev => ({ ...prev, [userId]: data.status }))
+
+      if (data.status === 'pending') {
+        toast.success(`Demande envoyée à ${username}`)
+      } else if (data.status === 'accepted') {
+        toast.success(`Tu suis ${username}`)
+      } else {
+        toast.success(`Tu ne suis plus ${username}`)
+      }
     } catch (error) {
       toast.error('Erreur')
     }
   }
 
+  const getFollowButton = (user) => {
+    const status = followStatusMap[user.id]
+
+    if (status === 'accepted') {
+      return (
+        <button
+          onClick={() => handleFollow(user.id, user.username, user.is_private)}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition active:scale-95 bg-lookup-cream text-lookup-gray border border-gray-200"
+        >
+          <UserCheck size={14} />
+          <span>Suivi</span>
+        </button>
+      )
+    }
+
+    if (status === 'pending') {
+      return (
+        <button
+          onClick={() => handleFollow(user.id, user.username, user.is_private)}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition active:scale-95 bg-amber-100 text-amber-700 border border-amber-200"
+        >
+          <Clock size={14} />
+          <span>En attente</span>
+        </button>
+      )
+    }
+
+    // Not following
+    return (
+      <button
+        onClick={() => handleFollow(user.id, user.username, user.is_private)}
+        className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition active:scale-95 bg-lookup-mint text-white"
+      >
+        <UserPlus size={14} />
+        <span>{user.is_private ? 'Demander' : 'Suivre'}</span>
+      </button>
+    )
+  }
+
   return (
     <div className="min-h-full pb-4">
       {/* Header */}
-      <div className="glass-strong px-4 pt-4 pb-3 rounded-b-3xl shadow-glass">
+      <div className="glass-strong px-4 pb-3 rounded-b-3xl shadow-glass sticky top-0 z-20" style={{ paddingTop: 'max(16px, env(safe-area-inset-top, 16px))' }}>
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
@@ -99,7 +145,7 @@ export default function Search() {
             {results.map((user) => (
               <div
                 key={user.id}
-                className="glass rounded-2xl p-4 shadow-glass flex items-center gap-3"
+                className="glass rounded-2xl p-4 shadow-glass flex items-center gap-3 dark:bg-neutral-800"
               >
                 {user.avatar_url ? (
                   <img
@@ -113,28 +159,14 @@ export default function Search() {
                   </div>
                 )}
                 <div className="flex-1">
-                  <p className="font-semibold text-lookup-black">{user.username}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-semibold text-lookup-black dark:text-white">{user.username}</p>
+                    {user.is_private && (
+                      <Lock size={12} className="text-lookup-gray" />
+                    )}
+                  </div>
                 </div>
-                <button
-                  onClick={() => handleFollow(user.id, user.username)}
-                  className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition active:scale-95 ${
-                    followingMap[user.id]
-                      ? 'bg-lookup-cream text-lookup-gray border border-gray-200'
-                      : 'bg-lookup-mint text-white'
-                  }`}
-                >
-                  {followingMap[user.id] ? (
-                    <>
-                      <UserCheck size={14} />
-                      <span>Suivi</span>
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus size={14} />
-                      <span>Suivre</span>
-                    </>
-                  )}
-                </button>
+                {getFollowButton(user)}
               </div>
             ))}
           </div>

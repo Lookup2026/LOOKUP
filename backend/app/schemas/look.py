@@ -12,6 +12,7 @@ class LookItemBase(BaseModel):
     product_reference: Optional[str] = None
     product_url: Optional[str] = None
     color: Optional[str] = None
+    photo_url: Optional[str] = None
 
 class LookItemCreate(LookItemBase):
     pass
@@ -29,6 +30,10 @@ class LookBase(BaseModel):
 
 class LookCreate(LookBase):
     items: List[LookItemCreate] = []
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
 
 class LookUpdate(BaseModel):
     title: Optional[str] = None
@@ -44,6 +49,10 @@ class LookResponse(LookBase):
     items: List[LookItemResponse] = []
     likes_count: int = 0
     views_count: int = 0
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
 
     class Config:
         from_attributes = True
