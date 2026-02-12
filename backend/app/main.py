@@ -139,6 +139,10 @@ async def run_migration(request: Request, _: bool = Depends(verify_admin_key)):
             ("referral_count", "ALTER TABLE users ADD COLUMN referral_count INTEGER DEFAULT 0"),
             ("bio", "ALTER TABLE users ADD COLUMN bio VARCHAR"),
             ("username_changed_at", "ALTER TABLE users ADD COLUMN username_changed_at TIMESTAMP"),
+            ("avatar_url", "ALTER TABLE users ADD COLUMN avatar_url VARCHAR"),
+            ("is_visible", "ALTER TABLE users ADD COLUMN is_visible BOOLEAN DEFAULT TRUE"),
+            ("is_verified", "ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE"),
+            ("updated_at", "ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT NOW()"),
         ]:
             if col not in user_cols:
                 try:
