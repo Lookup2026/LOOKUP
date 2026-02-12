@@ -137,6 +137,8 @@ async def run_migration(request: Request, _: bool = Depends(verify_admin_key)):
             ("referral_code", "ALTER TABLE users ADD COLUMN referral_code VARCHAR UNIQUE"),
             ("referred_by_id", "ALTER TABLE users ADD COLUMN referred_by_id INTEGER REFERENCES users(id)"),
             ("referral_count", "ALTER TABLE users ADD COLUMN referral_count INTEGER DEFAULT 0"),
+            ("bio", "ALTER TABLE users ADD COLUMN bio VARCHAR"),
+            ("username_changed_at", "ALTER TABLE users ADD COLUMN username_changed_at TIMESTAMP"),
         ]:
             if col not in user_cols:
                 try:
@@ -144,6 +146,15 @@ async def run_migration(request: Request, _: bool = Depends(verify_admin_key)):
                     results.append(f"Added column {col}")
                 except Exception as e:
                     results.append(f"Column {col}: {e}")
+
+        # Colonnes manquantes sur follows
+        follow_cols = [c["name"] for c in inspector.get_columns("follows")] if "follows" in existing_tables else []
+        if "status" not in follow_cols and "follows" in existing_tables:
+            try:
+                conn.execute(text("ALTER TABLE follows ADD COLUMN status VARCHAR DEFAULT 'accepted'"))
+                results.append("Added column status to follows")
+            except Exception as e:
+                results.append(f"Column status on follows: {e}")
 
         # Creer tables manquantes
         Base.metadata.create_all(bind=engine)
