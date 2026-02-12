@@ -117,91 +117,77 @@ async def run_migration(request: Request, _: bool = Depends(verify_admin_key)):
     """Lancer la migration de la base de donnees (colonnes/tables/contraintes manquantes)"""
     from sqlalchemy import text, inspect
     results = []
+
+    def run_sql(description, sql):
+        """Execute une requete SQL dans sa propre transaction"""
+        try:
+            with engine.begin() as conn:
+                conn.execute(text(sql))
+            results.append(f"OK: {description}")
+        except Exception as e:
+            if "already exists" in str(e) or "duplicate" in str(e).lower():
+                results.append(f"SKIP: {description} (already exists)")
+            else:
+                results.append(f"ERROR: {description}: {e}")
+
     inspector = inspect(engine)
     existing_tables = inspector.get_table_names()
 
-    with engine.begin() as conn:
-        # Colonnes manquantes sur look_items
-        look_item_cols = [c["name"] for c in inspector.get_columns("look_items")] if "look_items" in existing_tables else []
-        if "photo_url" not in look_item_cols and "look_items" in existing_tables:
-            try:
-                conn.execute(text("ALTER TABLE look_items ADD COLUMN photo_url VARCHAR"))
-                results.append("Added column photo_url to look_items")
-            except Exception as e:
-                results.append(f"Column photo_url on look_items: {e}")
+    # Colonnes manquantes sur look_items
+    look_item_cols = [c["name"] for c in inspector.get_columns("look_items")] if "look_items" in existing_tables else []
+    if "photo_url" not in look_item_cols and "look_items" in existing_tables:
+        run_sql("look_items.photo_url", "ALTER TABLE look_items ADD COLUMN photo_url VARCHAR")
 
-        # Colonnes manquantes sur users
-        user_cols = [c["name"] for c in inspector.get_columns("users")] if "users" in existing_tables else []
-        for col, sql in [
-            ("is_private", "ALTER TABLE users ADD COLUMN is_private BOOLEAN DEFAULT FALSE"),
-            ("referral_code", "ALTER TABLE users ADD COLUMN referral_code VARCHAR UNIQUE"),
-            ("referred_by_id", "ALTER TABLE users ADD COLUMN referred_by_id INTEGER REFERENCES users(id)"),
-            ("referral_count", "ALTER TABLE users ADD COLUMN referral_count INTEGER DEFAULT 0"),
-            ("bio", "ALTER TABLE users ADD COLUMN bio VARCHAR"),
-            ("username_changed_at", "ALTER TABLE users ADD COLUMN username_changed_at TIMESTAMP"),
-            ("avatar_url", "ALTER TABLE users ADD COLUMN avatar_url VARCHAR"),
-            ("is_visible", "ALTER TABLE users ADD COLUMN is_visible BOOLEAN DEFAULT TRUE"),
-            ("is_verified", "ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE"),
-            ("updated_at", "ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT NOW()"),
-        ]:
-            if col not in user_cols:
-                try:
-                    conn.execute(text(sql))
-                    results.append(f"Added column {col}")
-                except Exception as e:
-                    results.append(f"Column {col}: {e}")
+    # Colonnes manquantes sur users
+    user_cols = [c["name"] for c in inspector.get_columns("users")] if "users" in existing_tables else []
+    for col, sql in [
+        ("is_private", "ALTER TABLE users ADD COLUMN is_private BOOLEAN DEFAULT FALSE"),
+        ("referral_code", "ALTER TABLE users ADD COLUMN referral_code VARCHAR UNIQUE"),
+        ("referred_by_id", "ALTER TABLE users ADD COLUMN referred_by_id INTEGER REFERENCES users(id)"),
+        ("referral_count", "ALTER TABLE users ADD COLUMN referral_count INTEGER DEFAULT 0"),
+        ("bio", "ALTER TABLE users ADD COLUMN bio VARCHAR"),
+        ("username_changed_at", "ALTER TABLE users ADD COLUMN username_changed_at TIMESTAMP"),
+        ("avatar_url", "ALTER TABLE users ADD COLUMN avatar_url VARCHAR"),
+        ("is_visible", "ALTER TABLE users ADD COLUMN is_visible BOOLEAN DEFAULT TRUE"),
+        ("is_verified", "ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE"),
+        ("updated_at", "ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT NOW()"),
+    ]:
+        if col not in user_cols:
+            run_sql(f"users.{col}", sql)
 
-        # Colonnes manquantes sur follows
-        follow_cols = [c["name"] for c in inspector.get_columns("follows")] if "follows" in existing_tables else []
-        if "status" not in follow_cols and "follows" in existing_tables:
-            try:
-                conn.execute(text("ALTER TABLE follows ADD COLUMN status VARCHAR DEFAULT 'accepted'"))
-                results.append("Added column status to follows")
-            except Exception as e:
-                results.append(f"Column status on follows: {e}")
+    # Colonnes manquantes sur follows
+    follow_cols = [c["name"] for c in inspector.get_columns("follows")] if "follows" in existing_tables else []
+    if "status" not in follow_cols and "follows" in existing_tables:
+        run_sql("follows.status", "ALTER TABLE follows ADD COLUMN status VARCHAR DEFAULT 'accepted'")
 
-        # Creer tables manquantes
+    # Creer tables manquantes
+    try:
         Base.metadata.create_all(bind=engine)
-        results.append("create_all done")
+        results.append("OK: create_all done")
+    except Exception as e:
+        results.append(f"ERROR: create_all: {e}")
 
-        # Contraintes uniques
-        for name, table, columns in [
-            ("uq_look_like", "look_likes", "look_id, user_id"),
-            ("uq_look_view", "look_views", "look_id, user_id"),
-            ("uq_saved_look", "saved_looks", "look_id, user_id"),
-            ("uq_follow", "follows", "follower_id, followed_id"),
-            ("uq_block", "blocked_users", "blocker_id, blocked_id"),
-            ("uq_crossing_like", "crossing_likes", "crossing_id, user_id"),
-            ("uq_saved_crossing", "saved_crossings", "crossing_id, user_id"),
-        ]:
-            try:
-                conn.execute(text(f"ALTER TABLE {table} ADD CONSTRAINT {name} UNIQUE ({columns})"))
-                results.append(f"Added {name}")
-            except Exception as e:
-                results.append(f"{name}: already exists or {e}")
+    # Contraintes uniques
+    for name, table, columns in [
+        ("uq_look_like", "look_likes", "look_id, user_id"),
+        ("uq_look_view", "look_views", "look_id, user_id"),
+        ("uq_saved_look", "saved_looks", "look_id, user_id"),
+        ("uq_follow", "follows", "follower_id, followed_id"),
+        ("uq_block", "blocked_users", "blocker_id, blocked_id"),
+        ("uq_crossing_like", "crossing_likes", "crossing_id, user_id"),
+        ("uq_saved_crossing", "saved_crossings", "crossing_id, user_id"),
+    ]:
+        run_sql(name, f"ALTER TABLE {table} ADD CONSTRAINT {name} UNIQUE ({columns})")
 
-        # Notifications table index
-        for name, table, columns in [
-            ("ix_notifications_user_read_created", "notifications", "user_id, is_read, created_at"),
-        ]:
-            try:
-                conn.execute(text(f"CREATE INDEX IF NOT EXISTS {name} ON {table} ({columns})"))
-                results.append(f"Index {name} OK")
-            except Exception as e:
-                results.append(f"Index {name}: {e}")
-
-        # Indexes
-        for name, table, columns in [
-            ("ix_looks_user_date", "looks", "user_id, look_date"),
-            ("ix_looks_created_at", "looks", "created_at"),
-            ("ix_crossings_users", "crossings", "user1_id, user2_id"),
-            ("ix_crossings_crossed_at", "crossings", "crossed_at"),
-        ]:
-            try:
-                conn.execute(text(f"CREATE INDEX IF NOT EXISTS {name} ON {table} ({columns})"))
-                results.append(f"Index {name} OK")
-            except Exception as e:
-                results.append(f"Index {name}: {e}")
+    # Indexes
+    for name, table, columns in [
+        ("ix_notifications_user_read_created", "notifications", "user_id, is_read, created_at"),
+        ("ix_looks_user_date", "looks", "user_id, look_date"),
+        ("ix_looks_created_at", "looks", "created_at"),
+        ("ix_crossings_users", "crossings", "user1_id, user2_id"),
+        ("ix_crossings_crossed_at", "crossings", "crossed_at"),
+    ]:
+        run_sql(f"Index {name}", f"CREATE INDEX IF NOT EXISTS {name} ON {table} ({columns})")
 
     return {"migration": results}
 
