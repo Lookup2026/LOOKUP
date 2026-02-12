@@ -155,6 +155,34 @@ async def run_migration(request: Request, _: bool = Depends(verify_admin_key)):
         if col not in user_cols:
             run_sql(f"users.{col}", sql)
 
+    # Colonnes manquantes sur looks
+    look_cols = [c["name"] for c in inspector.get_columns("looks")] if "looks" in existing_tables else []
+    for col, sql in [
+        ("latitude", "ALTER TABLE looks ADD COLUMN latitude FLOAT"),
+        ("longitude", "ALTER TABLE looks ADD COLUMN longitude FLOAT"),
+        ("city", "ALTER TABLE looks ADD COLUMN city VARCHAR"),
+        ("country", "ALTER TABLE looks ADD COLUMN country VARCHAR"),
+        ("likes_count", "ALTER TABLE looks ADD COLUMN likes_count INTEGER DEFAULT 0"),
+        ("views_count", "ALTER TABLE looks ADD COLUMN views_count INTEGER DEFAULT 0"),
+        ("look_date", "ALTER TABLE looks ADD COLUMN look_date DATE DEFAULT CURRENT_DATE"),
+    ]:
+        if col not in look_cols:
+            run_sql(f"looks.{col}", sql)
+
+    # Colonnes manquantes sur crossings
+    crossing_cols = [c["name"] for c in inspector.get_columns("crossings")] if "crossings" in existing_tables else []
+    for col, sql in [
+        ("latitude", "ALTER TABLE crossings ADD COLUMN latitude FLOAT"),
+        ("longitude", "ALTER TABLE crossings ADD COLUMN longitude FLOAT"),
+        ("location_name", "ALTER TABLE crossings ADD COLUMN location_name VARCHAR"),
+        ("user1_viewed", "ALTER TABLE crossings ADD COLUMN user1_viewed TIMESTAMP"),
+        ("user2_viewed", "ALTER TABLE crossings ADD COLUMN user2_viewed TIMESTAMP"),
+        ("likes_count", "ALTER TABLE crossings ADD COLUMN likes_count INTEGER DEFAULT 0"),
+        ("views_count", "ALTER TABLE crossings ADD COLUMN views_count INTEGER DEFAULT 0"),
+    ]:
+        if col not in crossing_cols:
+            run_sql(f"crossings.{col}", sql)
+
     # Colonnes manquantes sur follows
     follow_cols = [c["name"] for c in inspector.get_columns("follows")] if "follows" in existing_tables else []
     if "status" not in follow_cols and "follows" in existing_tables:
