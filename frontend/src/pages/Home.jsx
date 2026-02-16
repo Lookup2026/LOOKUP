@@ -8,27 +8,103 @@ import toast from 'react-hot-toast'
 import PullToRefresh from 'react-simple-pull-to-refresh'
 import { HomeSkeleton } from '../components/Skeleton'
 
-// ===== MOCK DATA — A SUPPRIMER =====
-const DEMO_MODE = true
+// ===== DEMO MODE — Pour screenshots App Store =====
+const DEMO_MODE = false
 
 const MOCK_LOOKS = [
-  { id: 101, title: 'Casual Friday', photo_url: 'https://picsum.photos/seed/look1/400/500', photo_urls: ['https://picsum.photos/seed/look1/400/500', 'https://picsum.photos/seed/look1b/400/500'], views_count: 24, likes_count: 8, created_at: new Date().toISOString() },
-  { id: 102, title: 'Streetwear vibes', photo_url: 'https://picsum.photos/seed/look2/400/500', photo_urls: ['https://picsum.photos/seed/look2/400/500'], views_count: 12, likes_count: 3, created_at: new Date(Date.now() - 3600000).toISOString() },
+  {
+    id: 101, title: 'Casual Friday',
+    photo_url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400&h=500&fit=crop'],
+    views_count: 47, likes_count: 18, created_at: new Date().toISOString(),
+    items: [{ category: 'top', brand: 'Carhartt WIP' }, { category: 'bottom', brand: "Levi's" }, { category: 'shoes', brand: 'Nike' }]
+  },
+  {
+    id: 102, title: 'Soiree Oberkampf',
+    photo_url: 'https://images.unsplash.com/photo-1521577352947-9bb58764b69a?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1521577352947-9bb58764b69a?w=400&h=500&fit=crop'],
+    views_count: 31, likes_count: 12, created_at: new Date(Date.now() - 3600000).toISOString(),
+    items: [{ category: 'outerwear', brand: 'Acne Studios' }, { category: 'bottom', brand: 'Diesel' }]
+  },
+  {
+    id: 103, title: 'Weekend vibes',
+    photo_url: 'https://images.unsplash.com/photo-1506634572416-48cdfe530110?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1506634572416-48cdfe530110?w=400&h=500&fit=crop'],
+    views_count: 19, likes_count: 7, created_at: new Date(Date.now() - 7200000).toISOString(),
+    items: [{ category: 'outerwear', brand: 'Stone Island' }, { category: 'shoes', brand: 'New Balance' }]
+  },
 ]
 
 const MOCK_CROSSINGS = [
-  { id: 201, other_username: 'marie_style', other_avatar_url: null, other_look_title: 'Total black', other_look_photo_url: 'https://picsum.photos/seed/cross1/400/500', other_look_photo_urls: ['https://picsum.photos/seed/cross1/400/500', 'https://picsum.photos/seed/cross1b/400/500'], crossed_at: new Date(Date.now() - 300000).toISOString(), location_name: 'Rue de Rivoli', views_count: 5, likes_count: 2 },
-  { id: 202, other_username: 'alex.drip', other_avatar_url: null, other_look_title: 'Vintage 90s', other_look_photo_url: 'https://picsum.photos/seed/cross2/400/500', other_look_photo_urls: ['https://picsum.photos/seed/cross2/400/500', 'https://picsum.photos/seed/cross2b/400/500', 'https://picsum.photos/seed/cross2c/400/500'], crossed_at: new Date(Date.now() - 1800000).toISOString(), location_name: 'Champs-Elysees', views_count: 18, likes_count: 7 },
-  { id: 203, other_username: 'lucas.fit', other_avatar_url: null, other_look_title: 'Sport chic', other_look_photo_url: 'https://picsum.photos/seed/cross3/400/500', other_look_photo_urls: ['https://picsum.photos/seed/cross3/400/500'], crossed_at: new Date(Date.now() - 7200000).toISOString(), location_name: 'Le Marais', views_count: 9, likes_count: 4 },
-  { id: 204, other_username: 'sofia.mode', other_avatar_url: null, other_look_title: 'Boheme chic', other_look_photo_url: 'https://picsum.photos/seed/cross4/400/500', other_look_photo_urls: ['https://picsum.photos/seed/cross4/400/500', 'https://picsum.photos/seed/cross4b/400/500'], crossed_at: new Date(Date.now() - 10800000).toISOString(), location_name: 'Saint-Germain', views_count: 32, likes_count: 15 },
+  {
+    id: 201, other_username: 'user.marie',
+    other_avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face',
+    other_look_title: 'Total black',
+    other_look_photo_url: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=500&fit=crop',
+    other_look_photo_urls: ['https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=500&fit=crop'],
+    crossed_at: new Date(Date.now() - 300000).toISOString(), location_name: 'Rue de Rivoli',
+    views_count: 23, likes_count: 9,
+    other_look_items: [{ category: 'outerwear', brand: 'The Kooples', color: 'Noir' }, { category: 'shoes', brand: 'Dr Martens', color: 'Noir' }]
+  },
+  {
+    id: 202, other_username: 'user.lucas',
+    other_avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face',
+    other_look_title: 'Vintage 90s',
+    other_look_photo_url: 'https://images.unsplash.com/photo-1516826957135-700dedea698c?w=400&h=500&fit=crop',
+    other_look_photo_urls: ['https://images.unsplash.com/photo-1516826957135-700dedea698c?w=400&h=500&fit=crop'],
+    crossed_at: new Date(Date.now() - 1800000).toISOString(), location_name: 'Champs-Elysees',
+    views_count: 41, likes_count: 17,
+    other_look_items: [{ category: 'top', brand: 'Stussy', color: 'Blanc' }, { category: 'bottom', brand: "Levi's 501", color: 'Bleu' }]
+  },
+  {
+    id: 203, other_username: 'user.sofia',
+    other_avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face',
+    other_look_title: 'Boheme chic',
+    other_look_photo_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=500&fit=crop',
+    other_look_photo_urls: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=500&fit=crop'],
+    crossed_at: new Date(Date.now() - 7200000).toISOString(), location_name: 'Le Marais',
+    views_count: 56, likes_count: 24,
+    other_look_items: [{ category: 'outerwear', brand: 'Sezane', color: 'Beige' }, { category: 'accessory', brand: 'Polene', color: 'Camel' }]
+  },
+  {
+    id: 204, other_username: 'user.alex',
+    other_avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face',
+    other_look_title: 'Sport luxe',
+    other_look_photo_url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&h=500&fit=crop',
+    other_look_photo_urls: ['https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&h=500&fit=crop'],
+    crossed_at: new Date(Date.now() - 10800000).toISOString(), location_name: 'Bastille',
+    views_count: 38, likes_count: 15,
+    other_look_items: [{ category: 'outerwear', brand: 'Stone Island', color: 'Noir' }, { category: 'shoes', brand: 'Nike Air Max', color: 'Blanc' }]
+  },
 ]
 
 const MOCK_FRIENDS = [
-  { id: 301, title: 'Look du soir', photo_url: 'https://picsum.photos/seed/friend1/400/500', photo_urls: ['https://picsum.photos/seed/friend1/400/500', 'https://picsum.photos/seed/friend1b/400/500'], user: { username: 'emma.fashion', avatar_url: null }, views_count: 45, likes_count: 12, created_at: new Date(Date.now() - 600000).toISOString() },
-  { id: 302, title: 'Oversize mood', photo_url: 'https://picsum.photos/seed/friend2/400/500', photo_urls: ['https://picsum.photos/seed/friend2/400/500'], user: { username: 'theo.style', avatar_url: null }, views_count: 21, likes_count: 6, created_at: new Date(Date.now() - 5400000).toISOString() },
-  { id: 303, title: 'Minimaliste', photo_url: 'https://picsum.photos/seed/friend3/400/500', photo_urls: ['https://picsum.photos/seed/friend3/400/500', 'https://picsum.photos/seed/friend3b/400/500'], user: { username: 'chloe.looks', avatar_url: null }, views_count: 67, likes_count: 28, created_at: new Date(Date.now() - 14400000).toISOString() },
+  {
+    id: 301, title: 'Look du soir',
+    photo_url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=500&fit=crop'],
+    user: { username: 'user.emma', avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face' },
+    views_count: 62, likes_count: 28, created_at: new Date(Date.now() - 600000).toISOString(),
+    items: [{ category: 'top', brand: 'Zara' }, { category: 'bottom', brand: 'Mango' }]
+  },
+  {
+    id: 302, title: 'Oversize mood',
+    photo_url: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400&h=500&fit=crop'],
+    user: { username: 'user.theo', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' },
+    views_count: 35, likes_count: 14, created_at: new Date(Date.now() - 5400000).toISOString(),
+    items: [{ category: 'outerwear', brand: 'Balenciaga' }, { category: 'shoes', brand: 'New Balance' }]
+  },
+  {
+    id: 303, title: 'Minimaliste',
+    photo_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=500&fit=crop'],
+    user: { username: 'user.chloe', avatar_url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=100&fit=crop&crop=face' },
+    views_count: 89, likes_count: 41, created_at: new Date(Date.now() - 14400000).toISOString(),
+    items: [{ category: 'top', brand: 'COS' }, { category: 'bottom', brand: 'Uniqlo' }]
+  },
 ]
-// ===== FIN MOCK DATA =====
+// ===== FIN DEMO MODE =====
 
 export default function Home() {
   const navigate = useNavigate()

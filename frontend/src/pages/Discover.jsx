@@ -4,17 +4,66 @@ import { MapPin, Search, Heart, Eye, Compass, Filter } from 'lucide-react'
 import { discoverLooks, getPhotoUrl, likeLook } from '../api/client'
 import toast from 'react-hot-toast'
 
-// Mock data pour le mode demo
-const MOCK_DISCOVER = [
-  { id: 401, title: 'Circoloco Paris 2026', photo_url: 'https://picsum.photos/seed/disco1/400/500', photo_urls: ['https://picsum.photos/seed/disco1/400/500'], user: { username: 'techno.queen', avatar_url: null }, views_count: 234, likes_count: 89, created_at: new Date(Date.now() - 86400000).toISOString(), items: [{ category: 'top', brand: 'Diesel', color: 'Noir' }, { category: 'bottom', brand: 'Acne Studios', color: 'Noir' }] },
-  { id: 402, title: 'Festival look', photo_url: 'https://picsum.photos/seed/disco2/400/500', photo_urls: ['https://picsum.photos/seed/disco2/400/500', 'https://picsum.photos/seed/disco2b/400/500'], user: { username: 'rave.style', avatar_url: null }, views_count: 156, likes_count: 67, created_at: new Date(Date.now() - 172800000).toISOString(), items: [{ category: 'outerwear', brand: 'Stone Island', color: 'Kaki' }] },
-  { id: 403, title: 'Berghain vibes', photo_url: 'https://picsum.photos/seed/disco3/400/500', photo_urls: ['https://picsum.photos/seed/disco3/400/500'], user: { username: 'berlin.nights', avatar_url: null }, views_count: 312, likes_count: 145, created_at: new Date(Date.now() - 259200000).toISOString(), items: [{ category: 'top', brand: 'Rick Owens', color: 'Noir' }, { category: 'shoes', brand: 'New Rock', color: 'Noir' }] },
-  { id: 404, title: 'Warehouse party', photo_url: 'https://picsum.photos/seed/disco4/400/500', photo_urls: ['https://picsum.photos/seed/disco4/400/500', 'https://picsum.photos/seed/disco4b/400/500'], user: { username: 'underground.fit', avatar_url: null }, views_count: 98, likes_count: 34, created_at: new Date(Date.now() - 345600000).toISOString(), items: [] },
-  { id: 405, title: 'Street casual', photo_url: 'https://picsum.photos/seed/disco5/400/500', photo_urls: ['https://picsum.photos/seed/disco5/400/500'], user: { username: 'daily.drip', avatar_url: null }, views_count: 189, likes_count: 78, created_at: new Date(Date.now() - 432000000).toISOString(), items: [{ category: 'shoes', brand: 'Nike', color: 'Blanc' }] },
-  { id: 406, title: 'Minimalist fit', photo_url: 'https://picsum.photos/seed/disco6/400/500', photo_urls: ['https://picsum.photos/seed/disco6/400/500'], user: { username: 'less.is.more', avatar_url: null }, views_count: 267, likes_count: 112, created_at: new Date(Date.now() - 518400000).toISOString(), items: [{ category: 'top', brand: 'COS', color: 'Beige' }] },
-]
+// ===== DEMO MODE — Pour screenshots App Store =====
+const DEMO_MODE = false
 
-const DEMO_MODE = true
+const MOCK_DISCOVER = [
+  {
+    id: 401, title: 'All black everything',
+    photo_url: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=500&fit=crop'],
+    user: { username: 'user.marie', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face' },
+    views_count: 312, likes_count: 145,
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    items: [{ category: 'outerwear', brand: 'The Kooples', color: 'Noir' }, { category: 'shoes', brand: 'Dr Martens', color: 'Noir' }]
+  },
+  {
+    id: 402, title: 'Streetwear Paris',
+    photo_url: 'https://images.unsplash.com/photo-1516826957135-700dedea698c?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1516826957135-700dedea698c?w=400&h=500&fit=crop'],
+    user: { username: 'user.lucas', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face' },
+    views_count: 234, likes_count: 98,
+    created_at: new Date(Date.now() - 172800000).toISOString(),
+    items: [{ category: 'top', brand: 'Stussy', color: 'Blanc' }, { category: 'shoes', brand: 'Nike Dunk', color: 'Blanc' }]
+  },
+  {
+    id: 403, title: 'Boheme chic',
+    photo_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=500&fit=crop'],
+    user: { username: 'user.sofia', avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face' },
+    views_count: 289, likes_count: 134,
+    created_at: new Date(Date.now() - 259200000).toISOString(),
+    items: [{ category: 'outerwear', brand: 'Sezane', color: 'Beige' }, { category: 'accessory', brand: 'Polene', color: 'Camel' }]
+  },
+  {
+    id: 404, title: 'Casual Friday',
+    photo_url: 'https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400&h=500&fit=crop'],
+    user: { username: 'user.theo', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' },
+    views_count: 178, likes_count: 67,
+    created_at: new Date(Date.now() - 345600000).toISOString(),
+    items: [{ category: 'outerwear', brand: 'Carhartt WIP', color: 'Kaki' }, { category: 'bottom', brand: "Levi's", color: 'Bleu' }]
+  },
+  {
+    id: 405, title: 'Minimaliste',
+    photo_url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=500&fit=crop'],
+    user: { username: 'user.chloe', avatar_url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=100&fit=crop&crop=face' },
+    views_count: 267, likes_count: 112,
+    created_at: new Date(Date.now() - 432000000).toISOString(),
+    items: [{ category: 'top', brand: 'COS', color: 'Blanc' }, { category: 'bottom', brand: 'Uniqlo', color: 'Noir' }]
+  },
+  {
+    id: 406, title: 'Sport luxe',
+    photo_url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&h=500&fit=crop',
+    photo_urls: ['https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&h=500&fit=crop'],
+    user: { username: 'user.alex', avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face' },
+    views_count: 198, likes_count: 87,
+    created_at: new Date(Date.now() - 518400000).toISOString(),
+    items: [{ category: 'outerwear', brand: 'Stone Island', color: 'Noir' }, { category: 'shoes', brand: 'Nike Air Max', color: 'Blanc' }]
+  },
+]
+// ===== FIN DEMO MODE =====
 
 export default function Discover() {
   const navigate = useNavigate()

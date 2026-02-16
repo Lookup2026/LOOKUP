@@ -19,6 +19,7 @@ import Crossings from './pages/Crossings'
 import Notifications from './pages/Notifications'
 import CGU from './pages/CGU'
 import Privacy from './pages/Privacy'
+import Support from './pages/Support'
 import EditProfile from './pages/EditProfile'
 import Discover from './pages/Discover'
 
@@ -124,6 +125,7 @@ function App() {
         <Route path="/join/:code" element={<JoinRedirect />} />
         <Route path="/cgu" element={<CGU />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/support" element={<Support />} />
 
         {/* Protected routes */}
         <Route

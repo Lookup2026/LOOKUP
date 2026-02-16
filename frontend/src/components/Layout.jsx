@@ -14,7 +14,13 @@ export default function Layout() {
   const location = useLocation()
   const prevUnreadRef = useRef(0)
 
+  const DEMO_MODE = false
+
   const fetchUnread = useCallback(async () => {
+    if (DEMO_MODE) {
+      setUnread(3)
+      return
+    }
     try {
       const res = await getUnreadCount()
       const newCount = res.data.count
@@ -40,9 +46,9 @@ export default function Layout() {
     }
   }, [fetchUnread])
 
-  // Demarrer le tracking en arriere-plan
+  // Demarrer le tracking en arriere-plan (pas en demo)
   useEffect(() => {
-    if (!isTracking) {
+    if (!DEMO_MODE && !isTracking) {
       startBackgroundTracking()
     }
   }, [])

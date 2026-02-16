@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel
 from typing import Optional
 import logging
+import secrets
 
 logger = logging.getLogger(__name__)
 from slowapi import Limiter
@@ -110,6 +111,170 @@ async def login(request: Request, credentials: UserLogin, db: Session = Depends(
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
     return response
+
+class AppleAuthRequest(BaseModel):
+    identity_token: str
+    user: Optional[str] = None  # Apple user ID (sub claim)
+    email: Optional[str] = None  # Provided only on first sign-in
+    full_name: Optional[str] = None  # Provided only on first sign-in
+
+
+async def verify_apple_token(identity_token: str) -> dict:
+    """Verify Apple identity token using Apple's public keys (JWKS)"""
+    import httpx
+    from jose import jwt as jose_jwt, jwk, JWTError
+
+    # Fetch Apple's public keys
+    async with httpx.AsyncClient() as client:
+        resp = await client.get("https://appleid.apple.com/auth/keys")
+        apple_keys = resp.json()
+
+    # Decode the token header to find the key ID
+    headers = jose_jwt.get_unverified_headers(identity_token)
+    kid = headers.get("kid")
+
+    # Find the matching key
+    apple_key = None
+    for key in apple_keys["keys"]:
+        if key["kid"] == kid:
+            apple_key = key
+            break
+
+    if not apple_key:
+        raise HTTPException(status_code=401, detail="Cle Apple introuvable")
+
+    # Verify and decode the token
+    try:
+        payload = jose_jwt.decode(
+            identity_token,
+            apple_key,
+            algorithms=["RS256"],
+            audience="com.lookup.app",
+            issuer="https://appleid.apple.com",
+        )
+        return payload
+    except JWTError as e:
+        logger.error(f"Apple token verification failed: {e}")
+        raise HTTPException(status_code=401, detail="Token Apple invalide")
+
+
+@router.post("/apple")
+@limiter.limit("10/minute")
+async def apple_sign_in(request: Request, data: AppleAuthRequest, db: Session = Depends(get_db)):
+    """Sign in with Apple — creates account if first time, logs in otherwise"""
+
+    # Verify the Apple identity token
+    payload = await verify_apple_token(data.identity_token)
+    apple_sub = payload.get("sub")
+
+    if not apple_sub:
+        raise HTTPException(status_code=401, detail="Token Apple invalide (sub manquant)")
+
+    # Check if user already exists with this Apple ID
+    user = db.query(User).filter(User.apple_id == apple_sub).first()
+
+    if user:
+        # Existing user — log in
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Compte desactive")
+
+        access_token = create_access_token(data={"sub": str(user.id)})
+        response = JSONResponse(content={
+            "access_token": access_token,
+            "token_type": "bearer",
+            "is_new_user": False
+        })
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=settings.is_production,
+            samesite="lax",
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+        return response
+
+    # New user — create account
+    # Apple may provide email (can be private relay)
+    email = data.email or payload.get("email")
+    if not email:
+        raise HTTPException(
+            status_code=400,
+            detail="Email requis pour creer un compte"
+        )
+
+    # Check if email already exists (user has email account, link it)
+    existing_user = db.query(User).filter(User.email == email).first()
+    if existing_user:
+        # Link Apple ID to existing account
+        existing_user.apple_id = apple_sub
+        db.commit()
+        db.refresh(existing_user)
+
+        access_token = create_access_token(data={"sub": str(existing_user.id)})
+        response = JSONResponse(content={
+            "access_token": access_token,
+            "token_type": "bearer",
+            "is_new_user": False
+        })
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=settings.is_production,
+            samesite="lax",
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        )
+        return response
+
+    # Generate unique username from name or email
+    base_username = (data.full_name or email.split("@")[0]).lower().replace(" ", "_")
+    # Keep only valid chars
+    import re
+    base_username = re.sub(r'[^a-zA-Z0-9_]', '', base_username)[:15]
+    if len(base_username) < 3:
+        base_username = "user"
+
+    username = base_username
+    counter = 1
+    while db.query(User).filter(User.username == username).first():
+        username = f"{base_username}{counter}"
+        counter += 1
+
+    # Generate referral code
+    new_referral_code = generate_referral_code()
+    while db.query(User).filter(User.referral_code == new_referral_code).first():
+        new_referral_code = generate_referral_code()
+
+    # Create the user (no password needed for Apple Sign In)
+    user = User(
+        email=email,
+        username=username,
+        full_name=data.full_name,
+        hashed_password=None,
+        apple_id=apple_sub,
+        referral_code=new_referral_code,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    access_token = create_access_token(data={"sub": str(user.id)})
+    response = JSONResponse(content={
+        "access_token": access_token,
+        "token_type": "bearer",
+        "is_new_user": True
+    })
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=settings.is_production,
+        samesite="lax",
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    )
+    return response
+
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):

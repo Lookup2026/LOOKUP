@@ -42,7 +42,7 @@ api.interceptors.response.use(
       localStorage.removeItem('token')
 
       const path = window.location.pathname
-      const publicPaths = ['/login', '/register', '/welcome', '/cgu', '/privacy']
+      const publicPaths = ['/login', '/register', '/welcome', '/cgu', '/privacy', '/support']
 
       if (!publicPaths.includes(path)) {
         // Afficher un message avant de rediriger
@@ -68,6 +68,7 @@ export const uploadAvatar = (formData) =>
   })
 export const deleteAccount = () => api.delete('/auth/account')
 export const logout = () => api.post('/auth/logout')
+export const appleSignIn = (data) => api.post('/auth/apple', data)
 export const updateProfile = (data) => api.put('/auth/profile', data)
 export const canChangeUsername = () => api.get('/auth/profile/can-change-username')
 

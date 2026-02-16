@@ -4,6 +4,45 @@ import { getNotifications, markAllRead, getPhotoUrl, getFollowRequests, acceptFo
 import { ArrowLeft, UserPlus, Heart, Clock, Check, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+// ===== DEMO MODE — Pour screenshots App Store =====
+const DEMO_MODE = false
+
+const MOCK_FOLLOW_REQUESTS = [
+  {
+    id: 901, username: 'user.lea',
+    avatar_url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=100&h=100&fit=crop&crop=face',
+    requested_at: new Date(Date.now() - 1800000).toISOString()
+  },
+]
+
+const MOCK_NOTIFICATIONS = [
+  {
+    id: 801, type: 'like', is_read: false, created_at: new Date(Date.now() - 300000).toISOString(), look_id: 101,
+    actor: { id: 10, username: 'user.marie', avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=face' }
+  },
+  {
+    id: 802, type: 'follow', is_read: false, created_at: new Date(Date.now() - 900000).toISOString(),
+    actor: { id: 11, username: 'user.lucas', avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&crop=face' }
+  },
+  {
+    id: 803, type: 'like', is_read: true, created_at: new Date(Date.now() - 3600000).toISOString(), look_id: 102,
+    actor: { id: 12, username: 'user.sofia', avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face' }
+  },
+  {
+    id: 804, type: 'follow_accepted', is_read: true, created_at: new Date(Date.now() - 7200000).toISOString(),
+    actor: { id: 13, username: 'user.emma', avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face' }
+  },
+  {
+    id: 805, type: 'like', is_read: true, created_at: new Date(Date.now() - 14400000).toISOString(), look_id: 101,
+    actor: { id: 14, username: 'user.alex', avatar_url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop&crop=face' }
+  },
+  {
+    id: 806, type: 'follow', is_read: true, created_at: new Date(Date.now() - 28800000).toISOString(),
+    actor: { id: 15, username: 'user.theo', avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face' }
+  },
+]
+// ===== FIN DEMO MODE =====
+
 function timeAgo(dateStr) {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
   if (seconds < 60) return "à l'instant"
@@ -24,10 +63,16 @@ export default function Notifications() {
 
   useEffect(() => {
     loadData()
-    markAllRead().catch(() => {})
+    if (!DEMO_MODE) markAllRead().catch(() => {})
   }, [])
 
   const loadData = async () => {
+    if (DEMO_MODE) {
+      setNotifications(MOCK_NOTIFICATIONS)
+      setFollowRequests(MOCK_FOLLOW_REQUESTS)
+      setLoading(false)
+      return
+    }
     try {
       const [notifRes, requestsRes] = await Promise.all([
         getNotifications(),

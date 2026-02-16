@@ -151,9 +151,13 @@ async def run_migration(request: Request, _: bool = Depends(verify_admin_key)):
         ("is_visible", "ALTER TABLE users ADD COLUMN is_visible BOOLEAN DEFAULT TRUE"),
         ("is_verified", "ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT FALSE"),
         ("updated_at", "ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT NOW()"),
+        ("apple_id", "ALTER TABLE users ADD COLUMN apple_id VARCHAR UNIQUE"),
     ]:
         if col not in user_cols:
             run_sql(f"users.{col}", sql)
+
+    # Make hashed_password nullable (for Apple Sign In users)
+    run_sql("users.hashed_password nullable", "ALTER TABLE users ALTER COLUMN hashed_password DROP NOT NULL")
 
     # Colonnes manquantes sur looks
     look_cols = [c["name"] for c in inspector.get_columns("looks")] if "looks" in existing_tables else []

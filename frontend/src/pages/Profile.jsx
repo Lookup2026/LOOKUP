@@ -7,6 +7,33 @@ import { getMyLooks, deleteLook, getPhotoUrl, uploadAvatar, getSavedCrossings, g
 import PhotoCarousel from '../components/PhotoCarousel'
 import toast from 'react-hot-toast'
 
+// ===== DEMO MODE — Pour screenshots App Store =====
+const DEMO_MODE = false
+
+const DEMO_USER = {
+  id: 1, username: 'user.hugo', full_name: 'Hugo',
+  avatar_url: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=200&h=200&fit=crop&crop=face',
+  bio: 'Paris street style',
+  referral_code: 'HUGO2026', referral_count: 3,
+  created_at: '2026-01-15T10:00:00Z', is_private: false,
+}
+
+const DEMO_LOOKS = [
+  { id: 101, title: 'Casual Friday', photo_url: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&h=500&fit=crop', photo_urls: ['https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400&h=500&fit=crop'], views_count: 47, likes_count: 18, look_date: '2026-02-10', items: [{ category: 'top', brand: 'Carhartt WIP' }] },
+  { id: 102, title: 'Soiree Oberkampf', photo_url: 'https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=400&h=500&fit=crop', photo_urls: ['https://images.unsplash.com/photo-1611312449408-fcece27cdbb7?w=400&h=500&fit=crop'], views_count: 31, likes_count: 12, look_date: '2026-02-09', items: [{ category: 'outerwear', brand: 'Acne Studios' }] },
+  { id: 103, title: 'Weekend vibes', photo_url: 'https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=400&h=500&fit=crop', photo_urls: ['https://images.unsplash.com/photo-1614252235316-8c857d38b5f4?w=400&h=500&fit=crop'], views_count: 19, likes_count: 7, look_date: '2026-02-08', items: [{ category: 'outerwear', brand: 'Stone Island' }] },
+  { id: 104, title: 'Back to basics', photo_url: 'https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400&h=500&fit=crop', photo_urls: ['https://images.unsplash.com/photo-1556906781-9a412961c28c?w=400&h=500&fit=crop'], views_count: 55, likes_count: 23, look_date: '2026-02-07', items: [{ category: 'shoes', brand: 'Nike' }] },
+  { id: 105, title: 'Noir total', photo_url: 'https://images.unsplash.com/photo-1543076447-215ad9ba6923?w=400&h=500&fit=crop', photo_urls: ['https://images.unsplash.com/photo-1543076447-215ad9ba6923?w=400&h=500&fit=crop'], views_count: 42, likes_count: 19, look_date: '2026-02-05', items: [{ category: 'outerwear', brand: 'The Kooples' }] },
+  { id: 106, title: 'Spring preview', photo_url: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=400&h=500&fit=crop', photo_urls: ['https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=400&h=500&fit=crop'], views_count: 28, likes_count: 11, look_date: '2026-02-03', items: [{ category: 'top', brand: 'COS' }] },
+]
+
+const DEMO_SAVED = [
+  { id: 201, other_user: { username: 'user.marie' }, other_look_photo_url: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=400&h=500&fit=crop', views_count: 23, likes_count: 9 },
+  { id: 203, other_user: { username: 'user.sofia' }, other_look_photo_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&h=500&fit=crop', views_count: 56, likes_count: 24 },
+  { id: 202, other_user: { username: 'user.emma' }, other_look_photo_url: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&h=500&fit=crop', views_count: 62, likes_count: 28 },
+]
+// ===== FIN DEMO MODE =====
+
 const CATEGORY_LABELS = {
   top: 'Haut',
   bottom: 'Bas',
@@ -102,6 +129,14 @@ export default function Profile() {
   }
 
   const loadLooks = async () => {
+    if (DEMO_MODE) {
+      setLooks(DEMO_LOOKS)
+      setSavedLooks(DEMO_SAVED)
+      setFollowersCount(47)
+      setFollowingCount(23)
+      setLoading(false)
+      return
+    }
     try {
       const [myLooksRes, savedCrossingsRes] = await Promise.all([
         getMyLooks(),
@@ -178,6 +213,7 @@ export default function Profile() {
   }
 
   const handleLogout = () => {
+    if (DEMO_MODE) return
     logout()
     toast.success('Déconnexion réussie')
   }

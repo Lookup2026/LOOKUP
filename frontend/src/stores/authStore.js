@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { login as apiLogin, register as apiRegister, getMe, logout as apiLogout } from '../api/client'
+import { login as apiLogin, register as apiRegister, getMe, logout as apiLogout, appleSignIn as apiAppleSignIn } from '../api/client'
 import { useLocationStore } from './locationStore'
 
 export const useAuthStore = create((set) => ({
@@ -64,6 +64,27 @@ export const useAuthStore = create((set) => ({
       localStorage.removeItem('token')
       set({ user: null, isAuthenticated: false, isLoading: false })
       throw new Error('Erreur lors de la récupération du profil')
+    }
+  },
+
+  // Apple Sign In
+  appleLogin: async (identityToken, email, fullName) => {
+    const { data } = await apiAppleSignIn({
+      identity_token: identityToken,
+      email: email || undefined,
+      full_name: fullName || undefined,
+    })
+    if (data.access_token) {
+      localStorage.setItem('token', data.access_token)
+    }
+    try {
+      const { data: user } = await getMe()
+      set({ user, isAuthenticated: true, isLoading: false })
+      return { isNewUser: data.is_new_user }
+    } catch (error) {
+      localStorage.removeItem('token')
+      set({ user: null, isAuthenticated: false, isLoading: false })
+      throw new Error('Erreur lors de la recuperation du profil')
     }
   },
 

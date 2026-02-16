@@ -14,7 +14,8 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=True)  # Nullable pour les comptes Apple Sign In
+    apple_id = Column(String, unique=True, nullable=True, index=True)  # Apple Sign In identifier
     full_name = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
     bio = Column(String, nullable=True)
