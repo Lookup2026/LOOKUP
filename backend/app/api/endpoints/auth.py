@@ -84,7 +84,7 @@ async def login(request: Request, credentials: UserLogin, db: Session = Depends(
 
     user = db.query(User).filter(User.email == credentials.email).first()
 
-    if not user or not verify_password(credentials.password, user.hashed_password):
+    if not user or not user.hashed_password or not verify_password(credentials.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou mot de passe incorrect"
@@ -122,29 +122,29 @@ class AppleAuthRequest(BaseModel):
 async def verify_apple_token(identity_token: str) -> dict:
     """Verify Apple identity token using Apple's public keys (JWKS)"""
     import httpx
-    from jose import jwt as jose_jwt, jwk, JWTError
+    from jose import jwt as jose_jwt, JWTError
 
-    # Fetch Apple's public keys
-    async with httpx.AsyncClient() as client:
-        resp = await client.get("https://appleid.apple.com/auth/keys")
-        apple_keys = resp.json()
-
-    # Decode the token header to find the key ID
-    headers = jose_jwt.get_unverified_headers(identity_token)
-    kid = headers.get("kid")
-
-    # Find the matching key
-    apple_key = None
-    for key in apple_keys["keys"]:
-        if key["kid"] == kid:
-            apple_key = key
-            break
-
-    if not apple_key:
-        raise HTTPException(status_code=401, detail="Cle Apple introuvable")
-
-    # Verify and decode the token
     try:
+        # Fetch Apple's public keys
+        async with httpx.AsyncClient() as client:
+            resp = await client.get("https://appleid.apple.com/auth/keys")
+            apple_keys = resp.json()
+
+        # Decode the token header to find the key ID
+        headers = jose_jwt.get_unverified_headers(identity_token)
+        kid = headers.get("kid")
+
+        # Find the matching key
+        apple_key = None
+        for key in apple_keys["keys"]:
+            if key["kid"] == kid:
+                apple_key = key
+                break
+
+        if not apple_key:
+            raise HTTPException(status_code=401, detail="Cle Apple introuvable")
+
+        # Verify and decode the token
         payload = jose_jwt.decode(
             identity_token,
             apple_key,
@@ -153,7 +153,9 @@ async def verify_apple_token(identity_token: str) -> dict:
             issuer="https://appleid.apple.com",
         )
         return payload
-    except JWTError as e:
+    except HTTPException:
+        raise
+    except Exception as e:
         logger.error(f"Apple token verification failed: {e}")
         raise HTTPException(status_code=401, detail="Token Apple invalide")
 
