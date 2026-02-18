@@ -149,7 +149,7 @@ async def verify_apple_token(identity_token: str) -> dict:
             identity_token,
             apple_key,
             algorithms=["RS256"],
-            audience="com.lookup.app",
+            audience="com.gabrielazoulay.lookup",
             issuer="https://appleid.apple.com",
         )
         return payload

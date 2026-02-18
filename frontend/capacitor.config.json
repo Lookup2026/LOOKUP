@@ -1,14 +1,21 @@
 {
-  "appId": "com.lookup.app",
+  "appId": "com.gabrielazoulay.lookup",
   "appName": "LOOKUP",
   "webDir": "dist",
   "server": {
     "allowNavigation": ["lookup-htrd.onrender.com"]
   },
   "ios": {
-    "contentInset": "always",
+    "contentInset": "never",
     "allowsLinkPreview": false,
     "scrollEnabled": true,
-    "preferredContentMode": "mobile"
+    "preferredContentMode": "mobile",
+    "backgroundColor": "#f8f7f4"
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": true,
+      "style": "Dark"
+    }
   }
 }
