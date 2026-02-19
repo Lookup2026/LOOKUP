@@ -85,6 +85,10 @@ async def send_location_ping(
     Envoyer sa position et detecter les croisements.
     Utilise un systeme de zones 50m x 50m.
     """
+    # Valider les coordonnees
+    if not (-90 <= location.latitude <= 90) or not (-180 <= location.longitude <= 180):
+        raise HTTPException(status_code=400, detail="Coordonnees GPS invalides")
+
     # Calculer la zone de l'utilisateur
     zone_id = get_zone_id(location.latitude, location.longitude)
 

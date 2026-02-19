@@ -319,6 +319,8 @@ async def discover_looks(
 
 @router.get("/feed")
 async def get_friends_feed(
+    skip: int = 0,
+    limit: int = 50,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -343,7 +345,7 @@ async def get_friends_feed(
     ).filter(
         Look.user_id.in_(following_ids),
         Look.look_date == today
-    ).order_by(Look.created_at.desc()).all()
+    ).order_by(Look.created_at.desc()).offset(skip).limit(limit).all()
 
     result = []
     for look in looks:

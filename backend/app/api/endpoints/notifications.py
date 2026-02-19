@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List
 
 from app.core.database import get_db
@@ -18,23 +18,24 @@ async def get_notifications(
     current_user: User = Depends(get_current_user)
 ):
     """Liste paginee des notifications, plus recentes en premier"""
-    notifs = db.query(Notification).filter(
+    notifs = db.query(Notification).options(
+        joinedload(Notification.actor)
+    ).filter(
         Notification.user_id == current_user.id
     ).order_by(Notification.created_at.desc()).offset(skip).limit(limit).all()
 
     result = []
     for n in notifs:
-        actor = db.query(User).filter(User.id == n.actor_id).first()
-        if not actor:
+        if not n.actor:
             continue
         result.append(NotificationResponse(
             id=n.id,
             type=n.type,
             actor=NotificationActor(
-                id=actor.id,
-                username=actor.username,
-                avatar_url=actor.avatar_url,
-                full_name=actor.full_name,
+                id=n.actor.id,
+                username=n.actor.username,
+                avatar_url=n.actor.avatar_url,
+                full_name=n.actor.full_name,
             ),
             look_id=n.look_id,
             is_read=n.is_read,
